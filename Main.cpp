@@ -8,6 +8,7 @@
 #include "MotionDetector.h"
 #include "SaliencyMath.h"
 #include "ImageSaliencyDetector.h"
+#include "Helper.h"
 
 // OpenCV includes.
 
@@ -16,14 +17,16 @@
 
 using namespace std;
 
+#if 0
+
 int main(int argc, char* argv[])
 {
 	//Create a new movie capture object.
 	CvCapture* input;
 		
 	//read the input parameters
-	char* fileName = "C:/Users/MHI/Desktop/Torben Dipl.-Arbeit/Video files/used for the user study/hhi1/hhi1-1-3.avi";
-	char* outputFilename = "C:/Users/MHI/Desktop/Torben Dipl.-Arbeit/Video files/used for the user study/hhi1/output";
+	char* fileName = "D:/media/hhi1-1-3.avi";
+	char* outputFilename = "D:/media/output";
 	char* stereoAlgorithm = "BM";
 		
 	input = cvCaptureFromFile(fileName);
@@ -45,10 +48,10 @@ int main(int argc, char* argv[])
 	IplImage* outputFrame  = cvCreateImage(S,decodedFrame->depth,decodedFrame->nChannels);
 	
 	if( !decodedFrame )
-		{
-			cout << "THERE IS NO FRAME TO BE DECODED" << endl;
-			return -1;
-		}
+	{
+		cout << "THERE IS NO FRAME TO BE DECODED" << endl;
+		return -1;
+	}
 
 //------------------------------------------------------------------------
 //--------------------Start Initialization--------------------------------
@@ -63,9 +66,8 @@ int main(int argc, char* argv[])
 	SaliencyMath* sm = new SaliencyMath(S.width/2, S.height);
 	
 	CvMat* combinedSaliency = cvCreateMat( S.width/2, S.height, CV_8UC1);
-	
-	VideoWriter outputVideo;                                        // Open the output
-	
+	VideoWriter outputVideo;
+
 	//Add containter format to the output filename
 	char* container = ".avi";
 	char output[50];
@@ -73,13 +75,11 @@ int main(int argc, char* argv[])
 	strcat(output,container);
 
 	outputVideo.open(output , CV_FOURCC('X','2','6','4'), fps , Size(S.width, S.height), true);
-	
-	int x=0;
 
 //------------------------------------------------------------------------
 //---------------------------Edit Frames----------------------------------
-//------------------------------------------------------------------------
-
+//------------------------------------------------------------------------	
+	int x=0;
 	for(;;)
 	{
 		//if there are no more frames, jump out of the for.
@@ -136,9 +136,9 @@ int main(int argc, char* argv[])
 		if(x>0)
 		{
 			combinedSaliency = sm->computeSaliency();
-			
+
 			outputFrame = ie->smoothImage(combinedSaliency, frame, isd->getNumColors());
-			
+
 			outputVideo.write(outputFrame);
 		}
 		else
@@ -149,7 +149,6 @@ int main(int argc, char* argv[])
 		//load next frame
 		decodedFrame = cvQueryFrame(input);
 	}
-	
 	
 	//clean up
 	cvReleaseCapture(&input);
@@ -173,3 +172,15 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
+#endif
+
+#if 1
+
+int main()
+{
+	ImageSaliencyDetector* isd = new ImageSaliencyDetector();
+	Mat m = isd->hContrast(NULL);
+	imshow("Test", m);
+	cvWaitKey(1000000);
+}
+#endif

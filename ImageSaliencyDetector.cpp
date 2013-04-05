@@ -255,9 +255,11 @@ CvMat* ImageSaliencyDetector::hContrast(IplImage* img)
 {
 	cout << "\nStart Histogram Based Contrast" << endl;
 	cout << "> load (image): " << "test" << endl;
+	char* tPath = "D:/media/imL.png";
 
 	// load image
-	Mat source = img;//imread(tPath, CV_LOAD_IMAGE_COLOR);
+	//Mat source = img;
+	Mat source = imread(tPath, CV_LOAD_IMAGE_COLOR);
 	source.convertTo(source, CV_32FC3, 1.0/255); // 0...255 -> 0...1
 	
 	// initialization

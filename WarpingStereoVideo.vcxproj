@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DisparityMapBuilder.h" />
+    <ClInclude Include="Helper.h" />
     <ClInclude Include="ImageEditor.h" />
     <ClInclude Include="ImageSaliencyDetector.h" />
     <ClInclude Include="MotionDetector.h" />
@@ -22,6 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DisparityMapBuilder.cpp" />
+    <ClCompile Include="Helper.cpp" />
     <ClCompile Include="ImageEditor.cpp" />
     <ClCompile Include="ImageSaliencyDetector.cpp" />
     <ClCompile Include="Main.cpp" />

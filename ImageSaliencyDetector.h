@@ -5,8 +5,8 @@
 
 #include "Stdafx.h"
 #include <iostream>
-#include <opencv\cv.h>
-#include <opencv\highgui.h>
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 
 using namespace std;
 using namespace cv;
