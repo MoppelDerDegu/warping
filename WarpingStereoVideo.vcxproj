@@ -10,6 +10,26 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DisparityMapBuilder.h" />
+    <ClInclude Include="ImageEditor.h" />
+    <ClInclude Include="ImageSaliencyDetector.h" />
+    <ClInclude Include="MotionDetector.h" />
+    <ClInclude Include="SaliencyMath.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="StereoImage.h" />
+    <ClInclude Include="targetver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DisparityMapBuilder.cpp" />
+    <ClCompile Include="ImageEditor.cpp" />
+    <ClCompile Include="ImageSaliencyDetector.cpp" />
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="MotionDetector.cpp" />
+    <ClCompile Include="SaliencyMath.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="StereoImage.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -73,8 +93,6 @@
       <AdditionalDependencies>opencv_calib3d244.lib;opencv_contrib244.lib;opencv_core244.lib;opencv_features2d244.lib;opencv_flann244.lib;opencv_gpu244.lib;opencv_highgui244.lib;opencv_imgproc244.lib;opencv_legacy244.lib;opencv_ml244.lib;opencv_nonfree244.lib;opencv_objdetect244.lib;opencv_photo244.lib;opencv_stitching244.lib;opencv_ts244.lib;opencv_video244.lib;opencv_videostab244.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
