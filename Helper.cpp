@@ -1,8 +1,7 @@
 #include "Helper.h"
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include "stdafx.h"
 
-IplImage* getNthFrame(CvCapture* capture, int n)
+IplImage* Helper::getNthFrame(CvCapture* capture, int n)
 {
 	for(int i = 0; i <= n; i++)
 	{
@@ -11,4 +10,16 @@ IplImage* getNthFrame(CvCapture* capture, int n)
 	}
 
 	return cvQueryFrame(capture);
+}
+
+IplImage Helper::MatToIplImage(Mat& m)
+{
+	IplImage img = m;
+	return img;
+}
+
+Mat Helper::IplImageToMat(IplImage* im)
+{
+	Mat m(im);
+	return m;
 }

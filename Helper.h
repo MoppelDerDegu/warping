@@ -1,7 +1,10 @@
 #pragma once
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include "stdafx.h"
 
-IplImage* getNthFrame(CvCapture* capture, int n);
-
+struct Helper
+{
+	static IplImage* getNthFrame(CvCapture* capture, int n);
+	static IplImage MatToIplImage(Mat& m);
+	static Mat IplImageToMat(IplImage* im);
+};

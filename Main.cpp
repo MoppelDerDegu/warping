@@ -10,14 +10,7 @@
 #include "ImageSaliencyDetector.h"
 #include "Helper.h"
 
-// OpenCV includes.
-
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-
-using namespace std;
-
-#if 0
+#if 1
 
 int main(int argc, char* argv[])
 {
@@ -171,16 +164,5 @@ int main(int argc, char* argv[])
 	cout << "FINISHED WRITING THE VIDEO FILE" << endl;
 
 	return 0;
-}
-#endif
-
-#if 1
-
-int main()
-{
-	ImageSaliencyDetector* isd = new ImageSaliencyDetector();
-	Mat m = isd->hContrast(NULL);
-	imshow("Test", m);
-	cvWaitKey(1000000);
 }
 #endif
