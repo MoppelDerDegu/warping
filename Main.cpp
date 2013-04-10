@@ -3,14 +3,10 @@
 
 #include "stdafx.h"
 
-#include "ImageEditor.h"
-#include "DisparityMapBuilder.h"
-#include "MotionDetector.h"
-#include "SaliencyMath.h"
-#include "ImageSaliencyDetector.h"
+#include "ImageWarper.h"
 #include "Helper.h"
 
-#if 1
+#if 0
 
 int main(int argc, char* argv[])
 {
@@ -164,5 +160,19 @@ int main(int argc, char* argv[])
 	cout << "FINISHED WRITING THE VIDEO FILE" << endl;
 
 	return 0;
+}
+#endif
+
+#if 1
+int main(int argc, char* argv[])
+{
+	CvCapture* input;
+	char* fileName = "D:/media/big_buck_bunny_480p_stereo.avi";	
+	input = cvCaptureFromFile(fileName);
+
+	IplImage* img = cvQueryFrame(input);
+
+	//cvReleaseImage(&img);
+	//cvReleaseCapture(&input);
 }
 #endif

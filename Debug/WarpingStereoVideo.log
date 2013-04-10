@@ -1,31 +1,25 @@
-﻿Der Buildvorgang wurde am 4/5/2013 7:05:14 PM gestartet.
+﻿Der Buildvorgang wurde am 4/10/2013 1:41:40 PM gestartet.
 Projekt "C:\Users\MHI\Documents\Visual Studio 2010\Projects\WarpingStereoVideo\WarpingStereoVideo.vcxproj" auf Knoten "2", build Ziel(e).
 InitializeBuildStatus:
-  "Debug\WarpingStereoVideo.unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+  Aktualisieren des Timestamps von "Debug\WarpingStereoVideo.unsuccessfulbuild".
 ClCompile:
-  C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt ImageSaliencyDetector.cpp Main.cpp
+  C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt Main.cpp
   Main.cpp
-d:\dev\opencv\build\include\opencv2\flann\logger.h(66): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-          C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\stdio.h(234): Siehe Deklaration von 'fopen'
-  ImageSaliencyDetector.cpp
-d:\dev\opencv\build\include\opencv2\flann\logger.h(66): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-          C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\stdio.h(234): Siehe Deklaration von 'fopen'
-ImageSaliencyDetector.cpp(35): warning C4244: 'Initialisierung': Konvertierung von 'double' in 'const int', möglicher Datenverlust
-ImageSaliencyDetector.cpp(35): warning C4244: 'Initialisierung': Konvertierung von 'double' in 'const int', möglicher Datenverlust
-ImageSaliencyDetector.cpp(35): warning C4244: 'Initialisierung': Konvertierung von 'double' in 'const int', möglicher Datenverlust
-ImageSaliencyDetector.cpp(92): warning C4244: 'Initialisierung': Konvertierung von 'double' in 'int', möglicher Datenverlust
-  Code wird generiert...
 ManifestResourceCompile:
   Alle Ausgaben sind aktuell.
 Link:
-  C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\MHI\Documents\Visual Studio 2010\Projects\WarpingStereoVideo\Debug\WarpingStereoVideo.exe" /INCREMENTAL /NOLOGO opencv_calib3d244d.lib opencv_contrib244d.lib opencv_core244d.lib opencv_features2d244d.lib opencv_flann244d.lib opencv_gpu244d.lib opencv_highgui244d.lib opencv_imgproc244d.lib opencv_legacy244d.lib opencv_ml244d.lib opencv_nonfree244d.lib opencv_objdetect244d.lib opencv_photo244d.lib opencv_stitching244d.lib opencv_ts244d.lib opencv_video244d.lib opencv_videostab244d.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\WarpingStereoVideo.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\MHI\Documents\Visual Studio 2010\Projects\WarpingStereoVideo\Debug\WarpingStereoVideo.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\MHI\Documents\Visual Studio 2010\Projects\WarpingStereoVideo\Debug\WarpingStereoVideo.lib" /MACHINE:X86 Debug\WarpingStereoVideo.exe.embed.manifest.res
+  C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\MHI\Documents\Visual Studio 2010\Projects\WarpingStereoVideo\Debug\WarpingStereoVideo.exe" /INCREMENTAL /NOLOGO opencv_calib3d244d.lib opencv_contrib244d.lib opencv_core244d.lib opencv_features2d244d.lib opencv_flann244d.lib opencv_gpu244d.lib opencv_highgui244d.lib opencv_imgproc244d.lib opencv_legacy244d.lib opencv_ml244d.lib opencv_nonfree244d.lib opencv_objdetect244d.lib opencv_photo244d.lib opencv_stitching244d.lib opencv_ts244d.lib opencv_video244d.lib opencv_videostab244d.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib "libnlopt-0.lib" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\WarpingStereoVideo.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\MHI\Documents\Visual Studio 2010\Projects\WarpingStereoVideo\Debug\WarpingStereoVideo.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\MHI\Documents\Visual Studio 2010\Projects\WarpingStereoVideo\Debug\WarpingStereoVideo.lib" /MACHINE:X86 Debug\WarpingStereoVideo.exe.embed.manifest.res
   Debug\DisparityMapBuilder.obj
+  Debug\FileManager.obj
   Debug\Helper.obj
   Debug\ImageEditor.obj
   Debug\ImageSaliencyDetector.obj
+  Debug\ImageWarper.obj
   Debug\Main.obj
   Debug\MotionDetector.obj
+  Debug\Saliency.obj
   Debug\SaliencyMath.obj
+  "Debug\segment-image.obj"
   Debug\stdafx.obj
   Debug\StereoImage.obj
 Manifest:
@@ -41,4 +35,4 @@ Die Erstellung des Projekts "C:\Users\MHI\Documents\Visual Studio 2010\Projects\
 
 Das Erstellen war erfolgreich.
 
-Verstrichene Zeit 00:00:16.45
+Verstrichene Zeit 00:00:13.39

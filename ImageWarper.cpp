@@ -28,21 +28,23 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size destSize)
 	initializeMesh(img);
 
 	// TODO warp
+
+	return NULL;
 }
 
 void ImageWarper::initializeMesh(IplImage* img)
 {
-	// create initial mesh
 	int quadSizeX = (int) img->width / QUAD_NUMBER_X;
 	int quadSizeY = (int) img->height / QUAD_NUMBER_Y;
 
+	// create vertices
 	int x;
 	int y;
 	for (int i = 0; i < QUAD_NUMBER_TOTAL; i++)
 	{
 		Quad q;
 
-		x = i / QUAD_NUMBER_X;
+		x = (int) i / QUAD_NUMBER_X;
 		y = i % QUAD_NUMBER_Y;
 
 		q.v1.first = x * quadSizeX;
@@ -58,7 +60,9 @@ void ImageWarper::initializeMesh(IplImage* img)
 		q.v4.second = (y + 1) * quadSizeY;
 
 		mesh.quads.push_back(q);
-
-		// TODO Add edges
+		mesh.vertices.push_back(q.v1);
+		mesh.vertices.push_back(q.v2);
+		mesh.vertices.push_back(q.v3);
+		mesh.vertices.push_back(q.v4);
 	}
 }
