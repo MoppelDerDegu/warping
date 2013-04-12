@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <tchar.h>
 #include <Windows.h>
+#include <cmath>
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>

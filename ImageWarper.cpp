@@ -38,8 +38,7 @@ void ImageWarper::initializeMesh(IplImage* img)
 	int quadSizeY = (int) img->height / QUAD_NUMBER_Y;
 
 	// create vertices
-	int x;
-	int y;
+	int x, y;
 	for (int i = 0; i < QUAD_NUMBER_TOTAL; i++)
 	{
 		Quad q;
