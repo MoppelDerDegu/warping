@@ -20,7 +20,7 @@ IplImage Helper::MatToIplImage(Mat& m)
 
 Mat Helper::IplImageToMat(IplImage* im)
 {
-	Mat m(im);
+	Mat m = im;
 	return m;
 }
 
@@ -31,12 +31,20 @@ float Helper::getDistance(Vertex v1, Vertex v2)
 
 float Helper::getAverageSaliency(int sumOfSaliencyValues, int numOfPixel)
 {
-	return ((float) sumOfSaliencyValues) / ((float) numOfPixel);
+	float res = ((float) sumOfSaliencyValues) / ((float) numOfPixel);
+
+	if (res < 0)
+		return 0;
+	else
+		return res;
 }
 
-float Helper::normalize(float value)
+float Helper::normalize(float value, float max)
 {
-	// TODO
-
-	return 0;
+	float res = value / max;
+	
+	if (res < 0)
+		return 0;
+	else
+		return res;
 }

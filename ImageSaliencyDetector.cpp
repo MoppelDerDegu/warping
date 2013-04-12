@@ -251,15 +251,15 @@ void ImageSaliencyDetector::build()
 	normalize(resultHC, resultHC, 0, 1, NORM_MINMAX);
 }
 
-CvMat* ImageSaliencyDetector::hContrast(IplImage* img)
+Mat ImageSaliencyDetector::hContrast(IplImage* img)
 {
 	cout << "\nStart Histogram Based Contrast" << endl;
 	cout << "> load (image): " << "test" << endl;
-	char* tPath = "D:/media/imL.png";
+	//char* tPath = "D:/media/imL.png";
 
 	// load image
-	//Mat source = img;
-	Mat source = imread(tPath, CV_LOAD_IMAGE_COLOR);
+	Mat source = img;
+	//Mat source = imread(tPath, CV_LOAD_IMAGE_COLOR);
 	source.convertTo(source, CV_32FC3, 1.0/255); // 0...255 -> 0...1
 	
 	// initialization
@@ -293,7 +293,7 @@ CvMat* ImageSaliencyDetector::hContrast(IplImage* img)
 	tmpImage.~Mat();
 	resImage.~Mat();
 
-	return &this->saliencyMap;
+	return this->saliencyMap;
 }
 
 float ImageSaliencyDetector::getMaxColorDistance()

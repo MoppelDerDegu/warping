@@ -1,7 +1,6 @@
 #pragma once
 
 #include "stdafx.h"
-#include "Mesh.h"
 
 class QuadSaliencyManager
 {

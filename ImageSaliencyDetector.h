@@ -24,13 +24,13 @@ private:
 		Mat couImage;		// frequency of each color
 		Mat disImage;		// weighted distance
 		Mat resultHC;		// result of algorithm
-		CvMat saliencyMap;  // to convert resultHC into a CvMat
+		Mat saliencyMap;  // to convert resultHC into a CvMat
 		vector<vector<pair<float, int>>> collection;	// contains each color distance
 
 		float maxColorDistance;  //stores the maximum color distance in each frame
 		int numColors;			 //stores the number of colors in each frame
 public:
-		CvMat* hContrast(IplImage*);	// constructor (path to file)
+		Mat hContrast(IplImage*);	// constructor (path to file)
 
 		ImageSaliencyDetector(void);
 		~ImageSaliencyDetector(void);

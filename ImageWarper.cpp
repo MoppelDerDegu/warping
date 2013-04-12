@@ -1,5 +1,6 @@
 #include "ImageWarper.h"
 #include "stdafx.h"
+#include "QuadSaliencyManager.h"
 
 
 ImageWarper::ImageWarper(void)
@@ -10,7 +11,7 @@ ImageWarper::~ImageWarper(void)
 {
 }
 
-void ImageWarper::setMesh(Mesh& mesh)
+void ImageWarper::setMesh(Mesh &mesh)
 {
 	this->mesh = mesh;
 }
@@ -20,12 +21,14 @@ Mesh ImageWarper::getMesh()
 	return this->mesh;
 }
 
-IplImage* ImageWarper::warpImage(IplImage* img, Size destSize)
+IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 {
 	//initialisation
-	this->src = img;
-	this->dest = Mat::zeros(destSize, CV_32FC3);
+	src = img;
+	dest = Mat::zeros(destSize, CV_32FC3);
+	QuadSaliencyManager qsm;
 	initializeMesh(img);
+	qsm.assignSaliencyValuesToQuads(mesh, saliency);
 
 	// TODO warp
 

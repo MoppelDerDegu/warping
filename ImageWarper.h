@@ -1,15 +1,14 @@
 #pragma once
 
 #include "stdafx.h"
-#include "Mesh.h"
 
 class ImageWarper
 {
 public:
 	ImageWarper(void);
 	~ImageWarper(void);
-	IplImage* warpImage(IplImage* img, Size dest);
-	void setMesh(Mesh& mesh);
+	IplImage* warpImage(IplImage* img, Size &dest, Mat &saliency);
+	void setMesh(Mesh &mesh);
 	Mesh getMesh();
 private:
 	Vertex newVEnd;

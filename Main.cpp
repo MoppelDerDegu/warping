@@ -1,10 +1,9 @@
-// author : Torben Dittrich
-// edited by : Christopher Hipp
-
 #include "stdafx.h"
 
 #include "ImageWarper.h"
 #include "Helper.h"
+#include "Saliency.h"
+#include "ImageSaliencyDetector.h"
 
 #if 0
 
@@ -167,10 +166,17 @@ int main(int argc, char* argv[])
 int main(int argc, char* argv[])
 {
 	CvCapture* input;
-	char* fileName = "D:/media/big_buck_bunny_480p_stereo.avi";	
+	char* fileName = "D:/media/big_buck_bunny_480p_stereo.avi";
 	input = cvCaptureFromFile(fileName);
+	ImageWarper iw;
 
-	IplImage* img = cvQueryFrame(input);
+	IplImage* img = Helper::getNthFrame(input, 20);
+	
+	ImageSaliencyDetector isd;
+	Mat saliencyMap = isd.hContrast(img);
+
+	Size s;
+	iw.warpImage(img, s, saliencyMap);
 
 	//cvReleaseImage(&img);
 	//cvReleaseCapture(&input);

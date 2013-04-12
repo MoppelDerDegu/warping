@@ -7,7 +7,9 @@
 
 Mat Saliency::GetRC(const Mat &img3f)
 {
-	return GetRC(img3f, 0.4, 50, 50, 0.5);
+	img3f.convertTo(img3f, CV_32FC3, 1.0/255);
+	Mat sal = GetRC(img3f, 0.4, 50, 50, 0.5);
+	return sal * 255;
 }
 
 Mat Saliency::GetRC(const Mat &img3f, double sigmaDist, double segK, int segMinSize, double segSigma)
