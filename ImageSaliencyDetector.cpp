@@ -261,7 +261,7 @@ Mat ImageSaliencyDetector::hContrast(IplImage* img)
 	Mat source = img;
 	//Mat source = imread(tPath, CV_LOAD_IMAGE_COLOR);
 	source.convertTo(source, CV_32FC3, 1.0/255); // 0...255 -> 0...1
-	
+
 	// initialization
 	this -> rawImage = source;
 	this -> tmpImage = Mat::zeros(rawImage.size(), CV_32S);
@@ -285,7 +285,7 @@ Mat ImageSaliencyDetector::hContrast(IplImage* img)
 	build();
 
 	resultHC = resultHC*255;
-	
+
 	this->saliencyMap = resultHC;
 		
 	//clean up

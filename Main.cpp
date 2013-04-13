@@ -170,8 +170,8 @@ int main(int argc, char* argv[])
 	input = cvCaptureFromFile(fileName);
 	ImageWarper iw;
 
-	IplImage* img = Helper::getNthFrame(input, 20);
-	
+	IplImage* img = Helper::getNthFrame(input, 100);
+
 	ImageSaliencyDetector isd;
 	Mat saliencyMap = isd.hContrast(img);
 

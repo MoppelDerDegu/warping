@@ -14,9 +14,9 @@ vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh 
 {
 	vector<pair<float, Quad>> result;
 	int x, y;
+	float quadmax = 0;
 	int roiWidth, roiHeight;
 	Mat imageROI;
-	MatIterator_<unsigned char> it, it_end;
 
 	for (unsigned int i = 0; i < m.quads.size(); i++)
 	{
@@ -36,7 +36,7 @@ vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh 
 		{
 			for (int k = 0; k < imageROI.cols; k++)
 			{
-				float value = imageROI.at<float>(j, k);
+				float value = imageROI.at<float> (j, k);
 
 				if (value > max)
 					max = value;
@@ -45,10 +45,27 @@ vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh 
 			}
 		}
 
-		float wf = Helper::normalize(Helper::getAverageSaliency(sum, roiWidth * roiHeight), max);
+		float wf = Helper::getAverageSaliency(sum, roiWidth * roiHeight);
 		pair.first = wf;
 		pair.second = m.quads.at(i);
 		result.push_back(pair);
+	}
+
+	// determine max saliency values of all quads
+	for (unsigned int i = 0; i < result.size(); i++)
+	{
+		float wf = result.at(i).first;
+
+		if (wf > quadmax)
+			quadmax = wf;
+	}
+
+	// normalize saliency weight factors
+	for (unsigned int i = 0; i < result.size(); i++)
+	{
+		float value = result.at(i).first;
+		float wf = Helper::normalize(value, quadmax);
+		result.at(i).first = wf;
 	}
 
 	return result;
