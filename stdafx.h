@@ -14,7 +14,6 @@
 #include <tchar.h>
 #include <Windows.h>
 #include <cmath>
-#include "Mesh.h"
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -22,11 +21,17 @@
 using namespace cv;
 using namespace std;
 
-typedef pair<int, int> Vertex;
 // number of quads in the image in x and y direction respectively
 #define QUAD_NUMBER_X 30
 #define QUAD_NUMBER_Y 30
 #define QUAD_NUMBER_TOTAL QUAD_NUMBER_X * QUAD_NUMBER_Y
+
+typedef struct Vertex
+{
+	int x, y;
+	Vertex operator+ (Vertex);
+	Vertex operator- (Vertex);
+};
 
 typedef struct Edge
 {
@@ -56,6 +61,22 @@ typedef struct Mesh
 	vector<Edge> edges;
 	vector<Quad> quads;
 };
+
+Vertex Vertex::operator+ (Vertex param)
+{
+	Vertex tmp;
+	tmp.x = x + param.x;
+	tmp.y = y + param.x;
+	return tmp;
+}
+
+Vertex Vertex::operator- (Vertex param)
+{
+	Vertex tmp;
+	tmp.x = x - param.y;
+	tmp.y = y - param.y;
+	return tmp;
+}
 
 template<typename T> inline T sqr(T x) { return x * x;}
 template<class T> inline T vecDist3(const Vec<T, 3> &v1, const Vec<T, 3> &v2) {return sqrt(sqr(v1[0] - v2[0])+sqr(v1[1] - v2[1])+sqr(v1[2] - v2[2]));}

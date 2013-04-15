@@ -26,7 +26,7 @@ Mat Helper::IplImageToMat(IplImage* im)
 
 float Helper::getDistance(Vertex v1, Vertex v2)
 {
-	return sqrt(static_cast<float>(sqr(v1.first - v2.first) + sqr(v1.second - v2.second)));
+	return sqrt(static_cast<float>(sqr(v1.x - v2.x) + sqr(v1.y - v2.y)));
 }
 
 float Helper::getAverageSaliency(int sumOfSaliencyValues, int numOfPixel)
@@ -52,7 +52,7 @@ float Helper::normalize(float value, float max)
 string Helper::getImageType(int number)
 {
     // find type
-    int imgTypeInt = number%8;
+    int imgTypeInt = number % 8;
     string imgTypeString;
 
     switch (imgTypeInt)
@@ -89,4 +89,45 @@ string Helper::getImageType(int number)
     type << "CV_" << imgTypeString << "C" << channel;
 
     return type.str();
+}
+
+Mesh Helper::deepCopyMesh(const Mesh &m)
+{
+	Mesh result;
+	
+	for (unsigned int i = 0; i < m.quads.size(); i++)
+	{
+		Quad f;
+		Vertex v1;
+		Vertex v2;
+		Vertex v3;
+		Vertex v4;
+		
+		v1.x = m.quads.at(i).v1.x;
+		v1.y = m.quads.at(i).v1.y;
+		v2.x = m.quads.at(i).v2.x;
+		v2.y = m.quads.at(i).v2.y;
+		v3.x = m.quads.at(i).v3.x;
+		v3.y = m.quads.at(i).v3.y;
+		v4.x = m.quads.at(i).v4.x;
+		v4.y = m.quads.at(i).v4.y;
+
+		f.v1 = v1;
+		f.v2 = v2;
+		f.v3 = v3;
+		f.v4 = v4;
+
+		result.quads.push_back(f);
+		result.vertices.push_back(v1);
+		result.vertices.push_back(v2);
+		result.vertices.push_back(v3);
+		result.vertices.push_back(v4);
+	}
+
+	return result;
+}
+
+double Helper::euclideanNorm(const Vertex &v)
+{
+	return sqrt((double) (sqr(v.x) + sqr(v.y)));
 }

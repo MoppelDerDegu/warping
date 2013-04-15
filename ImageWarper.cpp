@@ -11,12 +11,12 @@ ImageWarper::~ImageWarper(void)
 {
 }
 
-void ImageWarper::setMesh(Mesh &mesh)
+inline void ImageWarper::setMesh(Mesh &mesh)
 {
 	this->mesh = mesh;
 }
 
-Mesh ImageWarper::getMesh()
+inline Mesh ImageWarper::getMesh()
 {
 	return this->mesh;
 }
@@ -49,17 +49,17 @@ void ImageWarper::initializeMesh(IplImage* img)
 		x = (int) i / QUAD_NUMBER_X;
 		y = i % QUAD_NUMBER_Y;
 
-		q.v1.first = x * quadSizeX;
-		q.v1.second = y * quadSizeY;
+		q.v1.x = x * quadSizeX;
+		q.v1.y = y * quadSizeY;
 
-		q.v2.first = (x + 1) * quadSizeX;
-		q.v2.second = y * quadSizeY;
+		q.v2.x = (x + 1) * quadSizeX;
+		q.v2.y = y * quadSizeY;
 
-		q.v3.first = x * quadSizeX;
-		q.v3.second = (y + 1) * quadSizeY;
+		q.v3.x = x * quadSizeX;
+		q.v3.y = (y + 1) * quadSizeY;
 
-		q.v4.first = (x + 1) * quadSizeX;
-		q.v4.second = (y + 1) * quadSizeY;
+		q.v4.x = (x + 1) * quadSizeX;
+		q.v4.y = (y + 1) * quadSizeY;
 
 		mesh.quads.push_back(q);
 		mesh.vertices.push_back(q.v1);

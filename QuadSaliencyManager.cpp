@@ -24,8 +24,8 @@ vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh 
 		float max = 0;
 		pair<float, Quad> pair;
 
-		x = m.quads.at(i).v1.first;
-		y = m.quads.at(i).v1.second;
+		x = m.quads.at(i).v1.x;
+		y = m.quads.at(i).v1.y;
 
 		roiWidth = (int) Helper::getDistance(m.quads.at(i).v1, m.quads.at(i).v2);
 		roiHeight = (int) Helper::getDistance(m.quads.at(i).v1, m.quads.at(i).v3);

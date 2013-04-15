@@ -11,4 +11,6 @@ struct Helper
 	static float getAverageSaliency(int sumOfSaliencyValues, int numOfPixel);
 	static float normalize(float value, float max); // normalizes values to [0...1]
 	static string getImageType(int number);
+	static Mesh deepCopyMesh(const Mesh &m);
+	static double euclideanNorm(const Vertex &v);
 };
