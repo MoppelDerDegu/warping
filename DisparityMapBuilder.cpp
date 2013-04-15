@@ -3,14 +3,7 @@
 
 #include "StdAfx.h"
 #include "DisparityMapBuilder.h"
-
 #include "StereoImage.h"
-
-//opencv includes
-#include <opencv2/opencv.hpp>
-#include <opencv/highgui.h>
-#include <opencv2/calib3d/calib3d.hpp>
-#include <opencv2/legacy/legacy.hpp>
 
 using namespace cv;
 using namespace std;

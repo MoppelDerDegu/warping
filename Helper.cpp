@@ -118,10 +118,20 @@ Mesh Helper::deepCopyMesh(const Mesh &m)
 		f.v4 = v4;
 
 		result.quads.push_back(f);
-		result.vertices.push_back(v1);
-		result.vertices.push_back(v2);
-		result.vertices.push_back(v3);
-		result.vertices.push_back(v4);
+	}
+
+	for (unsigned int i = 0; i < m.edges.size(); i++)
+	{
+		Edge edge;
+		edge.src = m.edges.at(i).src;
+		edge.dest = m.edges.at(i).dest;
+		
+		result.edges.push_back(edge);
+	}
+
+	for (unsigned int i = 0; i < m.vertices.size(); i++)
+	{
+		result.vertices.push_back(m.vertices.at(i));
 	}
 
 	return result;

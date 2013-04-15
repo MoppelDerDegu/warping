@@ -12,6 +12,8 @@ QuadSaliencyManager::~QuadSaliencyManager(void)
 
 vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh &m, Mat &saliencyMap)
 {
+	cout << ">> Assigning Saliency Weights To Mesh" << endl;
+
 	vector<pair<float, Quad>> result;
 	int x, y;
 	float quadmax = 0;

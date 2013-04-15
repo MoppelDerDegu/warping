@@ -3,6 +3,9 @@
 // die nur in unregelm‰ﬂigen Abst‰nden ge‰ndert werden.
 //
 
+#ifndef HEADER_H
+#define HEADER_H
+
 #pragma once
 #pragma warning (disable : 4996)
 #pragma warning (disable : 4244)
@@ -17,6 +20,10 @@
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/legacy/legacy.hpp>
+
 
 using namespace cv;
 using namespace std;
@@ -31,12 +38,14 @@ typedef struct Vertex
 	int x, y;
 	Vertex operator+ (Vertex);
 	Vertex operator- (Vertex);
+	bool operator== (Vertex &v);
 };
 
 typedef struct Edge
 {
 	Vertex src;
 	Vertex dest;
+	bool operator== (Edge &e);
 };
 
 // vertex numeration of a quad is like this
@@ -62,22 +71,6 @@ typedef struct Mesh
 	vector<Quad> quads;
 };
 
-Vertex Vertex::operator+ (Vertex param)
-{
-	Vertex tmp;
-	tmp.x = x + param.x;
-	tmp.y = y + param.x;
-	return tmp;
-}
-
-Vertex Vertex::operator- (Vertex param)
-{
-	Vertex tmp;
-	tmp.x = x - param.y;
-	tmp.y = y - param.y;
-	return tmp;
-}
-
 template<typename T> inline T sqr(T x) { return x * x;}
 template<class T> inline T vecDist3(const Vec<T, 3> &v1, const Vec<T, 3> &v2) {return sqrt(sqr(v1[0] - v2[0])+sqr(v1[1] - v2[1])+sqr(v1[2] - v2[2]));}
 template<class T> inline T vecSqrDist3(const Vec<T, 3> &v1, const Vec<T, 3> &v2) {return sqr(v1[0] - v2[0])+sqr(v1[1] - v2[1])+sqr(v1[2] - v2[2]);}
@@ -86,3 +79,4 @@ template<class T> inline T pntSqrDist(const Point_<T> &p1, const Point_<T> &p2) 
 
 
 // TODO: Hier auf zus‰tzliche Header, die das Programm erfordert, verweisen.
+#endif

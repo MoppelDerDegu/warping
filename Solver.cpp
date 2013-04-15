@@ -11,12 +11,17 @@ Solver::~Solver(void)
 {
 }
 
-Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize)
+Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vector<pair<float, Quad>> &wfMap)
 {
+	cout << ">> Solving Image Optimization Problem" << endl;
+
 	this->originalMesh = m;
+	this->saliencyWeightMapping = wfMap;
 	initialGuess(newSize, originalSize);
 
 	// TODO solve optimization problem
+
+	return deformedMesh;
 }
 
 // initial guess of the new vertex coordinates, i.e. linear scaling according to the new image size
@@ -46,11 +51,37 @@ double Solver::calculateLengthRatio(Edge &oldEdge, Edge &newEdge)
 	return (Helper::euclideanNorm(newEdge.src - newEdge.dest)) / (Helper::euclideanNorm(oldEdge.src - oldEdge.dest));
 }
 
-double Solver::calculateQuadScale(const Quad &q)
+double Solver::calculateQuadScale(Quad &oldQuad, Quad &newQuad)
 {
 	double sf;
+	double sum1 = 0.0;
+	double sum2 = 0.0;
 
-	// TODO
+	for (int i = 0; i < 4; i++)
+	{
+		if (i == 0)
+		{
+			sum1 += vTv(oldQuad.v1 - oldQuad.v2, newQuad.v1 - newQuad.v2);
+			sum2 += sqr(Helper::euclideanNorm(oldQuad.v1 - oldQuad.v2));
+		}
+		else if (i == 1)
+		{
+			sum1 += vTv(oldQuad.v2 - oldQuad.v3, newQuad.v2 - newQuad.v3);
+			sum2 += sqr(Helper::euclideanNorm(oldQuad.v2 - oldQuad.v3));
+		}
+		else if (i == 2)
+		{
+			sum1 += vTv(oldQuad.v3 - oldQuad.v4, newQuad.v3 - newQuad.v4);
+			sum2 += sqr(Helper::euclideanNorm(oldQuad.v3 - oldQuad.v4));
+		}
+		else
+		{
+			sum1 += vTv(oldQuad.v4 - oldQuad.v1, newQuad.v4 - newQuad.v1);
+			sum2 += sqr(Helper::euclideanNorm(oldQuad.v4 - oldQuad.v1));
+		}
+	}
+
+	sf = sum1 / sum2;
 
 	return sf;
 }
@@ -102,17 +133,51 @@ double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 	return du;
 }
 
-double Solver::totalQuadEnergy(const Mesh &m)
+double Solver::totalQuadEnergy(Mesh &newMesh)
 {
-	// TODO
+	double du = 0.0;
+
+	// assuming #quads in oldmesh = #quads in new mesh
+	for (unsigned int i = 0; i < originalMesh.quads.size(); i++)
+	{
+		// calculate quad scale factor with the initial guess
+		double sf = calculateQuadScale(originalMesh.quads.at(i), tmp.quads.at(i));
+		double duf = quadEnergy(originalMesh.quads.at(i), newMesh.quads.at(i), sf);
+
+		// du = du + wf * duf
+		du += saliencyWeightMapping.at(i).first * duf;
+	}
+
+	return du;
 }
 
-double Solver::totalEdgeEnergy(const Mesh &m)
+double Solver::totalEdgeEnergy(Mesh &newMesh)
 {
-	// TODO
+	double dl = 0.0;
+
+	for (unsigned int i = 0; originalMesh.edges.size(); i++)
+	{
+		Vertex _v = newMesh.edges.at(i).src - newMesh.edges.at(i).dest;
+		Vertex v = originalMesh.edges.at(i).src - originalMesh.edges.at(i).dest;
+
+		double lij = calculateLengthRatio(originalMesh.edges.at(i), newMesh.edges.at(i));
+		v.x = v.x * lij;
+		v.y = v.y * lij;
+
+		dl += sqr(Helper::euclideanNorm(_v - v));
+	}
+
+	return dl;
 }
 
 double Solver::imageObjFunc(const vector<double> &x, vector<double> &grad, void *myFuncData)
 {
 	// TODO 
+
+	return 0.0;
+}
+
+double Solver::vTv(Vertex v1, Vertex v2)
+{
+	return (double) (v1.x * v2.x + v1.y * v2.y);
 }
