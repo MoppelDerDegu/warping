@@ -11,19 +11,19 @@ ImageWarper::~ImageWarper(void)
 {
 }
 
-inline void ImageWarper::setMesh(Mesh &mesh)
+void ImageWarper::setMesh(Mesh &mesh)
 {
 	this->mesh = mesh;
 }
 
-inline Mesh ImageWarper::getMesh()
+Mesh ImageWarper::getMesh()
 {
 	return this->mesh;
 }
 
 IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 {
-	cout << "\n Start Image Warping" << endl;
+	cout << "\nStart Image Warping" << endl;
 
 	//initialisation
 	src = img;
@@ -37,6 +37,15 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	return NULL;
 }
 
+/*
+	The order of the vertices being pushed to the vector is as follows:
+
+	v1---v2---v7---V10
+	|	 |	  |		|
+	v3---v4---v8---V11
+	|	 |    |		|
+	v5---v6---v9---V12
+*/
 void ImageWarper::initializeMesh(IplImage* img)
 {
 	cout << ">> Initialize Mesh" << endl;
@@ -73,10 +82,10 @@ void ImageWarper::initializeMesh(IplImage* img)
 		e1.src = q.v1;
 		e1.dest = q.v2;
 		e2.src = q.v2;
-		e2.dest = q.v3;
-		e3.src = q.v3;
-		e3.dest = q.v4;
-		e4.src = q.v4;
+		e2.dest = q.v4;
+		e3.src = q.v4;
+		e3.dest = q.v3;
+		e4.src = q.v3;
 		e4.dest = q.v1;
 
 		mesh.quads.push_back(q);

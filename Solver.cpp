@@ -1,5 +1,6 @@
 #include "Solver.h"
 #include "Helper.h"
+#include "lib/nlopt-2.3-dll/nlopt.hpp"
 
 
 Solver::Solver(void)
@@ -20,7 +21,7 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	initialGuess(newSize, originalSize);
 
 	// TODO solve optimization problem
-
+	
 	return deformedMesh;
 }
 
@@ -43,6 +44,21 @@ void Solver::initialGuess(Size &newSize, Size &originalSize)
 		Vertex v = tmp.vertices.at(i);
 		v.x = (int) (v.x * scaleX);
 		v.y = (int) (v.y * scaleY);
+	}
+
+	for (unsigned int i = 0; i < tmp.quads.size(); i++)
+	{
+		tmp.quads.at(i).v1.x = (int) tmp.quads.at(i).v1.x * scaleX;
+		tmp.quads.at(i).v1.y = (int) tmp.quads.at(i).v1.y * scaleY;
+
+		tmp.quads.at(i).v2.x = (int) tmp.quads.at(i).v2.x * scaleX;
+		tmp.quads.at(i).v2.y = (int) tmp.quads.at(i).v2.y * scaleY;
+
+		tmp.quads.at(i).v3.x = (int) tmp.quads.at(i).v3.x * scaleX;
+		tmp.quads.at(i).v3.y = (int) tmp.quads.at(i).v3.y * scaleY;
+
+		tmp.quads.at(i).v4.x = (int) tmp.quads.at(i).v4.x * scaleX;
+		tmp.quads.at(i).v4.y = (int) tmp.quads.at(i).v4.y * scaleY;
 	}
 }
 
@@ -180,4 +196,96 @@ double Solver::imageObjFunc(const vector<double> &x, vector<double> &grad, void 
 double Solver::vTv(Vertex v1, Vertex v2)
 {
 	return (double) (v1.x * v2.x + v1.y * v2.y);
+}
+
+vector<double> Solver::meshToDoubleVec(Mesh &m)
+{
+	vector<double> x;
+
+	for (unsigned int i = 0; i < m.vertices.size(); i++)
+	{
+		x.push_back(m.vertices.at(i).x);
+		x.push_back(m.vertices.at(i).y);
+	}
+
+	return x;
+}
+
+void Solver::doubleVecToMesh(vector<double> &x, Mesh &result)
+{
+	// vertices
+	for (unsigned int i = 0; i < x.size(); i += 2)
+	{
+		Vertex v;
+		v.x = x.at(i);
+		v.y = x.at(i + 1);
+
+		result.vertices.push_back(v);
+	}
+
+	int xfac, yfac;
+	int count = 0;
+
+	// quads and edges
+	for (unsigned int i = 0; i < QUAD_NUMBER_TOTAL; i++)
+	{
+		xfac = (int) i / QUAD_NUMBER_X;
+		yfac = i % QUAD_NUMBER_Y;
+
+		if (i == 0)
+		{
+			// top left quad
+			Quad q;
+			Edge e1;
+			Edge e2;
+			Edge e3;
+			Edge e4;
+			q.v1 = result.vertices.at(count);
+			q.v2 = result.vertices.at(count + 1);
+			q.v3 = result.vertices.at(count + 2);
+			q.v4 = result.vertices.at(count + 3);
+
+			e1.src = q.v1;
+			e1.dest = q.v2;
+			e2.src = q.v2;
+			e2.dest = q.v4;
+			e3.src = q.v4;
+			e3.dest = q.v3;
+			e4.src = q.v3;
+			e4.dest = q.v1;
+
+			result.edges.push_back(e1);
+			result.edges.push_back(e2);
+			result.edges.push_back(e3);
+			result.edges.push_back(e4);
+
+			result.quads.push_back(q);
+
+			count += 4;
+		}
+		else
+		{
+			if (xfac == 0)
+			{
+				// left column quads excluding top left
+				
+				// TODO
+			}
+			else
+			{
+				if (yfac == 0)
+				{
+					// top row quad
+
+					// TODO
+				}
+				else
+				{
+					// the rest
+
+					// TODO
+				}
+			}
+		}
+	}
 }

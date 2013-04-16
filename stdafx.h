@@ -48,13 +48,14 @@ typedef struct Edge
 	bool operator== (Edge &e);
 };
 
-// vertex numeration of a quad is like this
-/*
+// vertex and edge numeration of a quad is like this
+/*        e1
 	v1 --------- v2
 	|			 |
-	|			 |
+ e4	|			 | e2
 	|			 |
 	v3 --------- v4
+		  e3
 */
 typedef struct Quad
 {
