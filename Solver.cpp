@@ -18,6 +18,11 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 
 	this->originalMesh = m;
 	this->saliencyWeightMapping = wfMap;
+	this->oldSize = originalSize;
+	this->newSize = newSize;
+	this->originalQuadWidth = m.vertices.at(1).x;
+	this->originalQuadWidth = m.vertices.at(2).y;
+
 	initialGuess(newSize, originalSize);
 
 	// TODO solve optimization problem
@@ -186,11 +191,16 @@ double Solver::totalEdgeEnergy(Mesh &newMesh)
 	return dl;
 }
 
-double Solver::imageObjFunc(const vector<double> &x, vector<double> &grad, void *myFuncData)
+double Solver::imageObjFunc(vector<double> &x, vector<double> &grad, void *myFuncData)
 {
-	// TODO 
+	if (!grad.empty())
+	{
+		// compute gradient here
+	}
 
-	return 0.0;
+	doubleVecToMesh(x, deformedMesh);
+
+	return totalEdgeEnergy(deformedMesh) + totalQuadEnergy(deformedMesh);
 }
 
 double Solver::vTv(Vertex v1, Vertex v2)
@@ -224,68 +234,137 @@ void Solver::doubleVecToMesh(vector<double> &x, Mesh &result)
 	}
 
 	int xfac, yfac;
-	int count = 0;
+	int xSize = result.vertices.at(1).x;
+	int ySize = result.vertices.at(2).y;
 
 	// quads and edges
 	for (unsigned int i = 0; i < QUAD_NUMBER_TOTAL; i++)
 	{
+		Quad q;
+		Edge e1, e2, e3, e4;
+
 		xfac = (int) i / QUAD_NUMBER_X;
 		yfac = i % QUAD_NUMBER_Y;
 
+		q.v1.x = xfac * xSize;
+		q.v1.y = yfac * ySize;
+
+		q.v2.x = (xfac + 1) * xSize;
+		q.v2.y = yfac * ySize;
+
+		q.v3.x = xfac * xSize;
+		q.v3.y = (yfac + 1) * ySize;
+
+		q.v4.x = (xfac + 1) * xSize;
+		q.v4.y = (yfac + 1) * ySize;
+
+		e1.src = q.v1;
+		e1.dest = q.v2;
+		e2.src = q.v2;
+		e2.dest = q.v4;
+		e3.src = q.v4;
+		e3.dest = q.v3;
+		e4.src = q.v3;
+		e4.dest = q.v1;
+
+		result.quads.push_back(q);
+
 		if (i == 0)
 		{
-			// top left quad
-			Quad q;
-			Edge e1;
-			Edge e2;
-			Edge e3;
-			Edge e4;
-			q.v1 = result.vertices.at(count);
-			q.v2 = result.vertices.at(count + 1);
-			q.v3 = result.vertices.at(count + 2);
-			q.v4 = result.vertices.at(count + 3);
-
-			e1.src = q.v1;
-			e1.dest = q.v2;
-			e2.src = q.v2;
-			e2.dest = q.v4;
-			e3.src = q.v4;
-			e3.dest = q.v3;
-			e4.src = q.v3;
-			e4.dest = q.v1;
-
 			result.edges.push_back(e1);
 			result.edges.push_back(e2);
 			result.edges.push_back(e3);
 			result.edges.push_back(e4);
-
-			result.quads.push_back(q);
-
-			count += 4;
 		}
 		else
 		{
 			if (xfac == 0)
 			{
-				// left column quads excluding top left
-				
-				// TODO
+				// don't add front edge of a quad since it's already part of the mesh
+				result.edges.push_back(e2);
+				result.edges.push_back(e3);
+				result.edges.push_back(e4);
 			}
 			else
 			{
 				if (yfac == 0)
 				{
-					// top row quad
-
-					// TODO
+					// don't add the left-hand edge of a quad since it's redundant
+					result.edges.push_back(e1);
+					result.edges.push_back(e2);
+					result.edges.push_back(e3);
 				}
 				else
 				{
-					// the rest
-
-					// TODO
+					// don't add top and left-hand edge since they are redundant
+					result.edges.push_back(e2);
+					result.edges.push_back(e3);
 				}
 			}
 		}
 	}
+}
+
+vector<double> Solver::computeLowerImageBoundConstraints(vector<double> &x)
+{
+	vector<double> lb(x.size());
+
+	for (unsigned int i = 0; i < lb.size(); i++)
+	{
+		lb.at(i) = 0.0;
+	}
+
+	return lb;
+}
+
+vector<double> Solver::computeUpperImageBoundConstraints(vector<double> &x)
+{
+	vector<double> ub(x.size());
+
+	for (unsigned int i = 0; i < ub.size(); i++)
+	{
+		if (i == 0 || i == 1)
+		{
+			// top left vertex
+			ub.at(i) = 0.0;
+		}
+		else if (i == ub.size() - 2 || i == ub.size() - 1)
+		{
+			if (i == ub.size() - 2)
+			{
+				// x-coordinate of bottom right vertex
+				ub.at(i) = (double) newSize.width;
+			}
+			else
+			{
+				// y-coordinate of bottom right vertex
+				ub.at(i) = (double) newSize.height;
+			}
+		}
+		else
+		{
+			if (i % 2 == 0)
+			{
+				// x-coordinates
+				if (x.at(i) <= 1e-3)
+					ub.at(i) == 0.0;
+				else if (x.at(i) >= oldSize.width - originalQuadWidth && x.at(i) <= oldSize.width)
+					ub.at(i) == (double) newSize.width;
+				else
+					ub.at(i) == HUGE_VAL;
+			}
+			else
+			{
+				// y-coordinates
+				if(x.at(i) <= 1e-3)
+					ub.at(i) == 0.0;
+				else if (x.at(i) >= oldSize.height - originalQuadHeight && x.at(i) <= oldSize.height)
+					ub.at(i) == (double) newSize.height;
+				else
+					ub.at(i) == HUGE_VAL;
+			}
+		}
+	}
+
+	return ub;
 }

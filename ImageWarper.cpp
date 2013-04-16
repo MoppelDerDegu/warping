@@ -1,7 +1,7 @@
 #include "ImageWarper.h"
 #include "stdafx.h"
 #include "QuadSaliencyManager.h"
-
+#include "Solver.h"
 
 ImageWarper::ImageWarper(void)
 {
@@ -59,10 +59,7 @@ void ImageWarper::initializeMesh(IplImage* img)
 	for (int i = 0; i < QUAD_NUMBER_TOTAL; i++)
 	{
 		Quad q;
-		Edge e1;
-		Edge e2;
-		Edge e3;
-		Edge e4;
+		Edge e1, e2, e3, e4;
 
 		x = (int) i / QUAD_NUMBER_X;
 		y = i % QUAD_NUMBER_Y;
@@ -110,7 +107,7 @@ void ImageWarper::initializeMesh(IplImage* img)
 				mesh.edges.push_back(e3);
 				mesh.edges.push_back(e4);
 
-				// don't add v1 and v1 since they are redundant
+				// don't add v1 and v2 since they are redundant
 				mesh.vertices.push_back(q.v3);
 				mesh.vertices.push_back(q.v4);
 			}
