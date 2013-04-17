@@ -41,11 +41,17 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	opt.set_upper_bounds(ub);
 
 	//minimize objective function
-	//opt.set_min_objective(&Solver::imageObjFunc, NULL);
+	opt.set_min_objective(Solver::wrapperOptFunc, this);
 	
 	cout << ">> Solution found after " << iterationCount << " iterations" << endl;
 
 	return deformedMesh;
+}
+
+double Solver::wrapperOptFunc(const vector<double> &x, vector<double> &grad, void *my_func_data)
+{
+	Solver* solv = reinterpret_cast<Solver*> (my_func_data);
+	return solv->imageObjFunc(x, grad);
 }
 
 // initial guess of the new vertex coordinates, i.e. linear scaling according to the new image size
@@ -208,7 +214,7 @@ double Solver::totalEdgeEnergy(Mesh &newMesh)
 	return dl;
 }
 
-double Solver::imageObjFunc(vector<double> &x, vector<double> &grad, void *myFuncData)
+double Solver::imageObjFunc(const vector<double> &x, vector<double> &grad)
 {
 	++iterationCount;
 
@@ -220,9 +226,6 @@ double Solver::imageObjFunc(vector<double> &x, vector<double> &grad, void *myFun
 	doubleVecToMesh(x, deformedMesh);
 
 	return totalEdgeEnergy(deformedMesh) + totalQuadEnergy(deformedMesh);
-
-
-	return 0.0;
 }
 
 double Solver::vTv(Vertex v1, Vertex v2)
@@ -243,7 +246,7 @@ vector<double> Solver::meshToDoubleVec(Mesh &m)
 	return x;
 }
 
-void Solver::doubleVecToMesh(vector<double> &x, Mesh &result)
+void Solver::doubleVecToMesh(const vector<double> &x, Mesh &result)
 {
 	// vertices
 	for (unsigned int i = 0; i < x.size(); i += 2)
@@ -327,7 +330,7 @@ void Solver::doubleVecToMesh(vector<double> &x, Mesh &result)
 	}
 }
 
-vector<double> Solver::computeLowerImageBoundConstraints(vector<double> &x)
+vector<double> Solver::computeLowerImageBoundConstraints(const vector<double> &x)
 {
 	vector<double> lb(x.size());
 
@@ -379,7 +382,7 @@ vector<double> Solver::computeLowerImageBoundConstraints(vector<double> &x)
 	return lb;
 }
 
-vector<double> Solver::computeUpperImageBoundConstraints(vector<double> &x)
+vector<double> Solver::computeUpperImageBoundConstraints(const vector<double> &x)
 {
 	vector<double> ub(x.size());
 

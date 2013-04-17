@@ -1,6 +1,8 @@
 #include "Helper.h"
 #include "stdafx.h"
 
+class Solver;
+
 IplImage* Helper::getNthFrame(CvCapture* capture, int n)
 {
 	for(int i = 0; i <= n; i++)
