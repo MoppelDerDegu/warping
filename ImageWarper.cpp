@@ -23,7 +23,7 @@ Mesh ImageWarper::getMesh()
 
 IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 {
-	cout << "\nStart Image Warping" << endl;
+	cout << "\nStart image warping" << endl;
 
 	//initialisation
 	src = img;
@@ -31,6 +31,12 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	QuadSaliencyManager qsm;
 	initializeMesh(img);
 	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(mesh, saliency);
+
+	Solver solver;
+	Size originalSize;
+	originalSize.height = img->height;
+	originalSize.width = img->width;
+	solver.solveImageProblem(mesh, destSize, originalSize, wfMap);
 
 	// TODO warp
 
@@ -48,7 +54,7 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 */
 void ImageWarper::initializeMesh(IplImage* img)
 {
-	cout << ">> Initialize Mesh" << endl;
+	cout << ">> Initialize mesh" << endl;
 
 	int quadSizeX = (int) img->width / QUAD_NUMBER_X;
 	int quadSizeY = (int) img->height / QUAD_NUMBER_Y;

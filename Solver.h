@@ -17,6 +17,7 @@ private:
 	Size newSize;
 	int originalQuadWidth;
 	int originalQuadHeight;
+	unsigned int iterationCount;
 	void initialGuess(Size &newSize, Size &originalSize);
 	double calculateLengthRatio(Edge &oldEdge, Edge &newEdge); // unknown in equation (4)
 	double calculateQuadScale(Quad &oldQuad, Quad &newQuad); // Wang et al. 2008 equation (2)

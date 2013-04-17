@@ -14,19 +14,37 @@ Solver::~Solver(void)
 
 Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vector<pair<float, Quad>> &wfMap)
 {
-	cout << ">> Solving Image Optimization Problem" << endl;
+	cout << ">> Solving image optimization problem..." << endl;
 
 	this->originalMesh = m;
 	this->saliencyWeightMapping = wfMap;
 	this->oldSize = originalSize;
 	this->newSize = newSize;
 	this->originalQuadWidth = m.vertices.at(1).x;
-	this->originalQuadWidth = m.vertices.at(2).y;
+	this->originalQuadHeight = m.vertices.at(2).y;
 
+	// initial guess is stored in tmp
 	initialGuess(newSize, originalSize);
+	// copy initial guess to resultmesh
+	deformedMesh = Helper::deepCopyMesh(tmp);
+	vector<double> x = meshToDoubleVec(deformedMesh);
 
-	// TODO solve optimization problem
+	//formulate optimization problem
+
+	// derivative free optimization algorithm COBYLA
+	nlopt::opt opt(nlopt::LN_COBYLA, x.size());
+
+	//lower and upper bounds of vertex coordinates
+	vector<double> lb = computeLowerImageBoundConstraints(x);
+	vector<double> ub = computeUpperImageBoundConstraints(x);
+	opt.set_lower_bounds(lb);
+	opt.set_upper_bounds(ub);
+
+	//minimize objective function
+	//opt.set_min_objective(&Solver::imageObjFunc, NULL);
 	
+	cout << ">> Solution found after " << iterationCount << " iterations" << endl;
+
 	return deformedMesh;
 }
 
@@ -46,9 +64,8 @@ void Solver::initialGuess(Size &newSize, Size &originalSize)
 	// scale vertices
 	for (unsigned int i = 0; i < tmp.vertices.size(); i++)
 	{
-		Vertex v = tmp.vertices.at(i);
-		v.x = (int) (v.x * scaleX);
-		v.y = (int) (v.y * scaleY);
+		tmp.vertices.at(i).x = (int) tmp.vertices.at(i).x * scaleX;
+		tmp.vertices.at(i).y = (int) tmp.vertices.at(i).y * scaleY;
 	}
 
 	for (unsigned int i = 0; i < tmp.quads.size(); i++)
@@ -193,6 +210,8 @@ double Solver::totalEdgeEnergy(Mesh &newMesh)
 
 double Solver::imageObjFunc(vector<double> &x, vector<double> &grad, void *myFuncData)
 {
+	++iterationCount;
+
 	if (!grad.empty())
 	{
 		// compute gradient here
@@ -201,6 +220,9 @@ double Solver::imageObjFunc(vector<double> &x, vector<double> &grad, void *myFun
 	doubleVecToMesh(x, deformedMesh);
 
 	return totalEdgeEnergy(deformedMesh) + totalQuadEnergy(deformedMesh);
+
+
+	return 0.0;
 }
 
 double Solver::vTv(Vertex v1, Vertex v2)
@@ -311,7 +333,47 @@ vector<double> Solver::computeLowerImageBoundConstraints(vector<double> &x)
 
 	for (unsigned int i = 0; i < lb.size(); i++)
 	{
-		lb.at(i) = 0.0;
+		if (i == 0 || i == 1)
+		{
+			// top left vertex
+			lb.at(i) = 0.0;
+		}
+		else if (i == lb.size() - 2 || i == lb.size() - 1)
+		{
+			if (i == lb.size() - 2)
+			{
+				// x-coordinate of bottom right vertex
+				lb.at(i) = (double) newSize.width;
+			}
+			else
+			{
+				// y-coordinate of bottom right vertex
+				lb.at(i) = (double) newSize.height;
+			}
+		}
+		else
+		{
+			if (i % 2 == 0)
+			{
+				// x-coordinates
+				if (x.at(i) <= 1e-3)
+					lb.at(i) = 0.0;
+				else if (x.at(i) >= oldSize.width - originalQuadWidth && x.at(i) <= oldSize.width)
+					lb.at(i) = (double) newSize.width;
+				else
+					lb.at(i) = 0.0;
+			}
+			else
+			{
+				// y-coordinates
+				if(x.at(i) <= 1e-3)
+					lb.at(i) = 0.0;
+				else if (x.at(i) >= oldSize.height - originalQuadHeight && x.at(i) <= oldSize.height)
+					lb.at(i) = (double) newSize.height;
+				else
+					lb.at(i) = 0.0;
+			}
+		}
 	}
 
 	return lb;
@@ -347,21 +409,17 @@ vector<double> Solver::computeUpperImageBoundConstraints(vector<double> &x)
 			{
 				// x-coordinates
 				if (x.at(i) <= 1e-3)
-					ub.at(i) == 0.0;
-				else if (x.at(i) >= oldSize.width - originalQuadWidth && x.at(i) <= oldSize.width)
-					ub.at(i) == (double) newSize.width;
+					ub.at(i) = 0.0;
 				else
-					ub.at(i) == HUGE_VAL;
+					ub.at(i) = (double) newSize.width;
 			}
 			else
 			{
 				// y-coordinates
 				if(x.at(i) <= 1e-3)
-					ub.at(i) == 0.0;
-				else if (x.at(i) >= oldSize.height - originalQuadHeight && x.at(i) <= oldSize.height)
-					ub.at(i) == (double) newSize.height;
+					ub.at(i) = 0.0;
 				else
-					ub.at(i) == HUGE_VAL;
+					ub.at(i) = (double) newSize.height;
 			}
 		}
 	}

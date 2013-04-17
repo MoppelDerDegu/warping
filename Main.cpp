@@ -4,6 +4,7 @@
 #include "Helper.h"
 #include "Saliency.h"
 #include "ImageSaliencyDetector.h"
+#include "lib/nlopt-2.3-dll/nlopt.hpp"
 
 #if 0
 
@@ -176,9 +177,31 @@ int main(int argc, char* argv[])
 	Mat saliencyMap = isd.hContrast(img);
 
 	Size s;
+	s.height = 480;
+	s.width = 600;
 	iw.warpImage(img, s, saliencyMap);
 
 	//cvReleaseImage(&img);
 	//cvReleaseCapture(&input);
+}
+#endif
+
+#if 0
+
+double myvfunc(const std::vector<double> &x, std::vector<double> &grad, void *my_func_data);
+
+int main()
+{
+	nlopt::opt opt(nlopt::LD_MMA, 2);
+	opt.set_min_objective(myvfunc, NULL);
+}
+
+double myvfunc(const std::vector<double> &x, std::vector<double> &grad, void *my_func_data)
+{
+    if (!grad.empty()) {
+        grad[0] = 0.0;
+        grad[1] = 0.5 / sqrt(x[1]);
+    }
+    return sqrt(x[1]);
 }
 #endif
