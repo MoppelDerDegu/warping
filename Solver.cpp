@@ -29,7 +29,7 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	deformedMesh = Helper::deepCopyMesh(tmp);
 	vector<double> x = meshToDoubleVec(deformedMesh);
 
-	//formulate optimization problem
+	// formulate optimization problem:
 
 	// derivative free optimization algorithm COBYLA
 	nlopt::opt opt(nlopt::LN_COBYLA, x.size());
@@ -42,6 +42,12 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 
 	//minimize objective function
 	opt.set_min_objective(Solver::wrapperOptFunc, this);
+
+	// convergence criteria
+	opt.set_xtol_rel(0.5);
+
+	double minf;
+	nlopt::result result = opt.optimize(x, minf);
 	
 	cout << ">> Solution found after " << iterationCount << " iterations" << endl;
 
