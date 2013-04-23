@@ -33,7 +33,7 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	// formulate optimization problem:
 
 	// derivative free optimization algorithm COBYLA
-	nlopt::opt opt(nlopt::LN_COBYLA, x.size());
+	nlopt::opt opt(nlopt::LN_PRAXIS, x.size());
 
 	//lower and upper bounds of vertex coordinates
 	vector<double> lb = computeLowerImageBoundConstraints(x);
@@ -45,7 +45,8 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	opt.set_min_objective(Solver::wrapperOptFunc, this);
 
 	// convergence criteria
-	opt.set_xtol_abs(2);
+	//opt.set_xtol_abs(0.5);
+	opt.set_maxtime(120);
 
 	double minf;
 	nlopt::result result = opt.optimize(x, minf);
