@@ -5,6 +5,7 @@
 
 Solver::Solver(void)
 {
+	iterationCount = 0;
 }
 
 
@@ -44,7 +45,7 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	opt.set_min_objective(Solver::wrapperOptFunc, this);
 
 	// convergence criteria
-	opt.set_xtol_rel(0.5);
+	opt.set_xtol_abs(2);
 
 	double minf;
 	nlopt::result result = opt.optimize(x, minf);
@@ -93,6 +94,15 @@ void Solver::initialGuess(Size &newSize, Size &originalSize)
 
 		tmp.quads.at(i).v4.x = (int) tmp.quads.at(i).v4.x * scaleX;
 		tmp.quads.at(i).v4.y = (int) tmp.quads.at(i).v4.y * scaleY;
+	}
+
+	for (unsigned int i = 0; i < tmp.edges.size(); i++)
+	{
+		tmp.edges.at(i).src.x = (int) tmp.edges.at(i).src.x * scaleX;
+		tmp.edges.at(i).src.y = (int) tmp.edges.at(i).src.y * scaleY;
+
+		tmp.edges.at(i).dest.x = (int) tmp.edges.at(i).dest.x * scaleX;
+		tmp.edges.at(i).dest.y = (int) tmp.edges.at(i).dest.y * scaleY;
 	}
 }
 
@@ -205,12 +215,12 @@ double Solver::totalEdgeEnergy(Mesh &newMesh)
 {
 	double dl = 0.0;
 
-	for (unsigned int i = 0; originalMesh.edges.size(); i++)
+	for (unsigned int i = 0; i < originalMesh.edges.size(); i++)
 	{
 		Vertex _v = newMesh.edges.at(i).src - newMesh.edges.at(i).dest;
 		Vertex v = originalMesh.edges.at(i).src - originalMesh.edges.at(i).dest;
 
-		double lij = calculateLengthRatio(originalMesh.edges.at(i), newMesh.edges.at(i));
+		double lij = calculateLengthRatio(originalMesh.edges.at(i), tmp.edges.at(i));
 		v.x = v.x * lij;
 		v.y = v.y * lij;
 
@@ -229,9 +239,16 @@ double Solver::imageObjFunc(const vector<double> &x, vector<double> &grad)
 		// compute gradient here
 	}
 
+	cout << "Iteration: " << iterationCount << endl;
+
 	doubleVecToMesh(x, deformedMesh);
 
-	return totalEdgeEnergy(deformedMesh) + totalQuadEnergy(deformedMesh);
+	double edgeEnergy = totalEdgeEnergy(deformedMesh);
+	double quadEnergy = totalQuadEnergy(deformedMesh);
+
+	double res = edgeEnergy + quadEnergy;
+
+	return res;
 }
 
 double Solver::vTv(Vertex v1, Vertex v2)
@@ -254,6 +271,11 @@ vector<double> Solver::meshToDoubleVec(Mesh &m)
 
 void Solver::doubleVecToMesh(const vector<double> &x, Mesh &result)
 {
+	// clear mesh
+	result.vertices.clear();
+	result.edges.clear();
+	result.quads.clear();
+
 	// vertices
 	for (unsigned int i = 0; i < x.size(); i += 2)
 	{
