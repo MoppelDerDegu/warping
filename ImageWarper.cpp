@@ -27,6 +27,8 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	cout << "\nStart image warping" << endl;
 
 	//initialisation
+	oldSize.height = img->height;
+	oldSize.width = img->width;
 	src = img;
 	dest = Mat::zeros(destSize, CV_32FC3);
 	QuadSaliencyManager qsm;
@@ -34,17 +36,14 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(mesh, saliency);
 
 	Solver solver;
-	Size originalSize;
-	originalSize.height = img->height;
-	originalSize.width = img->width;
-	Mesh warpedMesh = solver.solveImageProblem(mesh, destSize, originalSize, wfMap);
+	Mesh warpedMesh = solver.solveImageProblem(mesh, destSize, oldSize, wfMap);
 	
+
+	string warpedFile = "warped_mesh.png";
 	string dir = "D:\\warping\\mesh\\";
 	string originalFile = "original_mesh.png";
-	string warpedFile = "warped_mesh.png";
-	Helper::saveGrid(originalFile, dir, mesh, originalSize);
+	Helper::saveGrid(originalFile, dir, mesh, oldSize);
 	Helper::saveGrid(warpedFile, dir, warpedMesh, destSize);
-
 
 	// TODO warp
 
@@ -78,17 +77,34 @@ void ImageWarper::initializeMesh(IplImage* img)
 		x = (int) i / QUAD_NUMBER_X;
 		y = i % QUAD_NUMBER_Y;
 
-		q.v1.x = x * quadSizeX;
-		q.v1.y = y * quadSizeY;
+		if (i < QUAD_NUMBER_TOTAL - QUAD_NUMBER_Y)
+		{
+			q.v1.x = x * quadSizeX;
+			q.v1.y = y * quadSizeY;
 
-		q.v2.x = (x + 1) * quadSizeX;
-		q.v2.y = y * quadSizeY;
+			q.v2.x = (x + 1) * quadSizeX;
+			q.v2.y = y * quadSizeY;
 
-		q.v3.x = x * quadSizeX;
-		q.v3.y = (y + 1) * quadSizeY;
+			q.v3.x = x * quadSizeX;
+			q.v3.y = (y + 1) * quadSizeY;
 
-		q.v4.x = (x + 1) * quadSizeX;
-		q.v4.y = (y + 1) * quadSizeY;
+			q.v4.x = (x + 1) * quadSizeX;
+			q.v4.y = (y + 1) * quadSizeY;
+		}
+		else
+		{
+			q.v1.x = x * quadSizeX;
+			q.v1.y = y * quadSizeY;
+
+			q.v2.x = oldSize.width;
+			q.v2.y = y * quadSizeY;
+
+			q.v3.x = x * quadSizeX;
+			q.v3.y = (y + 1) * quadSizeY;
+
+			q.v4.x = oldSize.width;
+			q.v4.y = (y + 1) * quadSizeY;
+		}
 
 		e1.src = q.v1;
 		e1.dest = q.v2;

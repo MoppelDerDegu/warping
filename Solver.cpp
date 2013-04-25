@@ -45,13 +45,15 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	opt.set_min_objective(Solver::wrapperOptFunc, this);
 
 	// convergence criteria
-	opt.set_xtol_abs(0.5);
-	//opt.set_maxtime(120);
+	opt.set_xtol_abs(1);
+	//opt.set_maxtime(60);
 
 	double minf;
 	nlopt::result result = opt.optimize(x, minf);
 	
 	cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
+
+	doubleVecToMesh(x, deformedMesh);
 
 	return deformedMesh;
 }
