@@ -1,7 +1,6 @@
 #include "Helper.h"
 #include "stdafx.h"
-
-class Solver;
+#include "FileManager.h"
 
 IplImage* Helper::getNthFrame(CvCapture* capture, int n)
 {
@@ -98,6 +97,7 @@ Mesh Helper::deepCopyMesh(const Mesh &m)
 	Mesh result;
 	
 	for (unsigned int i = 0; i < m.quads.size(); i++)
+	
 	{
 		Quad f;
 		Vertex v1;
@@ -142,4 +142,77 @@ Mesh Helper::deepCopyMesh(const Mesh &m)
 double Helper::euclideanNorm(const Vertex &v)
 {
 	return sqrt((double) (sqr(v.x) + sqr(v.y)));
+}
+
+void Helper::saveGrid(const string fileName, const string dir, const Mesh &m, const Size &s)
+{
+	const char* _dir = (char*) dir.c_str();
+	FileManager::mkDir(_dir);
+
+	Mat mat = Mat::zeros(s.height, s.width, CV_8UC3);
+	
+	// line parameters
+	Scalar lineColor(0, 0, 0); // black
+	int thickness = 1;
+	int linetype = 8;
+
+	// make everything white
+	for (int y = 0; y < mat.rows; y++)
+	{
+		for (int x = 0; x < mat.cols; x++)
+		{
+			mat.at<Vec3b> (y, x) [0] = 255;
+			mat.at<Vec3b> (y, x) [1] = 255;
+			mat.at<Vec3b> (y, x) [2] = 255;
+		}
+	}
+
+	// draw lines
+	Point start, end;
+	Quad q;
+	for (unsigned int i = 0; i < m.quads.size(); i++)
+	{
+		q = m.quads.at(i);
+		for (unsigned int j = 0; j < 4; j++)
+		{
+			if (j == 0)
+			{
+				start.x = q.v1.x;
+				start.y = q.v1.y;
+				end.x = q.v2.x;
+				end.y = q.v2.y;
+
+				line(mat, start, end, lineColor, thickness, linetype);
+			}
+			else if (j == 1)
+			{
+				start.x = q.v2.x;
+				start.y = q.v2.y;
+				end.x = q.v4.x;
+				end.y = q.v4.y;
+
+				line(mat, start, end, lineColor, thickness, linetype);
+			}
+			else if (j == 2)
+			{
+				start.x = q.v4.x;
+				start.y = q.v4.y;
+				end.x = q.v3.x;
+				end.y = q.v3.y;
+
+				line(mat, start, end, lineColor, thickness, linetype);
+			}
+			else
+			{
+				start.x = q.v3.x;
+				start.y = q.v3.y;
+				end.x = q.v1.x;
+				end.y = q.v1.y;
+
+				line(mat, start, end, lineColor, thickness, linetype);
+			}
+		}
+	}
+
+	imwrite(dir + fileName, mat);
 }

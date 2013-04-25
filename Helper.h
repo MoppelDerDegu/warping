@@ -13,4 +13,5 @@ struct Helper
 	static string getImageType(int number);
 	static Mesh deepCopyMesh(const Mesh &m);
 	static double euclideanNorm(const Vertex &v);
+	static void saveGrid(const string fileName, const string dir, const Mesh &m, const Size &s);
 };

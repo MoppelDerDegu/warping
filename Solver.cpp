@@ -45,13 +45,13 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	opt.set_min_objective(Solver::wrapperOptFunc, this);
 
 	// convergence criteria
-	//opt.set_xtol_abs(0.5);
-	opt.set_maxtime(120);
+	opt.set_xtol_abs(0.5);
+	//opt.set_maxtime(120);
 
 	double minf;
 	nlopt::result result = opt.optimize(x, minf);
 	
-	cout << ">> Solution found after " << iterationCount << " iterations" << endl;
+	cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
 
 	return deformedMesh;
 }
@@ -240,7 +240,7 @@ double Solver::imageObjFunc(const vector<double> &x, vector<double> &grad)
 		// compute gradient here
 	}
 
-	cout << "Iteration: " << iterationCount << endl;
+	cout << "\r>> Iteration: " << iterationCount << ends;
 
 	doubleVecToMesh(x, deformedMesh);
 

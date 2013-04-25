@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "QuadSaliencyManager.h"
 #include "Solver.h"
+#include "Helper.h"
 
 ImageWarper::ImageWarper(void)
 {
@@ -36,7 +37,14 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	Size originalSize;
 	originalSize.height = img->height;
 	originalSize.width = img->width;
-	solver.solveImageProblem(mesh, destSize, originalSize, wfMap);
+	Mesh warpedMesh = solver.solveImageProblem(mesh, destSize, originalSize, wfMap);
+	
+	string dir = "D:\\warping\\mesh\\";
+	string originalFile = "original_mesh.png";
+	string warpedFile = "warped_mesh.png";
+	Helper::saveGrid(originalFile, dir, mesh, originalSize);
+	Helper::saveGrid(warpedFile, dir, warpedMesh, destSize);
+
 
 	// TODO warp
 
