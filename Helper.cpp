@@ -214,14 +214,24 @@ void Helper::saveGrid(const string fileName, const string dir, const Mesh &m, co
 		}
 	}
 
-	Point center;
+	/*Point center;
 	for (unsigned int i = 0; i < m.vertices.size(); i++)
 	{
 		center.x = m.vertices.at(i).x;
 		center.y = m.vertices.at(i).y;
 
 		circle(mat, center, 3, Scalar(0, 0, 255), -1, 8);
-	}
+	}*/
 
 	imwrite(dir + fileName, mat);
+}
+
+float Helper::round (float f)
+{
+	return floor(f + 0.5);
+}
+
+double Helper::round (double d)
+{
+	return floor(d + 0.5);
 }

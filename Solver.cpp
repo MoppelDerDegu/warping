@@ -21,8 +21,6 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	this->saliencyWeightMapping = wfMap;
 	this->oldSize = originalSize;
 	this->newSize = newSize;
-	this->originalQuadWidth = m.vertices.at(1).x;
-	this->originalQuadHeight = m.vertices.at(2).y;
 
 	// initial guess is stored in tmp
 	initialGuess(newSize, originalSize);
@@ -33,7 +31,7 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	// formulate optimization problem:
 
 	// derivative free optimization algorithm
-	nlopt::opt opt(nlopt::LN_NELDERMEAD, x.size());
+	nlopt::opt opt(nlopt::LN_PRAXIS, x.size());
 
 	// lower and upper bounds of vertex coordinates
 	vector<double> lb = computeLowerImageBoundConstraints(x);
@@ -49,11 +47,10 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	// opt.set_maxtime(60);
 
 	double minf;
-	//nlopt::result result = opt.optimize(x, minf);
+	nlopt::result result = opt.optimize(x, minf);
 	
 	cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
 
-	doubleVecToMesh(x, deformedMesh);
 	string warpedFile = "warped_mesh.png";
 	string dir = "D:\\warping\\mesh\\";
 	Helper::saveGrid(warpedFile, dir, deformedMesh, newSize);
@@ -83,32 +80,32 @@ void Solver::initialGuess(Size &newSize, Size &originalSize)
 	// scale vertices
 	for (unsigned int i = 0; i < tmp.vertices.size(); i++)
 	{
-		tmp.vertices.at(i).x = (int) tmp.vertices.at(i).x * scaleX;
-		tmp.vertices.at(i).y = (int) tmp.vertices.at(i).y * scaleY;
+		tmp.vertices.at(i).x = Helper::round(tmp.vertices.at(i).x * scaleX);
+		tmp.vertices.at(i).y = Helper::round(tmp.vertices.at(i).y * scaleY);
 	}
 
 	for (unsigned int i = 0; i < tmp.quads.size(); i++)
 	{
-		tmp.quads.at(i).v1.x = (int) tmp.quads.at(i).v1.x * scaleX;
-		tmp.quads.at(i).v1.y = (int) tmp.quads.at(i).v1.y * scaleY;
+		tmp.quads.at(i).v1.x = Helper::round(tmp.quads.at(i).v1.x * scaleX);
+		tmp.quads.at(i).v1.y = Helper::round(tmp.quads.at(i).v1.y * scaleY);
 
-		tmp.quads.at(i).v2.x = (int) tmp.quads.at(i).v2.x * scaleX;
-		tmp.quads.at(i).v2.y = (int) tmp.quads.at(i).v2.y * scaleY;
+		tmp.quads.at(i).v2.x = Helper::round(tmp.quads.at(i).v2.x * scaleX);
+		tmp.quads.at(i).v2.y = Helper::round(tmp.quads.at(i).v2.y * scaleY);
 
-		tmp.quads.at(i).v3.x = (int) tmp.quads.at(i).v3.x * scaleX;
-		tmp.quads.at(i).v3.y = (int) tmp.quads.at(i).v3.y * scaleY;
+		tmp.quads.at(i).v3.x = Helper::round(tmp.quads.at(i).v3.x * scaleX);
+		tmp.quads.at(i).v3.y = Helper::round(tmp.quads.at(i).v3.y * scaleY);
 
-		tmp.quads.at(i).v4.x = (int) tmp.quads.at(i).v4.x * scaleX;
-		tmp.quads.at(i).v4.y = (int) tmp.quads.at(i).v4.y * scaleY;
+		tmp.quads.at(i).v4.x = Helper::round(tmp.quads.at(i).v4.x * scaleX);
+		tmp.quads.at(i).v4.y = Helper::round(tmp.quads.at(i).v4.y * scaleY);
 	}
 
 	for (unsigned int i = 0; i < tmp.edges.size(); i++)
 	{
-		tmp.edges.at(i).src.x = (int) tmp.edges.at(i).src.x * scaleX;
-		tmp.edges.at(i).src.y = (int) tmp.edges.at(i).src.y * scaleY;
+		tmp.edges.at(i).src.x = Helper::round(tmp.edges.at(i).src.x * scaleX);
+		tmp.edges.at(i).src.y = Helper::round(tmp.edges.at(i).src.y * scaleY);
 
-		tmp.edges.at(i).dest.x = (int) tmp.edges.at(i).dest.x * scaleX;
-		tmp.edges.at(i).dest.y = (int) tmp.edges.at(i).dest.y * scaleY;
+		tmp.edges.at(i).dest.x = Helper::round(tmp.edges.at(i).dest.x * scaleX);
+		tmp.edges.at(i).dest.y = Helper::round(tmp.edges.at(i).dest.y * scaleY);
 	}
 }
 
@@ -226,7 +223,7 @@ double Solver::totalEdgeEnergy(Mesh &newMesh)
 		Vertex _v = newMesh.edges.at(i).src - newMesh.edges.at(i).dest;
 		Vertex v = originalMesh.edges.at(i).src - originalMesh.edges.at(i).dest;
 
-		double lij = calculateLengthRatio(originalMesh.edges.at(i), tmp.edges.at(i));
+		double lij = calculateLengthRatio(originalMesh.edges.at(i), deformedMesh.edges.at(i));
 		v.x = v.x * lij;
 		v.y = v.y * lij;
 
@@ -320,15 +317,30 @@ void Solver::doubleVecToMesh(const vector<double> &x, Mesh &result)
 		}
 		else
 		{
-			q.v1 = result.vertices.at(vertexCount - diff);
-			q.v2 = result.vertices.at(vertexCount);
-			q.v3 = result.vertices.at(vertexCount + 1 - (diff - 1));
-			q.v4 = result.vertices.at(vertexCount + 1);
+			if (xfac < 2)
+			{
+				// second column
+				q.v1 = result.vertices.at(vertexCount - diff);
+				q.v2 = result.vertices.at(vertexCount);
+				q.v3 = result.vertices.at(vertexCount + 1 - (diff - 1));
+				q.v4 = result.vertices.at(vertexCount + 1);
+			}
+			else
+			{
+				// all other columns
+				q.v1 = result.vertices.at(vertexCount - diff);
+				q.v2 = result.vertices.at(vertexCount);
+				q.v3 = result.vertices.at(vertexCount + 1 - diff);
+				q.v4 = result.vertices.at(vertexCount + 1);
+			}
 
-			if (i <= QUAD_NUMBER_Y * 2)
+			if (i < QUAD_NUMBER_Y * 2)
 				diff--;	
 
-			vertexCount++;
+			if (yfac == QUAD_NUMBER_Y - 1)
+				vertexCount += 2;
+			else
+				vertexCount++;
 		}
 
 		e1.src = q.v1;
@@ -407,9 +419,7 @@ vector<double> Solver::computeLowerImageBoundConstraints(const vector<double> &x
 			if (i % 2 == 0)
 			{
 				// x-coordinates
-				if (x.at(i) <= 1e-3)
-					lb.at(i) = 0.0;
-				else if (x.at(i) >= oldSize.width - originalQuadWidth && x.at(i) <= oldSize.width)
+				if (((int) x.at(i)) == newSize.width)
 					lb.at(i) = (double) newSize.width;
 				else
 					lb.at(i) = 0.0;
@@ -417,9 +427,7 @@ vector<double> Solver::computeLowerImageBoundConstraints(const vector<double> &x
 			else
 			{
 				// y-coordinates
-				if(x.at(i) <= 1e-3)
-					lb.at(i) = 0.0;
-				else if (x.at(i) >= oldSize.height - originalQuadHeight && x.at(i) <= oldSize.height)
+				if (((int) x.at(i)) == newSize.height)
 					lb.at(i) = (double) newSize.height;
 				else
 					lb.at(i) = 0.0;

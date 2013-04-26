@@ -16,8 +16,6 @@ private:
 	vector<pair<float, Quad>> saliencyWeightMapping; //maps saliency weights to quads
 	Size oldSize;
 	Size newSize;
-	int originalQuadWidth;
-	int originalQuadHeight;
 	unsigned int iterationCount;
 	void initialGuess(Size &newSize, Size &originalSize);
 	double calculateLengthRatio(Edge &oldEdge, Edge &newEdge); // unknown in equation (4)
