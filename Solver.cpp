@@ -32,28 +32,31 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 
 	// formulate optimization problem:
 
-	// derivative free optimization algorithm COBYLA
-	nlopt::opt opt(nlopt::LN_PRAXIS, x.size());
+	// derivative free optimization algorithm
+	nlopt::opt opt(nlopt::LN_NELDERMEAD, x.size());
 
-	//lower and upper bounds of vertex coordinates
+	// lower and upper bounds of vertex coordinates
 	vector<double> lb = computeLowerImageBoundConstraints(x);
 	vector<double> ub = computeUpperImageBoundConstraints(x);
 	opt.set_lower_bounds(lb);
 	opt.set_upper_bounds(ub);
 
-	//minimize objective function
+	// minimize objective function
 	opt.set_min_objective(Solver::wrapperOptFunc, this);
 
 	// convergence criteria
-	opt.set_xtol_abs(1);
-	//opt.set_maxtime(60);
+	opt.set_xtol_abs(0.5);
+	// opt.set_maxtime(60);
 
 	double minf;
-	nlopt::result result = opt.optimize(x, minf);
+	//nlopt::result result = opt.optimize(x, minf);
 	
 	cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
 
 	doubleVecToMesh(x, deformedMesh);
+	string warpedFile = "warped_mesh.png";
+	string dir = "D:\\warping\\mesh\\";
+	Helper::saveGrid(warpedFile, dir, deformedMesh, newSize);
 
 	return deformedMesh;
 }
@@ -289,9 +292,9 @@ void Solver::doubleVecToMesh(const vector<double> &x, Mesh &result)
 		result.vertices.push_back(v);
 	}
 
+	int vertexCount = 0;
+	int diff = QUAD_NUMBER_Y * 2 + 1;
 	int xfac, yfac;
-	int xSize = result.vertices.at(1).x;
-	int ySize = result.vertices.at(2).y;
 
 	// quads and edges
 	for (unsigned int i = 0; i < QUAD_NUMBER_TOTAL; i++)
@@ -302,17 +305,31 @@ void Solver::doubleVecToMesh(const vector<double> &x, Mesh &result)
 		xfac = (int) i / QUAD_NUMBER_X;
 		yfac = i % QUAD_NUMBER_Y;
 
-		q.v1.x = xfac * xSize;
-		q.v1.y = yfac * ySize;
+		if (vertexCount <= QUAD_NUMBER_Y * 2)
+		{
+			// first column of mesh
+			q.v1 = result.vertices.at(vertexCount);
+			q.v2 = result.vertices.at(vertexCount + 1);
+			q.v3 = result.vertices.at(vertexCount + 2);
+			q.v4 = result.vertices.at(vertexCount + 3);
 
-		q.v2.x = (xfac + 1) * xSize;
-		q.v2.y = yfac * ySize;
+			if ( vertexCount < (QUAD_NUMBER_Y - 1) * 2)
+				vertexCount += 2;
+			else
+				vertexCount += 4;
+		}
+		else
+		{
+			q.v1 = result.vertices.at(vertexCount - diff);
+			q.v2 = result.vertices.at(vertexCount);
+			q.v3 = result.vertices.at(vertexCount + 1 - (diff - 1));
+			q.v4 = result.vertices.at(vertexCount + 1);
 
-		q.v3.x = xfac * xSize;
-		q.v3.y = (yfac + 1) * ySize;
+			if (i <= QUAD_NUMBER_Y * 2)
+				diff--;	
 
-		q.v4.x = (xfac + 1) * xSize;
-		q.v4.y = (yfac + 1) * ySize;
+			vertexCount++;
+		}
 
 		e1.src = q.v1;
 		e1.dest = q.v2;

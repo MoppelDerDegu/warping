@@ -37,13 +37,6 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 
 	Solver solver;
 	Mesh warpedMesh = solver.solveImageProblem(mesh, destSize, oldSize, wfMap);
-	
-
-	string warpedFile = "warped_mesh.png";
-	string dir = "D:\\warping\\mesh\\";
-	string originalFile = "original_mesh.png";
-	Helper::saveGrid(originalFile, dir, mesh, oldSize);
-	Helper::saveGrid(warpedFile, dir, warpedMesh, destSize);
 
 	// TODO warp
 
@@ -53,11 +46,17 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 /*
 	The order of the vertices being pushed to the vector is as follows:
 
-	v1---v2---v7---V10
+	v1---v2---v13--v19
 	|	 |	  |		|
-	v3---v4---v8---V11
+	v3---v4---v14--v20
 	|	 |    |		|
-	v5---v6---v9---V12
+	v5---v6---v15--v21
+	|	 |	  |	    |
+	v7---v8---v16--v22
+	|	 |	  |		|
+	v9---v10--v17--v23
+	|	 |	  |	    |
+	v11--v12--v18--v24
 */
 void ImageWarper::initializeMesh(IplImage* img)
 {
