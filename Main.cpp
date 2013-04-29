@@ -4,7 +4,7 @@
 #include "Helper.h"
 #include "Saliency.h"
 #include "ImageSaliencyDetector.h"
-#include "lib/nlopt-2.3-dll/nlopt.hpp"
+#include "GradientGenerator.h"
 
 #if 0
 
@@ -166,22 +166,40 @@ int main(int argc, char* argv[])
 #if 1
 int main(int argc, char* argv[])
 {
-	CvCapture* input;
+	/*CvCapture* input;
 	char* fileName = "D:/media/big_buck_bunny_480p_stereo.avi";
 	input = cvCaptureFromFile(fileName);
-	ImageWarper iw;
 
 	IplImage* img = Helper::getNthFrame(input, 100);
+	*/
 
+	// read image
+	char*fileName = "D:/media/test.jpg";
+	Mat mat = imread(fileName);
+	IplImage* img = &Helper::MatToIplImage(mat);
+
+	// initialization
 	ImageSaliencyDetector isd;
+	ImageWarper iw;
+	GradientGenerator gd;
+
+	// compute saliency
 	Mat saliencyMap = isd.hContrast(img);
 
+	// compute gradient
+	Mat gradient;
+	gd.generateGradient(mat, gradient, GRADIENT_SIMPLE);
+
+	// combine saliency and gradient
+	saliencyMap.convertTo(saliencyMap, CV_8U, 1, 0);
+	Mat combined = gradient + saliencyMap;
+
+	// warp
 	Size s;
 	s.height = 480;
 	s.width = 600;
-	iw.warpImage(img, s, saliencyMap);
+	iw.warpImage(img, s, combined);
 
-	//cvReleaseImage(&img);
 	//cvReleaseCapture(&input);
 }
 #endif

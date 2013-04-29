@@ -235,3 +235,10 @@ double Helper::round (double d)
 {
 	return floor(d + 0.5);
 }
+
+void Helper::saveMat(const string fileName, const string dir, const Mat &mat)
+{
+	const char* _dir = (char*) dir.c_str();
+	FileManager::mkDir(_dir);
+	imwrite(dir + fileName, mat);
+}

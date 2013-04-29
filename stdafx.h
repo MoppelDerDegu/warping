@@ -28,6 +28,10 @@
 using namespace cv;
 using namespace std;
 
+#define GRADIENT_SOBEL 1
+#define GRADIENT_SCHARR 2
+#define GRADIENT_SIMPLE 3
+
 // number of quads in the image in x and y direction respectively
 #define QUAD_NUMBER_X 30
 #define QUAD_NUMBER_Y 30

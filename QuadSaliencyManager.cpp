@@ -38,7 +38,7 @@ vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh 
 		{
 			for (int k = 0; k < imageROI.cols; k++)
 			{
-				float value = imageROI.at<float> (j, k);
+				uchar value = imageROI.at<uchar> (j, k);
 
 				if (value > max)
 					max = value;
