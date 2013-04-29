@@ -38,6 +38,10 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	Solver solver;
 	Mesh warpedMesh = solver.solveImageProblem(mesh, destSize, oldSize, wfMap);
 
+	string warpedFile = "warped_mesh.png";
+	string dir = "D:\\warping\\mesh\\";
+	Helper::saveGrid(warpedFile, dir, warpedMesh, destSize);
+
 	// TODO warp
 
 	return NULL;
@@ -62,8 +66,8 @@ void ImageWarper::initializeMesh(IplImage* img)
 {
 	cout << ">> Initialize mesh" << endl;
 
-	int quadSizeX = (int) img->width / QUAD_NUMBER_X;
-	int quadSizeY = (int) img->height / QUAD_NUMBER_Y;
+	int quadSizeX = Helper::round((float) img->width / (float) QUAD_NUMBER_X);
+	int quadSizeY = Helper::round((float) img->height / (float) QUAD_NUMBER_Y);
 
 	int x, y;
 
@@ -76,8 +80,9 @@ void ImageWarper::initializeMesh(IplImage* img)
 		x = (int) i / QUAD_NUMBER_X;
 		y = i % QUAD_NUMBER_Y;
 
-		if (i < QUAD_NUMBER_TOTAL - QUAD_NUMBER_Y)
+		if (x < QUAD_NUMBER_X - 1 &&  y < QUAD_NUMBER_Y - 1)
 		{
+			// inner quads
 			q.v1.x = x * quadSizeX;
 			q.v1.y = y * quadSizeY;
 
@@ -92,17 +97,51 @@ void ImageWarper::initializeMesh(IplImage* img)
 		}
 		else
 		{
-			q.v1.x = x * quadSizeX;
-			q.v1.y = y * quadSizeY;
+			if (x == QUAD_NUMBER_X - 1 && y != QUAD_NUMBER_Y -1)
+			{
+				// rightmost quads
+				q.v1.x = x * quadSizeX;
+				q.v1.y = y * quadSizeY;
 
-			q.v2.x = oldSize.width;
-			q.v2.y = y * quadSizeY;
+				q.v2.x = oldSize.width;
+				q.v2.y = y * quadSizeY;
 
-			q.v3.x = x * quadSizeX;
-			q.v3.y = (y + 1) * quadSizeY;
+				q.v3.x = x * quadSizeX;
+				q.v3.y = (y + 1) * quadSizeY;
 
-			q.v4.x = oldSize.width;
-			q.v4.y = (y + 1) * quadSizeY;
+				q.v4.x = oldSize.width;
+				q.v4.y = (y + 1) * quadSizeY;
+			}
+			else if (x != QUAD_NUMBER_X - 1 && y == QUAD_NUMBER_Y -1)
+			{
+				// bottom quads
+				q.v1.x = x * quadSizeX;
+				q.v1.y = y * quadSizeY;
+
+				q.v2.x = (x + 1) * quadSizeX;
+				q.v2.y = y * quadSizeY;
+
+				q.v3.x = x * quadSizeX;
+				q.v3.y = oldSize.height;
+
+				q.v4.x = (x + 1) * quadSizeX;
+				q.v4.y = oldSize.height;
+			}
+			else if (x == QUAD_NUMBER_X - 1 && y == QUAD_NUMBER_Y -1)
+			{
+				// bottom right quad
+				q.v1.x = x * quadSizeX;
+				q.v1.y = y * quadSizeY;
+
+				q.v2.x = oldSize.width;
+				q.v2.y = y * quadSizeY;
+
+				q.v3.x = x * quadSizeX;
+				q.v3.y = oldSize.height;
+
+				q.v4.x = oldSize.width;
+				q.v4.y = oldSize.height;
+			}
 		}
 
 		e1.src = q.v1;

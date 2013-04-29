@@ -19,6 +19,8 @@ GradientGenerator::~GradientGenerator(void)
 
 void GradientGenerator::generateGradient(Mat src, Mat &dest, int mode)
 {
+	cout << "\nCompute gradient image" << endl;
+
 	if (mode == GRADIENT_SCHARR)
 		generateScharrGradient(src, dest);
 	else if (mode == GRADIENT_SOBEL)

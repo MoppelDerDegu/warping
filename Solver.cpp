@@ -43,17 +43,13 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	opt.set_min_objective(Solver::wrapperOptFunc, this);
 
 	// convergence criteria
-	opt.set_xtol_abs(0.5);
-	// opt.set_maxtime(60);
+	opt.set_xtol_abs(1);
+	//opt.set_maxtime(60);
 
 	double minf;
 	nlopt::result result = opt.optimize(x, minf);
 	
 	cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
-
-	string warpedFile = "warped_mesh.png";
-	string dir = "D:\\warping\\mesh\\";
-	Helper::saveGrid(warpedFile, dir, deformedMesh, newSize);
 
 	return deformedMesh;
 }
@@ -129,18 +125,18 @@ double Solver::calculateQuadScale(Quad &oldQuad, Quad &newQuad)
 		}
 		else if (i == 1)
 		{
-			sum1 += vTv(oldQuad.v2 - oldQuad.v3, newQuad.v2 - newQuad.v3);
-			sum2 += sqr(Helper::euclideanNorm(oldQuad.v2 - oldQuad.v3));
+			sum1 += vTv(oldQuad.v2 - oldQuad.v4, newQuad.v2 - newQuad.v4);
+			sum2 += sqr(Helper::euclideanNorm(oldQuad.v2 - oldQuad.v4));
 		}
 		else if (i == 2)
 		{
-			sum1 += vTv(oldQuad.v3 - oldQuad.v4, newQuad.v3 - newQuad.v4);
-			sum2 += sqr(Helper::euclideanNorm(oldQuad.v3 - oldQuad.v4));
+			sum1 += vTv(oldQuad.v4 - oldQuad.v3, newQuad.v4 - newQuad.v3);
+			sum2 += sqr(Helper::euclideanNorm(oldQuad.v4 - oldQuad.v3));
 		}
 		else
 		{
-			sum1 += vTv(oldQuad.v4 - oldQuad.v1, newQuad.v4 - newQuad.v1);
-			sum2 += sqr(Helper::euclideanNorm(oldQuad.v4 - oldQuad.v1));
+			sum1 += vTv(oldQuad.v3 - oldQuad.v1, newQuad.v3 - newQuad.v1);
+			sum2 += sqr(Helper::euclideanNorm(oldQuad.v3 - oldQuad.v1));
 		}
 	}
 
@@ -166,8 +162,8 @@ double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 		}
 		else if (i == 1)
 		{
-			Vertex _v = newQuad.v2 - newQuad.v3;
-			Vertex v = oldQuad.v2 - oldQuad.v3;
+			Vertex _v = newQuad.v2 - newQuad.v4;
+			Vertex v = oldQuad.v2 - oldQuad.v4;
 			v.x = v.x * sf;
 			v.y = v.y * sf;
 
@@ -175,8 +171,8 @@ double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 		}
 		else if (i == 2)
 		{
-			Vertex _v = newQuad.v3 - newQuad.v4;
-			Vertex v = oldQuad.v3 - oldQuad.v4;
+			Vertex _v = newQuad.v4 - newQuad.v3;
+			Vertex v = oldQuad.v4 - oldQuad.v3;
 			v.x = v.x * sf;
 			v.y = v.y * sf;
 
@@ -184,8 +180,8 @@ double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 		}
 		else
 		{
-			Vertex _v = newQuad.v4 - newQuad.v1;
-			Vertex v = oldQuad.v4 - oldQuad.v1;
+			Vertex _v = newQuad.v3 - newQuad.v1;
+			Vertex v = oldQuad.v3 - oldQuad.v1;
 			v.x = v.x * sf;
 			v.y = v.y * sf;
 
@@ -200,15 +196,15 @@ double Solver::totalQuadEnergy(Mesh &newMesh)
 {
 	double du = 0.0;
 
-	// assuming #quads in oldmesh = #quads in new mesh
+	// assuming #quads in oldmesh == #quads in new mesh
 	for (unsigned int i = 0; i < originalMesh.quads.size(); i++)
 	{
-		// calculate quad scale factor with the initial guess
+		// calculate quad scale factor with the initial guess, i.e. sf is constant
 		double sf = calculateQuadScale(originalMesh.quads.at(i), tmp.quads.at(i));
 		double duf = quadEnergy(originalMesh.quads.at(i), newMesh.quads.at(i), sf);
 
 		// du = du + wf * duf
-		du += saliencyWeightMapping.at(i).first * duf;
+		du += (saliencyWeightMapping.at(i).first * duf);
 	}
 
 	return du;
@@ -223,7 +219,8 @@ double Solver::totalEdgeEnergy(Mesh &newMesh)
 		Vertex _v = newMesh.edges.at(i).src - newMesh.edges.at(i).dest;
 		Vertex v = originalMesh.edges.at(i).src - originalMesh.edges.at(i).dest;
 
-		double lij = calculateLengthRatio(originalMesh.edges.at(i), deformedMesh.edges.at(i));
+		// calculate edge lenght ratio
+		double lij = calculateLengthRatio(originalMesh.edges.at(i), tmp.edges.at(i));
 		v.x = v.x * lij;
 		v.y = v.y * lij;
 
