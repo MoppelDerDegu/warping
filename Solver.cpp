@@ -155,8 +155,8 @@ double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 		{
 			Vertex _v = newQuad.v1 - newQuad.v2;
 			Vertex v = oldQuad.v1 - oldQuad.v2;
-			v.x = v.x * sf;
-			v.y = v.y * sf;
+			v.x = Helper::round(v.x * sf);
+			v.y = Helper::round(v.y * sf);
 
 			du += sqr(Helper::euclideanNorm(_v - v));
 		}
@@ -164,8 +164,8 @@ double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 		{
 			Vertex _v = newQuad.v2 - newQuad.v4;
 			Vertex v = oldQuad.v2 - oldQuad.v4;
-			v.x = v.x * sf;
-			v.y = v.y * sf;
+			v.x = Helper::round(v.x * sf);
+			v.y = Helper::round(v.y * sf);
 
 			du += sqr(Helper::euclideanNorm(_v - v));
 		}
@@ -173,8 +173,8 @@ double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 		{
 			Vertex _v = newQuad.v4 - newQuad.v3;
 			Vertex v = oldQuad.v4 - oldQuad.v3;
-			v.x = v.x * sf;
-			v.y = v.y * sf;
+			v.x = Helper::round(v.x * sf);
+			v.y = Helper::round(v.y * sf);
 
 			du += sqr(Helper::euclideanNorm(_v - v));
 		}
@@ -182,8 +182,8 @@ double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 		{
 			Vertex _v = newQuad.v3 - newQuad.v1;
 			Vertex v = oldQuad.v3 - oldQuad.v1;
-			v.x = v.x * sf;
-			v.y = v.y * sf;
+			v.x = Helper::round(v.x * sf);
+			v.y = Helper::round(v.y * sf);
 
 			du += sqr(Helper::euclideanNorm(_v - v));
 		}
@@ -221,8 +221,8 @@ double Solver::totalEdgeEnergy(Mesh &newMesh)
 
 		// calculate edge lenght ratio
 		double lij = calculateLengthRatio(originalMesh.edges.at(i), tmp.edges.at(i));
-		v.x = v.x * lij;
-		v.y = v.y * lij;
+		v.x = Helper::round(v.x * lij);
+		v.y = Helper::round(v.y * lij);
 
 		dl += sqr(Helper::euclideanNorm(_v - v));
 	}
