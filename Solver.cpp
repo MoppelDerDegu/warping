@@ -31,7 +31,7 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	// formulate optimization problem:
 
 	// derivative free optimization algorithm
-	nlopt::opt opt(nlopt::LN_PRAXIS, x.size());
+	nlopt::opt opt(nlopt::LN_SBPLX, x.size());
 
 	// lower and upper bounds of vertex coordinates
 	vector<double> lb = computeLowerImageBoundConstraints(x);
@@ -45,6 +45,7 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	// convergence criteria
 	opt.set_xtol_abs(1);
 	//opt.set_maxtime(60);
+	//opt.set_ftol_abs(10);
 
 	double minf;
 	nlopt::result result = opt.optimize(x, minf);
@@ -200,8 +201,8 @@ double Solver::totalQuadEnergy(Mesh &newMesh)
 	for (unsigned int i = 0; i < originalMesh.quads.size(); i++)
 	{
 		// calculate quad scale factor with the initial guess, i.e. sf is constant
-		double sf = calculateQuadScale(originalMesh.quads.at(i), tmp.quads.at(i));
-		double duf = quadEnergy(originalMesh.quads.at(i), newMesh.quads.at(i), sf);
+		//double sf = calculateQuadScale(originalMesh.quads.at(i), tmp.quads.at(i));
+		double duf = quadEnergy(originalMesh.quads.at(i), newMesh.quads.at(i), /*sf*/ 0.0);
 
 		// du = du + wf * duf
 		du += (saliencyWeightMapping.at(i).first * duf);
@@ -224,7 +225,7 @@ double Solver::totalEdgeEnergy(Mesh &newMesh)
 		v.x = Helper::round(v.x * lij);
 		v.y = Helper::round(v.y * lij);
 
-		dl += sqr(Helper::euclideanNorm(_v - v));
+		dl += sqr(Helper::euclideanNorm(_v/* - v*/));
 	}
 
 	return dl;
@@ -239,14 +240,14 @@ double Solver::imageObjFunc(const vector<double> &x, vector<double> &grad)
 		// compute gradient here
 	}
 
-	cout << "\r>> Iteration: " << iterationCount << ends;
-
 	doubleVecToMesh(x, deformedMesh);
 
 	double edgeEnergy = totalEdgeEnergy(deformedMesh);
 	double quadEnergy = totalQuadEnergy(deformedMesh);
 
 	double res = edgeEnergy + quadEnergy;
+
+	cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << res << ends;
 
 	return res;
 }
