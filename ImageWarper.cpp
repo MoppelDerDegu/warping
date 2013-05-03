@@ -36,15 +36,9 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(mesh, saliency);
 
 	Solver solver;
-	Mesh warpedMesh = solver.solveImageProblem(mesh, destSize, oldSize, wfMap);
+	Mat warpedImg = solver.solveImageProblem(mesh, destSize, oldSize, wfMap, img);
 
-	string warpedFile = "warped_mesh.png";
-	string dir = "D:\\warping\\mesh\\";
-	Helper::saveGrid(warpedFile, dir, warpedMesh, destSize);
-
-	// TODO warp
-
-	return NULL;
+	return &Helper::MatToIplImage(warpedImg);
 }
 
 /*

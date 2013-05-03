@@ -188,7 +188,7 @@ int main(int argc, char* argv[])
 
 	// compute gradient
 	Mat gradient;
-	gd.generateGradient(mat, gradient, GRADIENT_SIMPLE);
+	gd.generateGradient(mat, gradient);
 
 	// combine saliency and gradient
 	saliencyMap.convertTo(saliencyMap, CV_8U, 1, 0);

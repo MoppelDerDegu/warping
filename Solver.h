@@ -7,9 +7,10 @@ class Solver
 public:
 	Solver(void);
 	~Solver(void);
-	Mesh solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vector<pair<float, Quad>> &wfMap);
+	Mat solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vector<pair<float, Quad>> &wfMap, IplImage* img);
 	static double wrapperOptFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
 private:
+	Mat destImage;
 	Mesh originalMesh;
 	Mesh deformedMesh; // result mesh after optimization
 	Mesh tmp; // stores the initial guess
@@ -29,5 +30,7 @@ private:
 	double vTv(Vertex v1, Vertex v2); // returns v1^tr * v2
 	vector<double> meshToDoubleVec(Mesh &m);
 	void doubleVecToMesh(const vector<double> &x, Mesh &result);
+	void initialScale();
+	void warp(int interpolation = INTER_LINEAR); //warps the destImage according to deformedMesh
 };
 

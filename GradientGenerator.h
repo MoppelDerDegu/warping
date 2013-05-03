@@ -7,7 +7,7 @@ public:
 	GradientGenerator(void);
 	GradientGenerator(int scale, int delta, int ddepth);
 	~GradientGenerator(void);
-	void generateGradient(Mat src, Mat &dest, int mode);
+	void generateGradient(Mat src, Mat &dest, int mode = GRADIENT_SIMPLE);
 private:
 	int scale;
 	int delta;
