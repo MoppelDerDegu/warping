@@ -29,6 +29,7 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	//initialisation
 	oldSize.height = img->height;
 	oldSize.width = img->width;
+	newSize = destSize;
 	src = img;
 	dest = Mat::zeros(destSize, CV_32FC3);
 	QuadSaliencyManager qsm;
@@ -37,6 +38,15 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 
 	Solver solver;
 	Mat warpedImg = solver.solveImageProblem(mesh, destSize, oldSize, wfMap, img);
+
+	string combinedFile = "mesh_over_image.png";
+	string dir = "D:\\warping\\mesh\\";
+	resize(saliency, saliency, newSize);
+	Helper::drawMeshOverMat(solver.getDeformedMesh(), saliency);
+	Helper::saveMat(combinedFile, dir, saliency);
+
+	string warpedFile = "warped_mesh.png";
+	Helper::saveGrid(warpedFile, dir, solver.getDeformedMesh(), newSize);
 
 	return &Helper::MatToIplImage(warpedImg);
 }

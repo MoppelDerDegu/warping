@@ -178,6 +178,9 @@ int main(int argc, char* argv[])
 	Mat mat = imread(fileName);
 	IplImage* img = &Helper::MatToIplImage(mat);
 
+	char* name = "D:/media/test-saliency.png";
+	Mat mat2 = imread(name);
+
 	// initialization
 	ImageSaliencyDetector isd;
 	ImageWarper iw;
@@ -198,7 +201,7 @@ int main(int argc, char* argv[])
 	Size s;
 	s.height = 480;
 	s.width = 600;
-	iw.warpImage(img, s, gradient);
+	iw.warpImage(img, s, combined);
 
 	//cvReleaseCapture(&input);
 }

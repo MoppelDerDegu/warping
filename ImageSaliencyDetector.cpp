@@ -248,7 +248,7 @@ void ImageSaliencyDetector::build()
 	GaussianBlur(resultHC, resultHC, Size(3, 3), 0);
 	
 	// transform the values between 0...1
-	//normalize(resultHC, resultHC, 0, 1, NORM_MINMAX);
+	normalize(resultHC, resultHC, 0, 1, NORM_MINMAX);
 }
 
 Mat ImageSaliencyDetector::hContrast(IplImage* img)
@@ -284,7 +284,7 @@ Mat ImageSaliencyDetector::hContrast(IplImage* img)
 	// build saliency map as Mat object
 	build();
 
-	//resultHC = resultHC*255;
+	resultHC = resultHC*255;
 
 	this->saliencyMap = resultHC;
 		

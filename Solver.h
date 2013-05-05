@@ -9,6 +9,7 @@ public:
 	~Solver(void);
 	Mat solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vector<pair<float, Quad>> &wfMap, IplImage* img);
 	static double wrapperOptFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
+	Mesh getDeformedMesh();
 private:
 	Mat destImage;
 	Mesh originalMesh;

@@ -17,4 +17,5 @@ struct Helper
 	static void saveMat(const string fileName, const string dir, const Mat &mat);
 	static float round (float f);
 	static double round (double d);
+	static void drawMeshOverMat(const Mesh &mesh, Mat &mat);
 };
