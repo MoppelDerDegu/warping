@@ -12,14 +12,9 @@ ImageWarper::~ImageWarper(void)
 {
 }
 
-void ImageWarper::setMesh(Mesh &mesh)
+Mesh ImageWarper::getDeformedMesh()
 {
-	this->mesh = mesh;
-}
-
-Mesh ImageWarper::getMesh()
-{
-	return this->mesh;
+	return this->deformedMesh;
 }
 
 IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
@@ -34,21 +29,19 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	dest = Mat::zeros(destSize, CV_32FC3);
 	QuadSaliencyManager qsm;
 	initializeMesh(img);
-	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(mesh, saliency);
+	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
 
 	Solver solver;
-	Mat warpedImg = solver.solveImageProblem(mesh, destSize, oldSize, wfMap, img);
+	deformedMesh = solver.solveImageProblem(initialMesh, destSize, oldSize, wfMap);
+	linearScaledMesh = solver.getInitialGuess();
 
-	string combinedFile = "mesh_over_image.png";
-	string dir = "D:\\warping\\mesh\\";
-	resize(saliency, saliency, newSize);
-	Helper::drawMeshOverMat(solver.getDeformedMesh(), saliency);
-	Helper::saveMat(combinedFile, dir, saliency);
+	//linearly scale the image as starting point
+	resize(tmp, tmp, newSize);
 
-	string warpedFile = "warped_mesh.png";
-	Helper::saveGrid(warpedFile, dir, solver.getDeformedMesh(), newSize);
+	// do the warping according to mesh
+	warp();
 
-	return &Helper::MatToIplImage(warpedImg);
+	return &Helper::MatToIplImage(dest);
 }
 
 /*
@@ -157,55 +150,133 @@ void ImageWarper::initializeMesh(IplImage* img)
 		e4.src = q.v3;
 		e4.dest = q.v1;
 
-		mesh.quads.push_back(q);
+		initialMesh.quads.push_back(q);
 
 		if (i == 0)
 		{
-			mesh.vertices.push_back(q.v1);
-			mesh.vertices.push_back(q.v2);
-			mesh.vertices.push_back(q.v3);
-			mesh.vertices.push_back(q.v4);
-			mesh.edges.push_back(e1);
-			mesh.edges.push_back(e2);
-			mesh.edges.push_back(e3);
-			mesh.edges.push_back(e4);
+			initialMesh.vertices.push_back(q.v1);
+			initialMesh.vertices.push_back(q.v2);
+			initialMesh.vertices.push_back(q.v3);
+			initialMesh.vertices.push_back(q.v4);
+			initialMesh.edges.push_back(e1);
+			initialMesh.edges.push_back(e2);
+			initialMesh.edges.push_back(e3);
+			initialMesh.edges.push_back(e4);
 		}
 		else
 		{
 			if (x == 0)
 			{
 				// don't add front edge of a quad since it's already part of the mesh
-				mesh.edges.push_back(e2);
-				mesh.edges.push_back(e3);
-				mesh.edges.push_back(e4);
+				initialMesh.edges.push_back(e2);
+				initialMesh.edges.push_back(e3);
+				initialMesh.edges.push_back(e4);
 
 				// don't add v1 and v2 since they are redundant
-				mesh.vertices.push_back(q.v3);
-				mesh.vertices.push_back(q.v4);
+				initialMesh.vertices.push_back(q.v3);
+				initialMesh.vertices.push_back(q.v4);
 			}
 			else
 			{
 				if (y == 0)
 				{
 					// don't add the left-hand edge of a quad since it's redundant
-					mesh.edges.push_back(e1);
-					mesh.edges.push_back(e2);
-					mesh.edges.push_back(e3);
+					initialMesh.edges.push_back(e1);
+					initialMesh.edges.push_back(e2);
+					initialMesh.edges.push_back(e3);
 
 					// don't add v1 and v3 since they are redundant
-					mesh.vertices.push_back(q.v2);
-					mesh.vertices.push_back(q.v4);
+					initialMesh.vertices.push_back(q.v2);
+					initialMesh.vertices.push_back(q.v4);
 				}
 				else
 				{
 					// don't add top and left-hand edge since they are redundant
-					mesh.edges.push_back(e2);
-					mesh.edges.push_back(e3);
+					initialMesh.edges.push_back(e2);
+					initialMesh.edges.push_back(e3);
 
 					// only add bottom right vertex
-					mesh.vertices.push_back(q.v4);
+					initialMesh.vertices.push_back(q.v4);
 				}
 			}
 		}
 	}
+}
+
+/*
+	For convenience the following vertices are treated as 2-dimensional vectors.
+
+	Vectors of a quad for warping:
+		p
+	<--------v
+	^		 |
+	|		 | q
+  b	|		 | 
+	|		 V
+	u------->
+		a
+*/
+void ImageWarper::warp(int interpolation)
+{
+	if (interpolation == INTER_NEAREST)
+		warpNN();
+	else if (interpolation == INTER_LINEAR)
+		warpLinear();
+	else if (interpolation == INTER_CUBIC)
+		warpCubic();
+}
+
+void ImageWarper::warpNN()
+{
+	cout << ">> Warp image with nearest neighbour interpolation" << endl;
+	// TODO
+}
+
+void ImageWarper::warpLinear()
+{
+	cout << ">> Warp image with linear interpolation" << endl;
+
+	// vectors of deformed quad
+	Vertex u, v, a, b, p, q;
+
+	// vectors of the linear scaled quad
+	Vertex _u, _v, _a, _b, _p, _q;
+
+	for (unsigned int i = 0; i < deformedMesh.quads.size(); i++)
+	{
+		Quad deformedQuad = deformedMesh.quads.at(i);
+		Quad linearQuad = linearScaledMesh.quads.at(i); // the corresponding quad in the linear scaled mesh
+
+		//set ROI over deformed quad, i.e. a rectangle that engulfs the quad completely
+		int roiX, roiY, roiWidth, roiHeight;
+		
+		if (deformedQuad.v1.y > deformedQuad.v2.y)
+			roiY = deformedQuad.v2.y;
+		else
+			roiY = deformedQuad.v1.y;
+
+		if (deformedQuad.v1.x > deformedQuad.v3.x)
+			roiX = deformedQuad.v3.x;
+		else
+			roiX = deformedQuad.v1.x;
+		
+		Vertex topleft, topright, bottomeft;
+		topleft.x = roiX;
+		topleft.y = roiY;
+	
+		// TODO determine topright and bottomleft vertex of ROI
+
+		// TODO ROI for linearscaled picture
+
+		// TODO finde corresponding pixels between quads
+
+		// TODO interpolate
+	}
+}
+
+void ImageWarper::warpCubic()
+{
+	cout << ">> Warp image with cubic interpolation" << endl;
+
+	// TODO
 }

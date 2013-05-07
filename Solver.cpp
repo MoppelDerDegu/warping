@@ -18,7 +18,12 @@ Mesh Solver::getDeformedMesh()
 	return deformedMesh;
 }
 
-Mat Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vector<pair<float, Quad>> &wfMap, IplImage* img)
+Mesh Solver::getInitialGuess()
+{
+	return tmp;
+}
+
+Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vector<pair<float, Quad>> &wfMap)
 {
 	cout << ">> Solving image optimization problem..." << endl;
 
@@ -26,11 +31,9 @@ Mat Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vector
 	this->saliencyWeightMapping = wfMap;
 	this->oldSize = originalSize;
 	this->newSize = newSize;
-	this->destImage = Helper::IplImageToMat(img);
 
 	// initial guess is stored in tmp
 	initialGuess(newSize, originalSize);
-	initialScale();
 
 	// copy initial guess to resultmesh
 	deformedMesh = Helper::deepCopyMesh(tmp);
@@ -60,15 +63,12 @@ Mat Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vector
 	
 	cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
 
-	return destImage;
+	return deformedMesh;
 }
 
 double Solver::wrapperOptFunc(const vector<double> &x, vector<double> &grad, void *my_func_data)
 {
 	Solver* solv = reinterpret_cast<Solver*> (my_func_data);
-
-	//update the warped image with every iteration
-	solv->warp();
 
 	return solv->imageObjFunc(x, grad);
 }
@@ -494,14 +494,4 @@ vector<double> Solver::computeUpperImageBoundConstraints(const vector<double> &x
 	}
 
 	return ub;
-}
-
-void Solver::initialScale()
-{
-	resize(destImage, destImage, newSize);
-}
-
-void Solver::warp(int interpolation)
-{
-	// TODO
 }

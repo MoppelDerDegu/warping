@@ -8,17 +8,20 @@ public:
 	ImageWarper(void);
 	~ImageWarper(void);
 	IplImage* warpImage(IplImage* img, Size &dest, Mat &saliency);
-	void setMesh(Mesh &mesh);
-	Mesh getMesh();
+	Mesh getDeformedMesh();
 private:
-	Vertex newVEnd;
-	Vertex vEnd;
 	Size oldSize;
 	Size newSize;
 	Mat src; //source frame
 	Mat dest; //destination frame
-	Mat tmp;
-	Mesh mesh; //the warping mesh
+	Mat tmp; //linear scale
+	Mesh initialMesh; //the warping mesh
+	Mesh linearScaledMesh;
+	Mesh deformedMesh;
 	void initializeMesh(IplImage* img);
+	void warp(int interpolation = INTER_LINEAR); //warps the destImage according to deformedMesh
+	void warpNN();
+	void warpLinear();
+	void warpCubic();
 };
 
