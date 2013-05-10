@@ -37,7 +37,7 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 
 	// copy initial guess to resultmesh
 	deformedMesh = Helper::deepCopyMesh(tmp);
-	vector<double> x = meshToDoubleVec(deformedMesh);
+	vector<double> x = Helper::meshToDoubleVec(deformedMesh);
 
 	// formulate optimization problem:
 
@@ -252,7 +252,7 @@ double Solver::imageObjFunc(const vector<double> &x, vector<double> &grad)
 		// compute gradient here
 	}
 
-	doubleVecToMesh(x, deformedMesh);
+	Helper::doubleVecToMesh(x, deformedMesh);
 
 	double edgeEnergy = totalEdgeEnergy(deformedMesh);
 	double quadEnergy = totalQuadEnergy(deformedMesh);
@@ -267,137 +267,6 @@ double Solver::imageObjFunc(const vector<double> &x, vector<double> &grad)
 double Solver::vTv(Vertex v1, Vertex v2)
 {
 	return (double) (v1.x * v2.x + v1.y * v2.y);
-}
-
-vector<double> Solver::meshToDoubleVec(Mesh &m)
-{
-	vector<double> x;
-
-	for (unsigned int i = 0; i < m.vertices.size(); i++)
-	{
-		x.push_back(m.vertices.at(i).x);
-		x.push_back(m.vertices.at(i).y);
-	}
-
-	return x;
-}
-
-void Solver::doubleVecToMesh(const vector<double> &x, Mesh &result)
-{
-	// clear mesh
-	result.vertices.clear();
-	result.edges.clear();
-	result.quads.clear();
-
-	// vertices
-	for (unsigned int i = 0; i < x.size(); i += 2)
-	{
-		Vertex v;
-		v.x = x.at(i);
-		v.y = x.at(i + 1);
-
-		result.vertices.push_back(v);
-	}
-
-	int vertexCount = 0;
-	int diff = QUAD_NUMBER_Y * 2 + 1;
-	int xfac, yfac;
-
-	// quads and edges
-	for (unsigned int i = 0; i < QUAD_NUMBER_TOTAL; i++)
-	{
-		Quad q;
-		Edge e1, e2, e3, e4;
-
-		xfac = (int) i / QUAD_NUMBER_X;
-		yfac = i % QUAD_NUMBER_Y;
-
-		if (vertexCount <= QUAD_NUMBER_Y * 2)
-		{
-			// first column of mesh
-			q.v1 = result.vertices.at(vertexCount);
-			q.v2 = result.vertices.at(vertexCount + 1);
-			q.v3 = result.vertices.at(vertexCount + 2);
-			q.v4 = result.vertices.at(vertexCount + 3);
-
-			if ( vertexCount < (QUAD_NUMBER_Y - 1) * 2)
-				vertexCount += 2;
-			else
-				vertexCount += 4;
-		}
-		else
-		{
-			if (xfac < 2)
-			{
-				// second column
-				q.v1 = result.vertices.at(vertexCount - diff);
-				q.v2 = result.vertices.at(vertexCount);
-				q.v3 = result.vertices.at(vertexCount + 1 - (diff - 1));
-				q.v4 = result.vertices.at(vertexCount + 1);
-			}
-			else
-			{
-				// all other columns
-				q.v1 = result.vertices.at(vertexCount - diff);
-				q.v2 = result.vertices.at(vertexCount);
-				q.v3 = result.vertices.at(vertexCount + 1 - diff);
-				q.v4 = result.vertices.at(vertexCount + 1);
-			}
-
-			if (i < QUAD_NUMBER_Y * 2)
-				diff--;	
-
-			if (yfac == QUAD_NUMBER_Y - 1)
-				vertexCount += 2;
-			else
-				vertexCount++;
-		}
-
-		e1.src = q.v1;
-		e1.dest = q.v2;
-		e2.src = q.v2;
-		e2.dest = q.v4;
-		e3.src = q.v4;
-		e3.dest = q.v3;
-		e4.src = q.v3;
-		e4.dest = q.v1;
-
-		result.quads.push_back(q);
-
-		if (i == 0)
-		{
-			result.edges.push_back(e1);
-			result.edges.push_back(e2);
-			result.edges.push_back(e3);
-			result.edges.push_back(e4);
-		}
-		else
-		{
-			if (xfac == 0)
-			{
-				// don't add front edge of a quad since it's already part of the mesh
-				result.edges.push_back(e2);
-				result.edges.push_back(e3);
-				result.edges.push_back(e4);
-			}
-			else
-			{
-				if (yfac == 0)
-				{
-					// don't add the left-hand edge of a quad since it's redundant
-					result.edges.push_back(e1);
-					result.edges.push_back(e2);
-					result.edges.push_back(e3);
-				}
-				else
-				{
-					// don't add top and left-hand edge since they are redundant
-					result.edges.push_back(e2);
-					result.edges.push_back(e3);
-				}
-			}
-		}
-	}
 }
 
 vector<double> Solver::computeLowerImageBoundConstraints(const vector<double> &x)

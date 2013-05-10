@@ -144,88 +144,6 @@ double Helper::euclideanNorm(const Vertex &v)
 	return sqrt((double) (sqr(v.x) + sqr(v.y)));
 }
 
-void Helper::saveGrid(const string fileName, const string dir, const Mesh &m, const Size &s)
-{
-	const char* _dir = (char*) dir.c_str();
-	FileManager::mkDir(_dir);
-
-	Mat mat = Mat::zeros(s.height, s.width, CV_8UC3);
-	
-	// line parameters
-	Scalar lineColor(0, 0, 0); // black
-	int thickness = 1;
-	int linetype = 8;
-
-	// make everything white
-	for (int y = 0; y < mat.rows; y++)
-	{
-		for (int x = 0; x < mat.cols; x++)
-		{
-			mat.at<Vec3b> (y, x) [0] = 255;
-			mat.at<Vec3b> (y, x) [1] = 255;
-			mat.at<Vec3b> (y, x) [2] = 255;
-		}
-	}
-
-	// draw lines
-	Point start, end;
-	Quad q;
-	for (unsigned int i = 0; i < m.quads.size(); i++)
-	{
-		q = m.quads.at(i);
-		for (unsigned int j = 0; j < 4; j++)
-		{
-			if (j == 0)
-			{
-				start.x = q.v1.x;
-				start.y = q.v1.y;
-				end.x = q.v2.x;
-				end.y = q.v2.y;
-
-				line(mat, start, end, lineColor, thickness, linetype);
-			}
-			else if (j == 1)
-			{
-				start.x = q.v2.x;
-				start.y = q.v2.y;
-				end.x = q.v4.x;
-				end.y = q.v4.y;
-
-				line(mat, start, end, lineColor, thickness, linetype);
-			}
-			else if (j == 2)
-			{
-				start.x = q.v4.x;
-				start.y = q.v4.y;
-				end.x = q.v3.x;
-				end.y = q.v3.y;
-
-				line(mat, start, end, lineColor, thickness, linetype);
-			}
-			else
-			{
-				start.x = q.v3.x;
-				start.y = q.v3.y;
-				end.x = q.v1.x;
-				end.y = q.v1.y;
-
-				line(mat, start, end, lineColor, thickness, linetype);
-			}
-		}
-	}
-
-	/*Point center;
-	for (unsigned int i = 0; i < m.vertices.size(); i++)
-	{
-		center.x = m.vertices.at(i).x;
-		center.y = m.vertices.at(i).y;
-
-		circle(mat, center, 3, Scalar(0, 0, 255), -1, 8);
-	}*/
-
-	imwrite(dir + fileName, mat);
-}
-
 float Helper::round (float f)
 {
 	return floor(f + 0.5);
@@ -236,11 +154,135 @@ double Helper::round (double d)
 	return floor(d + 0.5);
 }
 
-void Helper::saveMat(const string fileName, const string dir, const Mat &mat)
+vector<double> Helper::meshToDoubleVec(Mesh &m)
 {
-	const char* _dir = (char*) dir.c_str();
-	FileManager::mkDir(_dir);
-	imwrite(dir + fileName, mat);
+	vector<double> x;
+
+	for (unsigned int i = 0; i < m.vertices.size(); i++)
+	{
+		x.push_back(m.vertices.at(i).x);
+		x.push_back(m.vertices.at(i).y);
+	}
+
+	return x;
+}
+
+void Helper::doubleVecToMesh(const vector<double> &x, Mesh &result)
+{
+	// clear mesh
+	result.vertices.clear();
+	result.edges.clear();
+	result.quads.clear();
+
+	// vertices
+	for (unsigned int i = 0; i < x.size(); i += 2)
+	{
+		Vertex v;
+		v.x = x.at(i);
+		v.y = x.at(i + 1);
+
+		result.vertices.push_back(v);
+	}
+
+	int vertexCount = 0;
+	int diff = QUAD_NUMBER_Y * 2 + 1;
+	int xfac, yfac;
+
+	// quads and edges
+	for (unsigned int i = 0; i < QUAD_NUMBER_TOTAL; i++)
+	{
+		Quad q;
+		Edge e1, e2, e3, e4;
+
+		xfac = (int) i / QUAD_NUMBER_X;
+		yfac = i % QUAD_NUMBER_Y;
+
+		if (vertexCount <= QUAD_NUMBER_Y * 2)
+		{
+			// first column of mesh
+			q.v1 = result.vertices.at(vertexCount);
+			q.v2 = result.vertices.at(vertexCount + 1);
+			q.v3 = result.vertices.at(vertexCount + 2);
+			q.v4 = result.vertices.at(vertexCount + 3);
+
+			if ( vertexCount < (QUAD_NUMBER_Y - 1) * 2)
+				vertexCount += 2;
+			else
+				vertexCount += 4;
+		}
+		else
+		{
+			if (xfac < 2)
+			{
+				// second column
+				q.v1 = result.vertices.at(vertexCount - diff);
+				q.v2 = result.vertices.at(vertexCount);
+				q.v3 = result.vertices.at(vertexCount + 1 - (diff - 1));
+				q.v4 = result.vertices.at(vertexCount + 1);
+			}
+			else
+			{
+				// all other columns
+				q.v1 = result.vertices.at(vertexCount - diff);
+				q.v2 = result.vertices.at(vertexCount);
+				q.v3 = result.vertices.at(vertexCount + 1 - diff);
+				q.v4 = result.vertices.at(vertexCount + 1);
+			}
+
+			if (i < QUAD_NUMBER_Y * 2)
+				diff--;	
+
+			if (yfac == QUAD_NUMBER_Y - 1)
+				vertexCount += 2;
+			else
+				vertexCount++;
+		}
+
+		e1.src = q.v1;
+		e1.dest = q.v2;
+		e2.src = q.v2;
+		e2.dest = q.v4;
+		e3.src = q.v4;
+		e3.dest = q.v3;
+		e4.src = q.v3;
+		e4.dest = q.v1;
+
+		result.quads.push_back(q);
+
+		if (i == 0)
+		{
+			result.edges.push_back(e1);
+			result.edges.push_back(e2);
+			result.edges.push_back(e3);
+			result.edges.push_back(e4);
+		}
+		else
+		{
+			if (xfac == 0)
+			{
+				// don't add front edge of a quad since it's already part of the mesh
+				result.edges.push_back(e2);
+				result.edges.push_back(e3);
+				result.edges.push_back(e4);
+			}
+			else
+			{
+				if (yfac == 0)
+				{
+					// don't add the left-hand edge of a quad since it's redundant
+					result.edges.push_back(e1);
+					result.edges.push_back(e2);
+					result.edges.push_back(e3);
+				}
+				else
+				{
+					// don't add top and left-hand edge since they are redundant
+					result.edges.push_back(e2);
+					result.edges.push_back(e3);
+				}
+			}
+		}
+	}
 }
 
 void Helper::drawMeshOverMat(const Mesh &mesh, Mat &mat)

@@ -3,6 +3,7 @@
 #include "QuadSaliencyManager.h"
 #include "Solver.h"
 #include "Helper.h"
+#include "FileManager.h"
 
 ImageWarper::ImageWarper(void)
 {
@@ -26,7 +27,7 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	oldSize.width = img->width;
 	newSize = destSize;
 	src = img;
-	dest = Mat::zeros(destSize, CV_32FC3);
+	dest = Mat::zeros(destSize, /*CV_32FC3*/ CV_8U);
 	QuadSaliencyManager qsm;
 	initializeMesh(img);
 	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
@@ -44,6 +45,11 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 
 	// convert dest frame back to original type
 	dest.convertTo(dest, src.type());
+
+	string filename = "warped_image + mesh.png";
+	string dir = "D:\\warping\\result\\";
+	FileManager::drawMeshOverMat(deformedMesh, dest);
+	FileManager::saveMat(filename, dir, dest);
 
 	return &Helper::MatToIplImage(dest);
 }
@@ -251,7 +257,7 @@ void ImageWarper::warpLinear()
 		Quad deformedQuad = deformedMesh.quads.at(i);
 		Quad linearQuad = linearScaledMesh.quads.at(i); // the corresponding quad in the linear scaled mesh
 
-		Mat deformedROI;
+		Mat deformedROI, linearROI;
 
 		u = deformedQuad.v3;
 		v = deformedQuad.v2;
@@ -269,6 +275,7 @@ void ImageWarper::warpLinear()
 
 		//set ROI over deformed quad, i.e. a rectangle that engulfs the quad completely
 		getImageROI(deformedQuad, deformedROI, dest);
+		getImageROI(linearQuad, linearROI, tmp);
 
 		for (int j = 0; j < deformedROI.rows; j++)
 		{
@@ -278,7 +285,7 @@ void ImageWarper::warpLinear()
 				Vertex x;
 				x.x = j;
 				x.y = k;
-				double r = (b.y * (x.x - u.x) + b.y * (u.y - x.y)) / (b.y * a.x - b.x * a.y);
+				double r = (b.y * (x.x - u.x) + b.x * (u.y - x.y)) / (b.y * a.x - b.x * a.y);
 				double s = (x.y - r * a.y - u.y) / b.y;
 
 				if (!(r < 0.0 || r > 1.0 || s < 0.0 || s > 1.0))
@@ -300,13 +307,12 @@ void ImageWarper::warpLinear()
 					}
 
 					// interpolate pixels and fill new pixel
-					dest.at<Vec3f> (j, k) [0] = interpolateLinear(_x, 0);
-					dest.at<Vec3f> (j, k) [1] = interpolateLinear(_x, 1);
-					dest.at<Vec3f> (j, k) [2] = interpolateLinear(_x, 2);
+					deformedROI.at<Vec3f> (j, k) [0] = interpolateLinear(_x, 0, linearROI);
+					deformedROI.at<Vec3f> (j, k) [1] = interpolateLinear(_x, 1, linearROI);
+					deformedROI.at<Vec3f> (j, k) [2] = interpolateLinear(_x, 2, linearROI);
 				}
 				else
 				{
-					// TODO pixel trotzdem füllen?
 				}
 			}
 		}
@@ -366,40 +372,40 @@ void ImageWarper::getImageROI(Quad &quad, Mat &roi, Mat &img)
 	roi = img(Rect(roiX, roiY, roiWidth, roiHeight));
 }
 
-float ImageWarper::interpolateLinear(Vertex &x, int channel)
+float ImageWarper::interpolateLinear(Vertex &x, int channel, Mat &image)
 {
 	float n, s, w, e;
 
 	if (x.x - 1 < 0)
-		w = tmp.at<Vec3f> (x.x, x.y) [channel];
+		w = image.at<Vec3f> (x.x, x.y) [channel];
 	else
-		w = tmp.at<Vec3f> (x.x - 1, x.y) [channel];
+		w = image.at<Vec3f> (x.x - 1, x.y) [channel];
 
 	if (x.x + 1 > tmp.cols)
-		e = tmp.at<Vec3f> (x.x, x.y) [channel];
+		e = image.at<Vec3f> (x.x, x.y) [channel];
 	else
-		e = tmp.at<Vec3f> (x.x + 1, x.y) [channel];
+		e = image.at<Vec3f> (x.x + 1, x.y) [channel];
 
 	if (x.y - 1 < 0)
-		n = tmp.at<Vec3f> (x.x, x.y) [channel];
+		n = image.at<Vec3f> (x.x, x.y) [channel];
 	else
-		n = tmp.at<Vec3f> (x.x, x.y - 1) [channel];
+		n = image.at<Vec3f> (x.x, x.y - 1) [channel];
 
 	if (x.y + 1 > tmp.rows)
-		s = tmp.at<Vec3f> (x.x, x.y) [channel];
+		s = image.at<Vec3f> (x.x, x.y) [channel];
 	else
-		s = tmp.at<Vec3f> (x.x, x.y + 1) [channel];
+		s = image.at<Vec3f> (x.x, x.y + 1) [channel];
 
 	return (n + s + w + e) / 4;
 }
 
-float ImageWarper::interpolateNN(Vertex &x, int channel)
+float ImageWarper::interpolateNN(Vertex &x, int channel, Mat &image)
 {
 	// TODO
 	return 0.0;
 }
 
-float ImageWarper::interpolateCubic(Vertex &x, int channel)
+float ImageWarper::interpolateCubic(Vertex &x, int channel, Mat &image)
 {
 	// TODO
 	return 0.0;

@@ -29,7 +29,5 @@ private:
 	vector<double> computeLowerImageBoundConstraints(const vector<double> &x);
 	vector<double> computeUpperImageBoundConstraints(const vector<double> &x);
 	double vTv(Vertex v1, Vertex v2); // returns v1^tr * v2
-	vector<double> meshToDoubleVec(Mesh &m);
-	void doubleVecToMesh(const vector<double> &x, Mesh &result);
 };
 

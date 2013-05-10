@@ -24,8 +24,8 @@ private:
 	void warpLinear();
 	void warpCubic();
 	void getImageROI(Quad &quad, Mat &roi, Mat &img);
-	float interpolateLinear(Vertex &x, int channel);
-	float interpolateNN(Vertex &x, int channel);
-	float interpolateCubic(Vertex &x, int channel);
+	float interpolateLinear(Vertex &x, int channel, Mat &image);
+	float interpolateNN(Vertex &x, int channel, Mat &image);
+	float interpolateCubic(Vertex &x, int channel, Mat &image);
 };
 
