@@ -27,14 +27,16 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	oldSize.width = img->width;
 	newSize = destSize;
 	src = img;
-	dest = Mat::zeros(destSize, /*CV_32FC3*/ CV_8U);
+	dest = Mat::zeros(destSize, CV_32FC3);
 	QuadSaliencyManager qsm;
 	initializeMesh(img);
 	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
-
+	
 	Solver solver;
 	deformedMesh = solver.solveImageProblem(initialMesh, destSize, oldSize, wfMap);
 	linearScaledMesh = solver.getInitialGuess();
+	
+	deformedMesh = FileManager::loadMesh("D:\\warping\\mesh\\mesh.txt");
 
 	//linearly scale the image as starting point
 	resize(src, tmp, newSize);
@@ -48,7 +50,7 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 
 	string filename = "warped_image + mesh.png";
 	string dir = "D:\\warping\\result\\";
-	FileManager::drawMeshOverMat(deformedMesh, dest);
+	Helper::drawMeshOverMat(deformedMesh, dest);
 	FileManager::saveMat(filename, dir, dest);
 
 	return &Helper::MatToIplImage(dest);
@@ -283,8 +285,8 @@ void ImageWarper::warpLinear()
 			{
 				//current pixel
 				Vertex x;
-				x.x = j;
-				x.y = k;
+				x.x = k;
+				x.y = j;
 				double r = (b.y * (x.x - u.x) + b.x * (u.y - x.y)) / (b.y * a.x - b.x * a.y);
 				double s = (x.y - r * a.y - u.y) / b.y;
 
@@ -306,10 +308,17 @@ void ImageWarper::warpLinear()
 						_x.y = (int) (_v.y + (1.0 - r) * _p.y + (1.0 - s) * _q.y);
 					}
 
-					// interpolate pixels and fill new pixel
-					deformedROI.at<Vec3f> (j, k) [0] = interpolateLinear(_x, 0, linearROI);
-					deformedROI.at<Vec3f> (j, k) [1] = interpolateLinear(_x, 1, linearROI);
-					deformedROI.at<Vec3f> (j, k) [2] = interpolateLinear(_x, 2, linearROI);
+					try {
+						// interpolate pixels and fill new pixel
+						deformedROI.at<Vec3f> (j, k) [0] = interpolateLinear(_x, 0, linearROI);
+						deformedROI.at<Vec3f> (j, k) [1] = interpolateLinear(_x, 1, linearROI);
+						deformedROI.at<Vec3f> (j, K) [2] = interpolateLinear(_x, 2, linearROI);
+					}
+					catch(...)
+					{
+						cout << "i: " << i << " j: " << j << " k: " << k;
+						return;
+					}
 				}
 				else
 				{
@@ -375,13 +384,13 @@ void ImageWarper::getImageROI(Quad &quad, Mat &roi, Mat &img)
 float ImageWarper::interpolateLinear(Vertex &x, int channel, Mat &image)
 {
 	float n, s, w, e;
-
+	
 	if (x.x - 1 < 0)
 		w = image.at<Vec3f> (x.x, x.y) [channel];
-	else
+	else 
 		w = image.at<Vec3f> (x.x - 1, x.y) [channel];
 
-	if (x.x + 1 > tmp.cols)
+	if (x.x + 1 == image.cols)
 		e = image.at<Vec3f> (x.x, x.y) [channel];
 	else
 		e = image.at<Vec3f> (x.x + 1, x.y) [channel];
@@ -391,12 +400,12 @@ float ImageWarper::interpolateLinear(Vertex &x, int channel, Mat &image)
 	else
 		n = image.at<Vec3f> (x.x, x.y - 1) [channel];
 
-	if (x.y + 1 > tmp.rows)
+	if (x.y + 1 == image.rows)
 		s = image.at<Vec3f> (x.x, x.y) [channel];
 	else
 		s = image.at<Vec3f> (x.x, x.y + 1) [channel];
 
-	return (n + s + w + e) / 4;
+	return (float) ((n + s + w + e) / 4);
 }
 
 float ImageWarper::interpolateNN(Vertex &x, int channel, Mat &image)

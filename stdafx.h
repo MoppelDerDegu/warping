@@ -17,6 +17,9 @@
 #include <tchar.h>
 #include <Windows.h>
 #include <cmath>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -33,8 +36,8 @@ using namespace std;
 #define GRADIENT_SIMPLE 3
 
 // number of quads in the image in x and y direction respectively
-#define QUAD_NUMBER_X 5
-#define QUAD_NUMBER_Y 5
+#define QUAD_NUMBER_X 30
+#define QUAD_NUMBER_Y 30
 #define QUAD_NUMBER_TOTAL QUAD_NUMBER_X * QUAD_NUMBER_Y
 
 typedef struct Vertex

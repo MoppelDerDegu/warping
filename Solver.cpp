@@ -59,7 +59,7 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	//opt.set_ftol_abs(10);
 
 	double minf;
-	nlopt::result result = opt.optimize(x, minf);
+	//nlopt::result result = opt.optimize(x, minf);
 	
 	cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
 

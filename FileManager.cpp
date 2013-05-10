@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "FileManager.h"
+#include "Helper.h"
 
 BOOL FileManager::mkDir(const char* &path)
 {
@@ -17,7 +18,7 @@ BOOL FileManager::mkDir(const char* &path)
 	return CreateDirectoryA(path, 0);
 }
 
-void FileManager::saveGrid(const string fileName, const string dir, const Mesh &m, const Size &s)
+void FileManager::saveMeshAsImage(const string fileName, const string dir, const Mesh &m, const Size &s)
 {
 	const char* _dir = (char*) dir.c_str();
 	mkDir(_dir);
@@ -87,15 +88,6 @@ void FileManager::saveGrid(const string fileName, const string dir, const Mesh &
 		}
 	}
 
-	/*Point center;
-	for (unsigned int i = 0; i < m.vertices.size(); i++)
-	{
-		center.x = m.vertices.at(i).x;
-		center.y = m.vertices.at(i).y;
-
-		circle(mat, center, 3, Scalar(0, 0, 255), -1, 8);
-	}*/
-
 	imwrite(dir + fileName, mat);
 }
 
@@ -104,4 +96,54 @@ void FileManager::saveMat(const string fileName, const string dir, const Mat &ma
 	const char* _dir = (char*) dir.c_str();
 	mkDir(_dir);
 	imwrite(dir + fileName, mat);
+}
+
+void FileManager::saveMeshAsText(const string fileName, const string dir, Mesh &mesh)
+{
+	vector<double> vertices = Helper::meshToDoubleVec(mesh);
+
+	const char* _dir = (char*) dir.c_str();
+	mkDir(_dir);
+
+	ofstream myfile;
+	myfile.open(dir + fileName);
+
+	if (myfile.is_open())
+	{
+		for (unsigned int i = 0; i < vertices.size(); i++)
+		{
+			if (i < vertices.size() - 1)
+				myfile << vertices.at(i) << "\n";
+			else
+				myfile << vertices.at(i);
+		}
+
+		myfile.close();
+	}
+	else
+		cerr << "Unable to open file: " << fileName << endl;
+}
+
+Mesh FileManager::loadMesh(const string fileName)
+{
+	vector<double> res;
+	Mesh resmesh;
+	string line;
+	ifstream myfile;
+	myfile.open(fileName);
+
+	if (myfile.is_open())
+	{
+		while (myfile.good())
+		{
+			getline(myfile, line);
+			res.push_back(Helper::stringToDouble(line));
+		}
+
+		Helper::doubleVecToMesh(res, resmesh);
+	}
+	else
+		cerr << "Unable to open file: " << fileName << endl;
+
+	return resmesh;
 }

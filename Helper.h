@@ -18,4 +18,5 @@ struct Helper
 	static vector<double> meshToDoubleVec(Mesh &m);
 	static void doubleVecToMesh(const vector<double> &x, Mesh &result);
 	static void drawMeshOverMat(const Mesh &mesh, Mat &mat);
+	static double stringToDouble(const string &s);
 };
