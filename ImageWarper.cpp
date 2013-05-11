@@ -215,12 +215,6 @@ void ImageWarper::initializeMesh(IplImage* img)
 	}
 }
 
-void ImageWarper::warpNN()
-{
-	cout << ">> Warp image with nearest neighbour interpolation" << endl;
-	// TODO
-}
-
 /*
 	For convenience the following vertices are treated as 2-dimensional vectors.
 
@@ -236,7 +230,7 @@ void ImageWarper::warpNN()
 */
 void ImageWarper::warp(int interpolation)
 {
-	cout << ">> Warp image with linear interpolation" << endl;
+	cout << ">> Warp image" << endl;
 
 	// vectors of deformed quad
 	Vertex u, v, a, b, p, q;
@@ -279,8 +273,8 @@ void ImageWarper::warp(int interpolation)
 				Vertex x;
 				x.x = j;
 				x.y = k;
-				double r = (b.y * (x.x - u.x) + b.x * (u.y - x.y)) / (double) (b.y * a.x - b.x * a.y);
-				double s = (x.y - r * a.y - u.y) / (double) b.y;
+				double r = (double) (b.y * (x.x - u.x) + b.x * (u.y - x.y)) / (double) (b.y * a.x - b.x * a.y);
+				double s = (double) (x.y - r * a.y - u.y) / (double) b.y;
 
 				if (!(r < 0.0 || r > 1.0 || s < 0.0 || s > 1.0))
 				{
