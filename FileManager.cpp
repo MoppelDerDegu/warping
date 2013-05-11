@@ -23,70 +23,7 @@ void FileManager::saveMeshAsImage(const string fileName, const string dir, const
 	const char* _dir = (char*) dir.c_str();
 	mkDir(_dir);
 
-	Mat mat = Mat::zeros(s.height, s.width, CV_8UC3);
-	
-	// line parameters
-	Scalar lineColor(0, 0, 0); // black
-	int thickness = 1;
-	int linetype = 8;
-
-	// make everything white
-	for (int y = 0; y < mat.rows; y++)
-	{
-		for (int x = 0; x < mat.cols; x++)
-		{
-			mat.at<Vec3b> (y, x) [0] = 255;
-			mat.at<Vec3b> (y, x) [1] = 255;
-			mat.at<Vec3b> (y, x) [2] = 255;
-		}
-	}
-
-	// draw lines
-	Point start, end;
-	Quad q;
-	for (unsigned int i = 0; i < m.quads.size(); i++)
-	{
-		q = m.quads.at(i);
-		for (unsigned int j = 0; j < 4; j++)
-		{
-			if (j == 0)
-			{
-				start.x = q.v1.x;
-				start.y = q.v1.y;
-				end.x = q.v2.x;
-				end.y = q.v2.y;
-
-				line(mat, start, end, lineColor, thickness, linetype);
-			}
-			else if (j == 1)
-			{
-				start.x = q.v2.x;
-				start.y = q.v2.y;
-				end.x = q.v4.x;
-				end.y = q.v4.y;
-
-				line(mat, start, end, lineColor, thickness, linetype);
-			}
-			else if (j == 2)
-			{
-				start.x = q.v4.x;
-				start.y = q.v4.y;
-				end.x = q.v3.x;
-				end.y = q.v3.y;
-
-				line(mat, start, end, lineColor, thickness, linetype);
-			}
-			else
-			{
-				start.x = q.v3.x;
-				start.y = q.v3.y;
-				end.x = q.v1.x;
-				end.y = q.v1.y;
-
-				line(mat, start, end, lineColor, thickness, linetype);
-			}
-		}
-	}
+	Mat mat = Helper::meshAsMat(m, s);
 
 	imwrite(dir + fileName, mat);
 }
@@ -146,4 +83,75 @@ Mesh FileManager::loadMesh(const string fileName)
 		cerr << "Unable to open file: " << fileName << endl;
 
 	return resmesh;
+}
+
+void FileManager::saveMeshROIAsImage(const string fileName, const string dir, const Mesh &m, const Size &s)
+{
+	const char* _dir = (char*) dir.c_str();
+	mkDir(_dir);
+	Mat mat = Helper::meshAsMat(m, s);
+
+	Scalar lineColor(0, 0, 255); // red
+	int thickness = 1;
+	int linetype = 8;
+
+	for (unsigned int i = 0; i < m.quads.size(); i++)
+	{
+		Quad quad = m.quads.at(i);
+		Point topleft, topright, bottomleft, bottomright;
+		int roiWidth, roiHeight;
+
+		if (quad.v1.y > quad.v2.y)
+		{
+			topleft.y = quad.v2.y;
+			topright.y = quad.v2.y;
+		}
+		else
+		{
+			topleft.y = quad.v1.y;
+			topright.y = quad.v1.y;
+		}
+
+		if (quad.v1.x > quad.v3.x)
+		{
+			topleft.x = quad.v3.x;
+			bottomleft.x = quad.v3.x;
+		}
+		else
+		{
+			topleft.x = quad.v1.x;
+			bottomleft.x = quad.v1.x;
+		}
+
+		if (quad.v2.x < quad.v4.x)
+			topright.x = quad.v4.x;
+		else
+			topright.x = quad.v2.x;
+
+		if (quad.v3.y < quad.v4.y)
+			bottomleft.y = quad.v4.y;
+		else
+			bottomleft.y = quad.v3.y;
+
+		Vertex _topleft, _topright, _bottomleft;
+		_topleft.x = topleft.x;
+		_topleft.y = topleft.y;
+		_topright.x = topright.x;
+		_topright.y = topright.y;
+		_bottomleft.x = bottomleft.x;
+		_bottomleft.y = bottomleft.y;
+
+		roiWidth = (int) Helper::getDistance(_topleft, _topright);
+		roiHeight = (int) Helper::getDistance(_topleft, _bottomleft);
+
+		bottomright.x = bottomleft.x + roiWidth;
+		bottomright.y = topright.y + roiHeight;
+
+		line(mat, topleft, topright, lineColor, thickness, linetype);
+		line(mat, topright, bottomright, lineColor, thickness, linetype);
+		line(mat, bottomright, bottomleft, lineColor, thickness, linetype);
+		line(mat, bottomleft, topleft, lineColor, thickness, linetype);
+	}
+
+	imwrite(dir + fileName, mat);
 }

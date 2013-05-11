@@ -258,22 +258,24 @@ void ImageWarper::warpLinear()
 	{
 		Quad deformedQuad = deformedMesh.quads.at(i);
 		Quad linearQuad = linearScaledMesh.quads.at(i); // the corresponding quad in the linear scaled mesh
+		Quad deformedQuadRelative = getRelativeCoordinates(deformedQuad);
+		Quad linearQuadRelative = getRelativeCoordinates(linearQuad);
 
 		Mat deformedROI, linearROI;
 
-		u = deformedQuad.v3;
-		v = deformedQuad.v2;
-		a = deformedQuad.v4 - deformedQuad.v3;
-		b = deformedQuad.v1 - deformedQuad.v3;
-		p = deformedQuad.v1 - deformedQuad.v2;
-		q = deformedQuad.v4 - deformedQuad.v2;
+		u = deformedQuadRelative.v3;
+		v = deformedQuadRelative.v2;
+		a = deformedQuadRelative.v4 - deformedQuadRelative.v3;
+		b = deformedQuadRelative.v1 - deformedQuadRelative.v3;
+		p = deformedQuadRelative.v1 - deformedQuadRelative.v2;
+		q = deformedQuadRelative.v4 - deformedQuadRelative.v2;
 
-		_u = linearQuad.v3;
-		_v = linearQuad.v2;
-		_a = linearQuad.v4 - linearQuad.v3;
-		_b = linearQuad.v1 - linearQuad.v3;
-		_p = linearQuad.v1 - linearQuad.v2;
-		_q = linearQuad.v4 - linearQuad.v2;
+		_u = linearQuadRelative.v3;
+		_v = linearQuadRelative.v2;
+		_a = linearQuadRelative.v4 - linearQuadRelative.v3;
+		_b = linearQuadRelative.v1 - linearQuadRelative.v3;
+		_p = linearQuadRelative.v1 - linearQuadRelative.v2;
+		_q = linearQuadRelative.v4 - linearQuadRelative.v2;
 
 		//set ROI over deformed quad, i.e. a rectangle that engulfs the quad completely
 		getImageROI(deformedQuad, deformedROI, dest);
@@ -285,10 +287,10 @@ void ImageWarper::warpLinear()
 			{
 				//current pixel
 				Vertex x;
-				x.x = k;
-				x.y = j;
-				double r = (b.y * (x.x - u.x) + b.x * (u.y - x.y)) / (b.y * a.x - b.x * a.y);
-				double s = (x.y - r * a.y - u.y) / b.y;
+				x.x = j;
+				x.y = k;
+				double r = (b.y * (x.x - u.x) + b.x * (u.y - x.y)) / (double) (b.y * a.x - b.x * a.y);
+				double s = (x.y - r * a.y - u.y) / (double) b.y;
 
 				if (!(r < 0.0 || r > 1.0 || s < 0.0 || s > 1.0))
 				{
@@ -304,15 +306,15 @@ void ImageWarper::warpLinear()
 					}
 					else
 					{
-						_x.x = (int) (_v.x + (1.0 - r) * _p.x + (1.0 - s) * _q.x);
-						_x.y = (int) (_v.y + (1.0 - r) * _p.y + (1.0 - s) * _q.y);
+						_x.y = (int) (_v.x + (1.0 - r) * _p.x + (1.0 - s) * _q.x);
+						_x.x = (int) (_v.y + (1.0 - r) * _p.y + (1.0 - s) * _q.y);
 					}
 
 					try {
 						// interpolate pixels and fill new pixel
 						deformedROI.at<Vec3f> (j, k) [0] = interpolateLinear(_x, 0, linearROI);
 						deformedROI.at<Vec3f> (j, k) [1] = interpolateLinear(_x, 1, linearROI);
-						deformedROI.at<Vec3f> (j, K) [2] = interpolateLinear(_x, 2, linearROI);
+						deformedROI.at<Vec3f> (j, k) [2] = interpolateLinear(_x, 2, linearROI);
 					}
 					catch(...)
 					{
@@ -324,7 +326,7 @@ void ImageWarper::warpLinear()
 				{
 				}
 			}
-		}
+		}	
 	}
 }
 
@@ -385,27 +387,32 @@ float ImageWarper::interpolateLinear(Vertex &x, int channel, Mat &image)
 {
 	float n, s, w, e;
 	
-	if (x.x - 1 < 0)
-		w = image.at<Vec3f> (x.x, x.y) [channel];
-	else 
-		w = image.at<Vec3f> (x.x - 1, x.y) [channel];
+	if (x.y < image.rows && x.x < image.cols)
+	{
+		if (x.x - 1 < 0)
+			w = image.at<Vec3f> (x.y, x.x) [channel];
+		else 
+			w = image.at<Vec3f> (x.y, x.x - 1) [channel];
 
-	if (x.x + 1 == image.cols)
-		e = image.at<Vec3f> (x.x, x.y) [channel];
+		if (x.x + 1 == image.size().width)
+			e = image.at<Vec3f> (x.y, x.x) [channel];
+		else
+			e = image.at<Vec3f> (x.y, x.x + 1) [channel];
+
+		if (x.y - 1 < 0)
+			n = image.at<Vec3f> (x.y, x.x) [channel];
+		else
+			n = image.at<Vec3f> (x.y - 1, x.x) [channel];
+
+		if (x.y + 1 == image.size().height)
+			s = image.at<Vec3f> (x.y, x.x) [channel];
+		else
+			s = image.at<Vec3f> (x.y + 1, x.x) [channel];
+
+		return (float) ((n + s + w + e) / 4);
+	}
 	else
-		e = image.at<Vec3f> (x.x + 1, x.y) [channel];
-
-	if (x.y - 1 < 0)
-		n = image.at<Vec3f> (x.x, x.y) [channel];
-	else
-		n = image.at<Vec3f> (x.x, x.y - 1) [channel];
-
-	if (x.y + 1 == image.rows)
-		s = image.at<Vec3f> (x.x, x.y) [channel];
-	else
-		s = image.at<Vec3f> (x.x, x.y + 1) [channel];
-
-	return (float) ((n + s + w + e) / 4);
+		return 0.0;
 }
 
 float ImageWarper::interpolateNN(Vertex &x, int channel, Mat &image)
@@ -418,4 +425,28 @@ float ImageWarper::interpolateCubic(Vertex &x, int channel, Mat &image)
 {
 	// TODO
 	return 0.0;
+}
+
+Quad ImageWarper::getRelativeCoordinates(Quad &quad)
+{
+	Vertex topleft;
+
+	if (quad.v1.y > quad.v2.y)
+		topleft.y = quad.v2.y;
+	else
+		topleft.y = quad.v1.y;
+
+	if (quad.v1.x > quad.v3.x)
+		topleft.x = quad.v3.x;
+	else
+		topleft.x = quad.v1.x;
+
+	Quad result;
+
+	result.v1 = quad.v1 - topleft;
+	result.v2 = quad.v2 - topleft;
+	result.v3 = quad.v3 - topleft;
+	result.v4 = quad.v4 - topleft;
+
+	return result;
 }

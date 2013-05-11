@@ -27,5 +27,6 @@ private:
 	float interpolateLinear(Vertex &x, int channel, Mat &image);
 	float interpolateNN(Vertex &x, int channel, Mat &image);
 	float interpolateCubic(Vertex &x, int channel, Mat &image);
+	Quad getRelativeCoordinates(Quad &quad);
 };
 

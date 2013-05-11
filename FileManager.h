@@ -7,4 +7,5 @@ struct FileManager
 	static void saveMat(const string fileName, const string dir, const Mat &mat);
 	static void saveMeshAsText(const string fileName, const string dir, Mesh &mesh);
 	static Mesh loadMesh(const string fileName);
+	static void saveMeshROIAsImage(const string fileName, const string dir, const Mesh &m, const Size &s);
 };
