@@ -43,14 +43,14 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	tmp.convertTo(tmp, CV_32FC3);
 
 	// do the warping according to mesh
-	warp();
+	warp(INTER_NEAREST);
 
 	// convert dest frame back to original type
 	dest.convertTo(dest, src.type());
 
 	string filename = "warped_image + mesh.png";
 	string dir = "D:\\warping\\result\\";
-	Helper::drawMeshOverMat(deformedMesh, dest);
+	//Helper::drawMeshOverMat(deformedMesh, dest);
 	FileManager::saveMat(filename, dir, dest);
 
 	return &Helper::MatToIplImage(dest);
@@ -215,6 +215,12 @@ void ImageWarper::initializeMesh(IplImage* img)
 	}
 }
 
+void ImageWarper::warpNN()
+{
+	cout << ">> Warp image with nearest neighbour interpolation" << endl;
+	// TODO
+}
+
 /*
 	For convenience the following vertices are treated as 2-dimensional vectors.
 
@@ -229,22 +235,6 @@ void ImageWarper::initializeMesh(IplImage* img)
 		a
 */
 void ImageWarper::warp(int interpolation)
-{
-	if (interpolation == INTER_NEAREST)
-		warpNN();
-	else if (interpolation == INTER_LINEAR)
-		warpLinear();
-	else if (interpolation == INTER_CUBIC)
-		warpCubic();
-}
-
-void ImageWarper::warpNN()
-{
-	cout << ">> Warp image with nearest neighbour interpolation" << endl;
-	// TODO
-}
-
-void ImageWarper::warpLinear()
 {
 	cout << ">> Warp image with linear interpolation" << endl;
 
@@ -312,9 +302,24 @@ void ImageWarper::warpLinear()
 
 					try {
 						// interpolate pixels and fill new pixel
-						deformedROI.at<Vec3f> (j, k) [0] = interpolateLinear(_x, 0, linearROI);
-						deformedROI.at<Vec3f> (j, k) [1] = interpolateLinear(_x, 1, linearROI);
-						deformedROI.at<Vec3f> (j, k) [2] = interpolateLinear(_x, 2, linearROI);
+						if (interpolation == INTER_LINEAR)
+						{
+							deformedROI.at<Vec3f> (j, k) [0] = interpolateLinear(_x, 0, linearROI);
+							deformedROI.at<Vec3f> (j, k) [1] = interpolateLinear(_x, 1, linearROI);
+							deformedROI.at<Vec3f> (j, k) [2] = interpolateLinear(_x, 2, linearROI);
+						}
+						else if (interpolation == INTER_NEAREST)
+						{
+							deformedROI.at<Vec3f> (j, k) [0] = interpolateNN(_x, 0, linearROI);
+							deformedROI.at<Vec3f> (j, k) [1] = interpolateNN(_x, 1, linearROI);
+							deformedROI.at<Vec3f> (j, k) [2] = interpolateNN(_x, 2, linearROI);
+						}
+						else if (interpolation == INTER_CUBIC)
+						{
+							deformedROI.at<Vec3f> (j, k) [0] = interpolateCubic(_x, 0, linearROI);
+							deformedROI.at<Vec3f> (j, k) [1] = interpolateCubic(_x, 1, linearROI);
+							deformedROI.at<Vec3f> (j, k) [2] = interpolateCubic(_x, 2, linearROI);
+						}
 					}
 					catch(...)
 					{
@@ -328,13 +333,6 @@ void ImageWarper::warpLinear()
 			}
 		}	
 	}
-}
-
-void ImageWarper::warpCubic()
-{
-	cout << ">> Warp image with cubic interpolation" << endl;
-
-	// TODO
 }
 
 void ImageWarper::getImageROI(Quad &quad, Mat &roi, Mat &img)
@@ -417,8 +415,10 @@ float ImageWarper::interpolateLinear(Vertex &x, int channel, Mat &image)
 
 float ImageWarper::interpolateNN(Vertex &x, int channel, Mat &image)
 {
-	// TODO
-	return 0.0;
+	if (x.y < image.rows && x.x < image.cols)
+		return image.at<Vec3f> (x.y, x.x) [channel];
+	else
+		return 0.0;
 }
 
 float ImageWarper::interpolateCubic(Vertex &x, int channel, Mat &image)
