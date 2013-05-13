@@ -50,7 +50,7 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 
 	string filename = "warped_image + mesh.png";
 	string dir = "D:\\warping\\result\\";
-	Helper::drawMeshOverMat(deformedMesh, dest);
+	//Helper::drawMeshOverMat(deformedMesh, dest);
 	FileManager::saveMat(filename, dir, dest);
 
 	return &Helper::MatToIplImage(dest);
@@ -290,11 +290,25 @@ void ImageWarper::warp(int interpolation)
 					}
 					else
 					{
+						/*
 						_x.x = (int) (_v.x + (1.0 - r) * _p.x + (1.0 - s) * _q.x);
 						_x.y = (int) (_v.y + (1.0 - r) * _p.y + (1.0 - s) * _q.y);
+						*/
+
+						double _r = (double) (q.y * (x.x - v.x) + q.x * (v.y - x.y)) / (double) (q.y * p.x - q.x * p.y);
+						double _s = (double) (x.y - _r * p.y - v.y) / (double) q.y;
+
+						if (_r + _s <= 1 && !(_r < 0.0 || _r > 1.0 || _s < 0.0 || _s > 1.0))
+						{
+							_x.x = (int) (_v.x + _r * _p.x + _s * _q.x);
+							_x.y = (int) (_v.y + _r * _p.y + _s * _q.y);
+						}
+						else
+							continue;
 					}
 
-					try {
+					try 
+					{
 						// interpolate pixels and fill new pixel
 						if (interpolation == INTER_LINEAR)
 						{
