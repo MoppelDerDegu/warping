@@ -50,7 +50,7 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 
 	string filename = "warped_image + mesh.png";
 	string dir = "D:\\warping\\result\\";
-	//Helper::drawMeshOverMat(deformedMesh, dest);
+	Helper::drawMeshOverMat(deformedMesh, dest);
 	FileManager::saveMat(filename, dir, dest);
 
 	return &Helper::MatToIplImage(dest);
@@ -271,8 +271,8 @@ void ImageWarper::warp(int interpolation)
 			{
 				//current pixel
 				Vertex x;
-				x.x = j;
-				x.y = k;
+				x.x = k;
+				x.y = j;
 				double r = (double) (b.y * (x.x - u.x) + b.x * (u.y - x.y)) / (double) (b.y * a.x - b.x * a.y);
 				double s = (double) (x.y - r * a.y - u.y) / (double) b.y;
 
@@ -290,8 +290,8 @@ void ImageWarper::warp(int interpolation)
 					}
 					else
 					{
-						_x.y = (int) (_v.x + (1.0 - r) * _p.x + (1.0 - s) * _q.x);
-						_x.x = (int) (_v.y + (1.0 - r) * _p.y + (1.0 - s) * _q.y);
+						_x.x = (int) (_v.x + (1.0 - r) * _p.x + (1.0 - s) * _q.x);
+						_x.y = (int) (_v.y + (1.0 - r) * _p.y + (1.0 - s) * _q.y);
 					}
 
 					try {
@@ -411,8 +411,14 @@ float ImageWarper::interpolateNN(Vertex &x, int channel, Mat &image)
 {
 	if (x.y < image.rows && x.x < image.cols)
 		return image.at<Vec3f> (x.y, x.x) [channel];
+	else if (x.y == image.rows && x.x == image.cols)
+		return image.at<Vec3f> (x.y - 1, x.x - 1) [channel];
+	else if (x.y == image.rows)
+		return image.at<Vec3f> (x.y - 1, x.x) [channel];
+	else if (x.x == image.cols)
+		return image.at<Vec3f> (x.y, x.x - 1) [channel];
 	else
-		return 0.0;
+		return 5000;
 }
 
 float ImageWarper::interpolateCubic(Vertex &x, int channel, Mat &image)
