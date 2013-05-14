@@ -20,6 +20,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>

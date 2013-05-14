@@ -5,6 +5,7 @@
 #include "Saliency.h"
 #include "ImageSaliencyDetector.h"
 #include "GradientGenerator.h"
+#include "FileManager.h"
 
 #if 0
 
@@ -174,12 +175,9 @@ int main(int argc, char* argv[])
 	*/
 
 	// read image
-	char* fileName = "D:/media/test.jpg";
+	char* fileName = "D:/media/1.png";
 	Mat mat = imread(fileName);
 	IplImage* img = &Helper::MatToIplImage(mat);
-
-	char* name = "D:/media/test-saliency.png";
-	Mat mat2 = imread(name);
 
 	// initialization
 	ImageSaliencyDetector isd;
@@ -194,14 +192,18 @@ int main(int argc, char* argv[])
 	gd.generateGradient(mat, gradient);
 
 	// combine saliency and gradient
-	saliencyMap.convertTo(saliencyMap, CV_8U, 1, 0);
+	saliencyMap.convertTo(saliencyMap, CV_8U);
 	Mat combined = gradient + saliencyMap;
+
+	FileManager::saveMat("blume_saliency.png", "D:\\warping\\saliency\\", saliencyMap);
+	FileManager::saveMat("blume_gradient.png", "D:\\warping\\saliency\\", gradient);
+	FileManager::saveMat("blume_saliency + gradient.png", "D:\\warping\\saliency\\", combined);
 
 	// warp
 	Size s;
-	s.height = 480;
-	s.width = 600;
-	iw.warpImage(img, s, combined);
+	s.height = 300;
+	s.width = 300;
+	iw.warpImage(img, s, saliencyMap);
 
 	//cvReleaseCapture(&input);
 }

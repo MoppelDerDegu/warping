@@ -42,7 +42,7 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	// formulate optimization problem:
 
 	// derivative free optimization algorithm
-	nlopt::opt opt(nlopt::LN_SBPLX, x.size());
+	nlopt::opt opt(nlopt::LN_PRAXIS, x.size());
 
 	// lower and upper bounds of vertex coordinates
 	vector<double> lb = computeLowerImageBoundConstraints(x);
@@ -59,7 +59,7 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	//opt.set_ftol_abs(10);
 
 	double minf;
-	//nlopt::result result = opt.optimize(x, minf);
+	nlopt::result result = opt.optimize(x, minf);
 	
 	cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
 
@@ -210,11 +210,11 @@ double Solver::totalQuadEnergy(Mesh &newMesh)
 	double du = 0.0;
 
 	// assuming #quads in oldmesh == #quads in new mesh
-	for (unsigned int i = 0; i < tmp.quads.size(); i++)
+	for (unsigned int i = 0; i < originalMesh.quads.size(); i++)
 	{
 		// calculate quad scale factor with the initial guess, i.e. sf is constant
-		//double sf = calculateQuadScale(tmp.quads.at(i), newMesh.quads.at(i));
-		double duf = quadEnergy(tmp.quads.at(i), newMesh.quads.at(i), 0.0);
+		double sf = calculateQuadScale(originalMesh.quads.at(i), tmp.quads.at(i));
+		double duf = quadEnergy(originalMesh.quads.at(i), newMesh.quads.at(i), 0.0);
 
 		// du = du + wf * duf
 		du += (saliencyWeightMapping.at(i).first * duf);
@@ -227,17 +227,17 @@ double Solver::totalEdgeEnergy(Mesh &newMesh)
 {
 	double dl = 0.0;
 
-	for (unsigned int i = 0; i < tmp.edges.size(); i++)
+	for (unsigned int i = 0; i < originalMesh.edges.size(); i++)
 	{
 		Vertex _v = newMesh.edges.at(i).src - newMesh.edges.at(i).dest;
-		Vertex v = tmp.edges.at(i).src - tmp.edges.at(i).dest;
+		Vertex v = originalMesh.edges.at(i).src - originalMesh.edges.at(i).dest;
 
 		// calculate edge lenght ratio
-		double lij = calculateLengthRatio(tmp.edges.at(i), newMesh.edges.at(i));
+		double lij = calculateLengthRatio(originalMesh.edges.at(i), tmp.edges.at(i));
 		v.x = Helper::round(v.x * lij);
 		v.y = Helper::round(v.y * lij);
 
-		dl += sqr(Helper::euclideanNorm(_v/* - v*/));
+		dl += sqr(Helper::euclideanNorm(_v - v));
 	}
 
 	return dl;

@@ -36,21 +36,24 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	deformedMesh = solver.solveImageProblem(initialMesh, destSize, oldSize, wfMap);
 	linearScaledMesh = solver.getInitialGuess();
 	
-	deformedMesh = FileManager::loadMesh("D:\\warping\\mesh\\mesh.txt");
-
 	//linearly scale the image as starting point
 	resize(src, tmp, newSize);
 	tmp.convertTo(tmp, CV_32FC3);
 
+	FileManager::saveMeshAsImage("blume_mesh.png", "D:\\warping\\mesh\\", deformedMesh, newSize);
+	FileManager::saveMeshAsImage("blume_mesh_initial_guess.png", "D:\\warping\\mesh\\", linearScaledMesh, newSize);
+	resize(saliency, saliency, newSize);
+	Helper::drawMeshOverMat(deformedMesh, saliency);
+	FileManager::saveMat("blume_combined_saliency + mesh.png", "D:\\warping\\mesh\\", saliency);
+
 	// do the warping according to mesh
-	warp(INTER_NEAREST);
+	warp();
 
 	// convert dest frame back to original type
 	dest.convertTo(dest, src.type());
 
-	string filename = "warped_image + mesh.png";
+	string filename = "warped_image.png";
 	string dir = "D:\\warping\\result\\";
-	//Helper::drawMeshOverMat(deformedMesh, dest);
 	FileManager::saveMat(filename, dir, dest);
 
 	return &Helper::MatToIplImage(dest);
@@ -240,10 +243,10 @@ void ImageWarper::warp(int interpolation)
 
 	for (unsigned int i = 0; i < deformedMesh.quads.size(); i++)
 	{
-		Quad deformedQuad = deformedMesh.quads.at(i);
+		Quad deformedQuad = deformedMesh.quads.at(i); //current Quad
 		Quad linearQuad = linearScaledMesh.quads.at(i); // the corresponding quad in the linear scaled mesh
-		Quad deformedQuadRelative = getRelativeCoordinates(deformedQuad);
-		Quad linearQuadRelative = getRelativeCoordinates(linearQuad);
+		Quad deformedQuadRelative = getRelativeCoordinates(deformedQuad); //relative coordinates of quad
+		Quad linearQuadRelative = getRelativeCoordinates(linearQuad); //relative coordinates of quad
 
 		Mat deformedROI, linearROI;
 
@@ -273,33 +276,34 @@ void ImageWarper::warp(int interpolation)
 				Vertex x;
 				x.x = k;
 				x.y = j;
+
+				//compute scalars to determine the position of the current pixel
 				double r = (double) (b.y * (x.x - u.x) + b.x * (u.y - x.y)) / (double) (b.y * a.x - b.x * a.y);
 				double s = (double) (x.y - r * a.y - u.y) / (double) b.y;
 
 				if (!(r < 0.0 || r > 1.0 || s < 0.0 || s > 1.0))
 				{
-					//pixel inside quad
+					//pixel is in the parallelogram defined by vectors a and b
 
 					//corresponding pixel in the linear quad
 					Vertex _x;
 					
 					if (r + s < 1.0)
 					{
+						//pixel is in the lower left triangle of the quad
+
 						_x.x = (int) (_u.x + r * _a.x + s * _b.x);
 						_x.y = (int) (_u.y + r * _a.y + s * _b.y);
 					}
 					else
 					{
-						/*
-						_x.x = (int) (_v.x + (1.0 - r) * _p.x + (1.0 - s) * _q.x);
-						_x.y = (int) (_v.y + (1.0 - r) * _p.y + (1.0 - s) * _q.y);
-						*/
-
 						double _r = (double) (q.y * (x.x - v.x) + q.x * (v.y - x.y)) / (double) (q.y * p.x - q.x * p.y);
 						double _s = (double) (x.y - _r * p.y - v.y) / (double) q.y;
 
 						if (_r + _s <= 1 && !(_r < 0.0 || _r > 1.0 || _s < 0.0 || _s > 1.0))
 						{
+							//pixel is in the upper right triangle of the quad
+
 							_x.x = (int) (_v.x + _r * _p.x + _s * _q.x);
 							_x.y = (int) (_v.y + _r * _p.y + _s * _q.y);
 						}
@@ -307,8 +311,40 @@ void ImageWarper::warp(int interpolation)
 							continue;
 					}
 
-					try 
+					// interpolate pixels and fill new pixel
+					if (interpolation == INTER_LINEAR)
 					{
+						deformedROI.at<Vec3f> (j, k) [0] = interpolateLinear(_x, 0, linearROI);
+						deformedROI.at<Vec3f> (j, k) [1] = interpolateLinear(_x, 1, linearROI);
+						deformedROI.at<Vec3f> (j, k) [2] = interpolateLinear(_x, 2, linearROI);
+					}
+					else if (interpolation == INTER_NEAREST)
+					{
+						deformedROI.at<Vec3f> (j, k) [0] = interpolateNN(_x, 0, linearROI);
+						deformedROI.at<Vec3f> (j, k) [1] = interpolateNN(_x, 1, linearROI);
+						deformedROI.at<Vec3f> (j, k) [2] = interpolateNN(_x, 2, linearROI);
+					}
+					else if (interpolation == INTER_CUBIC)
+					{
+						deformedROI.at<Vec3f> (j, k) [0] = interpolateCubic(_x, 0, linearROI);
+						deformedROI.at<Vec3f> (j, k) [1] = interpolateCubic(_x, 1, linearROI);
+						deformedROI.at<Vec3f> (j, k) [2] = interpolateCubic(_x, 2, linearROI);
+					}
+				}
+				else
+				{
+					double _r = (double) (q.y * (x.x - v.x) + q.x * (v.y - x.y)) / (double) (q.y * p.x - q.x * p.y);
+					double _s = (double) (x.y - _r * p.y - v.y) / (double) q.y;
+
+					if (_r + _s <= 1 && !(_r < 0.0 || _r > 1.0 || _s < 0.0 || _s > 1.0))
+					{
+						//pixel is in the upper right triangle of the quad
+
+						Vertex _x;
+
+						_x.x = (int) (_v.x + _r * _p.x + _s * _q.x);
+						_x.y = (int) (_v.y + _r * _p.y + _s * _q.y);
+						
 						// interpolate pixels and fill new pixel
 						if (interpolation == INTER_LINEAR)
 						{
@@ -329,14 +365,6 @@ void ImageWarper::warp(int interpolation)
 							deformedROI.at<Vec3f> (j, k) [2] = interpolateCubic(_x, 2, linearROI);
 						}
 					}
-					catch(...)
-					{
-						cout << "i: " << i << " j: " << j << " k: " << k;
-						return;
-					}
-				}
-				else
-				{
 				}
 			}
 		}	

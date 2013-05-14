@@ -19,7 +19,7 @@ private:
 	Mesh linearScaledMesh;
 	Mesh deformedMesh;
 	void initializeMesh(IplImage* img);
-	void warp(int interpolation = INTER_LINEAR); //warps the destImage according to deformedMesh
+	void warp(int interpolation = INTER_NEAREST); //warps the destImage according to deformedMesh
 	void getImageROI(Quad &quad, Mat &roi, Mat &img);
 	float interpolateLinear(Vertex &x, int channel, Mat &image);
 	float interpolateNN(Vertex &x, int channel, Mat &image);
