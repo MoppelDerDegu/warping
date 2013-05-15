@@ -77,8 +77,8 @@ void GradientGenerator::generateSimpleGradient(Mat &src, Mat &dest)
 {
 	Mat srcGray;
 
-	GaussianBlur(src, src, Size(3, 3), 0, 0, BORDER_DEFAULT);
-	cvtColor(src, srcGray, CV_RGB2GRAY);
+	GaussianBlur(src, srcGray, Size(9, 9), 0, 0, BORDER_DEFAULT);
+	cvtColor(srcGray, srcGray, CV_RGB2GRAY);
 
 	dest = Mat::zeros(src.rows, src.cols, CV_8U);
 

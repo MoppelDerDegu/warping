@@ -52,9 +52,9 @@ vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh 
 		pair.second = m.quads.at(i);
 		result.push_back(pair);
 	}
-
+	/*
 	// determine max saliency values of all quads
-	/*for (unsigned int i = 0; i < result.size(); i++)
+	for (unsigned int i = 0; i < result.size(); i++)
 	{
 		float wf = result.at(i).first;
 
@@ -68,7 +68,7 @@ vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh 
 		float value = result.at(i).first;
 		float wf = Helper::normalize(value, quadmax);
 		result.at(i).first = wf;
-	}*/
-
+	}
+	*/
 	return result;
 }

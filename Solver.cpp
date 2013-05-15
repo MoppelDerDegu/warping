@@ -129,29 +129,17 @@ double Solver::calculateQuadScale(Quad &oldQuad, Quad &newQuad)
 	double sum1 = 0.0;
 	double sum2 = 0.0;
 
-	for (int i = 0; i < 4; i++)
-	{
-		if (i == 0)
-		{
-			sum1 += vTv(oldQuad.v1 - oldQuad.v2, newQuad.v1 - newQuad.v2);
-			sum2 += sqr(Helper::euclideanNorm(oldQuad.v1 - oldQuad.v2));
-		}
-		else if (i == 1)
-		{
-			sum1 += vTv(oldQuad.v2 - oldQuad.v4, newQuad.v2 - newQuad.v4);
-			sum2 += sqr(Helper::euclideanNorm(oldQuad.v2 - oldQuad.v4));
-		}
-		else if (i == 2)
-		{
-			sum1 += vTv(oldQuad.v4 - oldQuad.v3, newQuad.v4 - newQuad.v3);
-			sum2 += sqr(Helper::euclideanNorm(oldQuad.v4 - oldQuad.v3));
-		}
-		else
-		{
-			sum1 += vTv(oldQuad.v3 - oldQuad.v1, newQuad.v3 - newQuad.v1);
-			sum2 += sqr(Helper::euclideanNorm(oldQuad.v3 - oldQuad.v1));
-		}
-	}
+	sum1 += vTv(oldQuad.v1 - oldQuad.v2, newQuad.v1 - newQuad.v2);
+	sum2 += sqr(Helper::euclideanNorm(oldQuad.v1 - oldQuad.v2));
+
+	sum1 += vTv(oldQuad.v2 - oldQuad.v4, newQuad.v2 - newQuad.v4);
+	sum2 += sqr(Helper::euclideanNorm(oldQuad.v2 - oldQuad.v4));
+
+	sum1 += vTv(oldQuad.v4 - oldQuad.v3, newQuad.v4 - newQuad.v3);
+	sum2 += sqr(Helper::euclideanNorm(oldQuad.v4 - oldQuad.v3));
+
+	sum1 += vTv(oldQuad.v3 - oldQuad.v1, newQuad.v3 - newQuad.v1);
+	sum2 += sqr(Helper::euclideanNorm(oldQuad.v3 - oldQuad.v1));
 
 	sf = sum1 / sum2;
 
@@ -161,47 +149,36 @@ double Solver::calculateQuadScale(Quad &oldQuad, Quad &newQuad)
 double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 {
 	double du = 0.0;
+	Vertex _v, v;
 
-	for (int i = 0; i < 4; i++)
-	{
-		if (i == 0)
-		{
-			Vertex _v = newQuad.v1 - newQuad.v2;
-			Vertex v = oldQuad.v1 - oldQuad.v2;
-			v.x = Helper::round(v.x * sf);
-			v.y = Helper::round(v.y * sf);
+	_v = newQuad.v1 - newQuad.v2;
+	v = oldQuad.v1 - oldQuad.v2;
+	v.x = Helper::round(v.x * sf);
+	v.y = Helper::round(v.y * sf);
 
-			du += sqr(Helper::euclideanNorm(_v - v));
-		}
-		else if (i == 1)
-		{
-			Vertex _v = newQuad.v2 - newQuad.v4;
-			Vertex v = oldQuad.v2 - oldQuad.v4;
-			v.x = Helper::round(v.x * sf);
-			v.y = Helper::round(v.y * sf);
+	du += sqr(Helper::euclideanNorm(_v - v));
 
-			du += sqr(Helper::euclideanNorm(_v - v));
-		}
-		else if (i == 2)
-		{
-			Vertex _v = newQuad.v4 - newQuad.v3;
-			Vertex v = oldQuad.v4 - oldQuad.v3;
-			v.x = Helper::round(v.x * sf);
-			v.y = Helper::round(v.y * sf);
+	_v = newQuad.v2 - newQuad.v4;
+	v = oldQuad.v2 - oldQuad.v4;
+	v.x = Helper::round(v.x * sf);
+	v.y = Helper::round(v.y * sf);
 
-			du += sqr(Helper::euclideanNorm(_v - v));
-		}
-		else
-		{
-			Vertex _v = newQuad.v3 - newQuad.v1;
-			Vertex v = oldQuad.v3 - oldQuad.v1;
-			v.x = Helper::round(v.x * sf);
-			v.y = Helper::round(v.y * sf);
+	du += sqr(Helper::euclideanNorm(_v - v));
 
-			du += sqr(Helper::euclideanNorm(_v - v));
-		}
-	}
+	_v = newQuad.v4 - newQuad.v3;
+	v = oldQuad.v4 - oldQuad.v3;
+	v.x = Helper::round(v.x * sf);
+	v.y = Helper::round(v.y * sf);
 
+	du += sqr(Helper::euclideanNorm(_v - v));
+
+	_v = newQuad.v3 - newQuad.v1;
+	v = oldQuad.v3 - oldQuad.v1;
+	v.x = Helper::round(v.x * sf);
+	v.y = Helper::round(v.y * sf);
+
+	du += sqr(Helper::euclideanNorm(_v - v));
+	
 	return du;
 }
 
@@ -214,7 +191,7 @@ double Solver::totalQuadEnergy(Mesh &newMesh)
 	{
 		// calculate quad scale factor with the initial guess, i.e. sf is constant
 		double sf = calculateQuadScale(originalMesh.quads.at(i), tmp.quads.at(i));
-		double duf = quadEnergy(originalMesh.quads.at(i), newMesh.quads.at(i), 0.0);
+		double duf = quadEnergy(originalMesh.quads.at(i), newMesh.quads.at(i), sf / 2);
 
 		// du = du + wf * duf
 		du += (saliencyWeightMapping.at(i).first * duf);

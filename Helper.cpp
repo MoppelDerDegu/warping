@@ -419,32 +419,20 @@ Mat Helper::meshAsMat(const Mesh &mesh, const Size &s)
 
 void Helper::matXmat(const Mat &a, const Mat &b, Mat &dest)
 {
-	if (a.type() != b.type())
-		throw invalid_argument("The matrices a and b are of different types");
-
-	if (a.size != b.size)
-		throw invalid_argument("The matrices a and b have different sizes");
-
 	Size destSize(a.cols, a.rows);
-	int atype = a.type(), btype = b.type();
-	dest = Mat::zeros(destSize, CV_8U);
-	a.convertTo(a, CV_8U);
-	b.convertTo(b, CV_8U);
+	int atype = a.type();
+	dest = Mat::zeros(destSize, CV_32F);
+	
+	cv::normalize(a, a, 0, 1, NORM_MINMAX);
 
 	for (int y = 0; y < a.rows; y++)
 	{
 		for (int x = 0; x < a.cols; x++)
 		{
-			short value = a.at<uchar> (y, x) * b.at<uchar> (y, x);
-
-			if (value > 255)
-				value = 255;
-
-			dest.at<uchar> (y, x) = (uchar) value;
+			dest.at<float> (y, x) = a.at<float> (y, x) * b.at<uchar> (y, x);
 		}
 	}
 
-	a.convertTo(a, atype);
-	b.convertTo(b, btype);
-	dest.convertTo(dest, a.type());
+	a.convertTo(a, CV_32F, 255);
+	dest.convertTo(dest, b.type());
 }

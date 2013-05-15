@@ -20,5 +20,7 @@ struct Helper
 	static void drawMeshOverMat(const Mesh &mesh, Mat &mat);
 	static double stringToDouble(const string &s);
 	static Mat meshAsMat(const Mesh &mesh, const Size &s);
-	static void matXmat(const Mat &a, const Mat &b, Mat &dest); // multiplies (i,j) in a with (i, j) in b and writes the product in (i,j) in dest
+
+	// normalizes a to 0..1 and then multiplies (i,j) in a with (i, j) in b and writes the product in (i,j) in dest
+	static void matXmat(const Mat &a, const Mat &b, Mat &dest);
 };
