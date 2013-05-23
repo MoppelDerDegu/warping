@@ -7,8 +7,10 @@ class Solver
 public:
 	Solver(void);
 	~Solver(void);
+	Mesh redistributeQuads(Mesh &m, vector<pair<float, Quad>> &wfMap); //draws quads towards salient regions
 	Mesh solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vector<pair<float, Quad>> &wfMap);
-	static double wrapperOptFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
+	static double wrapperImageObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
+	static double wrapperRedistributeObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
 	Mesh getDeformedMesh();
 	Mesh getInitialGuess();
 private:
@@ -26,6 +28,7 @@ private:
 	double totalQuadEnergy(Mesh &newMesh); // Wang et al. 2008 equation (3) 
 	double totalEdgeEnergy(Mesh &newMesh); // Wang et al. 2008 equation (4)
 	double imageObjFunc(const vector<double> &x, vector<double> &grad); // Wang et al. 2008 equation (5)
+	double redistributeObjFunc(const vector<double> &x, vector<double> &grad); // Wang et al. 2008 equation (9)
 	vector<double> computeLowerImageBoundConstraints(const vector<double> &x);
 	vector<double> computeUpperImageBoundConstraints(const vector<double> &x);
 	double vTv(Vertex v1, Vertex v2); // returns v1^tr * v2

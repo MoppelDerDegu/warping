@@ -51,12 +51,13 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	opt.set_upper_bounds(ub);
 
 	// minimize objective function
-	opt.set_min_objective(Solver::wrapperOptFunc, this);
+	opt.set_min_objective(Solver::wrapperImageObjectiveFunc, this);
 
 	// convergence criteria
-	opt.set_xtol_abs(10);
+	opt.set_xtol_abs(1);
 	//opt.set_maxtime(60);
 	//opt.set_ftol_abs(10);
+	//opt.set_maxeval(1000);
 
 	double minf;
 	nlopt::result result = opt.optimize(x, minf);
@@ -66,10 +67,9 @@ Mesh Solver::solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vecto
 	return deformedMesh;
 }
 
-double Solver::wrapperOptFunc(const vector<double> &x, vector<double> &grad, void *my_func_data)
+double Solver::wrapperImageObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data)
 {
 	Solver* solv = reinterpret_cast<Solver*> (my_func_data);
-
 	return solv->imageObjFunc(x, grad);
 }
 
@@ -149,8 +149,9 @@ double Solver::calculateQuadScale(Quad &oldQuad, Quad &newQuad)
 double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 {
 	double du = 0.0;
+	/*
 	Vertex _v, v;
-
+	
 	_v = newQuad.v1 - newQuad.v2;
 	v = oldQuad.v1 - oldQuad.v2;
 	v.x = Helper::round(v.x * sf);
@@ -178,6 +179,19 @@ double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 	v.y = Helper::round(v.y * sf);
 
 	du += sqr(Helper::euclideanNorm(_v - v));
+	*/
+	
+	Vertex a, b, _a, _b;
+
+	a = oldQuad.v1 - oldQuad.v2;
+	b = oldQuad.v2 - oldQuad.v4;
+	_a = newQuad.v1 - newQuad.v2;
+	_b = newQuad.v2 - newQuad.v4;
+
+	double x = sqr(Helper::euclideanNorm(_a - a));
+	double y = sqr(Helper::euclideanNorm(_b - b));
+
+	du = x / y;
 	
 	return du;
 }
@@ -191,7 +205,7 @@ double Solver::totalQuadEnergy(Mesh &newMesh)
 	{
 		// calculate quad scale factor with the initial guess, i.e. sf is constant
 		double sf = calculateQuadScale(originalMesh.quads.at(i), tmp.quads.at(i));
-		double duf = quadEnergy(originalMesh.quads.at(i), newMesh.quads.at(i), sf / 2);
+		double duf = quadEnergy(originalMesh.quads.at(i), newMesh.quads.at(i), sf);
 
 		// du = du + wf * duf
 		du += (saliencyWeightMapping.at(i).first * duf);
@@ -210,10 +224,11 @@ double Solver::totalEdgeEnergy(Mesh &newMesh)
 		Vertex v = originalMesh.edges.at(i).src - originalMesh.edges.at(i).dest;
 
 		// calculate edge lenght ratio
+		/*
 		double lij = calculateLengthRatio(originalMesh.edges.at(i), tmp.edges.at(i));
 		v.x = Helper::round(v.x * lij);
 		v.y = Helper::round(v.y * lij);
-
+		*/
 		dl += sqr(Helper::euclideanNorm(_v - v));
 	}
 
@@ -340,4 +355,26 @@ vector<double> Solver::computeUpperImageBoundConstraints(const vector<double> &x
 	}
 
 	return ub;
+}
+
+Mesh Solver::redistributeQuads(Mesh &m, vector<pair<float, Quad>> &wfMap)
+{
+	Mesh mesh;
+
+	// TODO
+
+	return mesh;
+}
+
+double Solver::wrapperRedistributeObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data)
+{
+	Solver* solver = reinterpret_cast<Solver*> (my_func_data);
+	return solver->redistributeObjFunc(x, grad);
+}
+
+double Solver::redistributeObjFunc(const vector<double> &x, vector<double> &grad)
+{
+	// TODO
+
+	return 0.0;
 }

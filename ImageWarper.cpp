@@ -52,8 +52,9 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	// convert dest frame back to original type
 	dest.convertTo(dest, src.type());
 
-	string filename = "warped_image.png";
+	string filename = "warped_image + mesh.png";
 	string dir = "D:\\warping\\result\\";
+	FileManager::saveMat("warped_image.png", dir, dest);
 	Helper::drawMeshOverMat(deformedMesh, dest);
 	FileManager::saveMat(filename, dir, dest);
 
