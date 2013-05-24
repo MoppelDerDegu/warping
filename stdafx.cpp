@@ -30,5 +30,10 @@ bool Edge::operator== (Edge &e)
 	return (e.src == src && e.dest == dest);
 }
 
+bool Quad::operator== (Quad &q)
+{
+	return (q.v1 == v1 && q.v2 == v2 && q.v3 == v3 && q.v4 == v4);
+}
+
 // TODO: Auf zusätzliche Header verweisen, die in STDAFX.H
 // und nicht in dieser Datei erforderlich sind.

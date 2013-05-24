@@ -30,8 +30,6 @@ private:
 	double imageObjFunc(const vector<double> &x, vector<double> &grad); // Wang et al. 2008 equation (5)
 	double redistributeObjFunc(const vector<double> &x, vector<double> &grad); 
 	double totalRedistributionEnergy(Mesh &newMesh); // Wang et al. 2008 equation (9)
-	double edgeSaliency(Mesh &m, Edge &e);
-	bool isEdgeOnBorder(Edge &e, Size &size);
 	vector<double> computeLowerImageBoundConstraints(const vector<double> &x, const Size size);
 	vector<double> computeUpperImageBoundConstraints(const vector<double> &x, const Size size);
 	double vTv(Vertex v1, Vertex v2); // returns v1^tr * v2

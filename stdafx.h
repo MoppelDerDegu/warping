@@ -71,6 +71,7 @@ typedef struct Quad
 	Vertex v2;
 	Vertex v3;
 	Vertex v4;
+	bool operator== (Quad &q);
 };
 
 typedef struct Mesh

@@ -412,30 +412,11 @@ double Solver::redistributeObjFunc(const vector<double> &x, vector<double> &grad
 double Solver::totalRedistributionEnergy(Mesh &newMesh)
 {
 	double sum = 0;
-	
+	/*
 	for (unsigned int i = 0; i < newMesh.edges.size(); i++)
 	{
 		sum += ((1 + edgeSaliency(newMesh, newMesh.edges.at(i))) * sqr(WarpingMath::euclideanNorm(newMesh.edges.at(i).src - newMesh.edges.at(i).dest)));
 	}
-
+	*/
 	return sum;
-}
-
-double Solver::edgeSaliency(Mesh &m, Edge &e)
-{
-	if (isEdgeOnBorder(e, oldSize))
-	{
-
-	}
-	else
-	{
-
-	}
-
-	return 0.0;
-}
-
-bool Solver::isEdgeOnBorder(Edge &e, Size &size)
-{
-	return (e.src.x == 0 && e.dest.x == 0) || (e.src.y == 0 && e.dest.y == 0) || (e.src.x == size.width && e.dest.x == size.width) || (e.src.y == size.height && e.dest.y == size.height);
 }

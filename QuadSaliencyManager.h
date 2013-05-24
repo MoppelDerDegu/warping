@@ -8,7 +8,8 @@ public:
 	QuadSaliencyManager(void);
 	~QuadSaliencyManager(void);
 	vector<pair<float, Quad>> assignSaliencyValuesToQuads(Mesh &m, Mat &saliencyMap);
+	map<Edge, float> assignSaliencyValuesToEdges(Mesh &m, vector<pair<float, Quad>> saliencyValues, Size &size);
 private:
-	vector<pair<float, Quad>> wf_values; // contains the average saliency values normalized to [0, 1] for each quad
+	bool isEdgeOnBorder(Edge &e, Size &size);
 };
 

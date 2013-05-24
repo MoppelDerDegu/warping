@@ -73,3 +73,49 @@ vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh 
 	
 	return result;
 }
+
+map<Edge, float> QuadSaliencyManager::assignSaliencyValuesToEdges(Mesh &m, vector<pair<float, Quad>> saliencyValues, Size &size)
+{
+	map<Edge, float> map;
+	
+	for (unsigned int i = 0; i < m.edges.size(); i++)
+	{
+		Edge e = m.edges.at(i);
+		bool isBorder = isEdgeOnBorder(e, size);
+
+		for (unsigned int j = 0; j < m.quads.size(); j++)
+		{
+			Quad q = m.quads.at(j);
+			Edge a, b, c, d;
+			a.src = q.v1;
+			a.dest = q.v2;
+			b.src = q.v2;
+			b.dest = q.v4;
+			c.src = q.v4;
+			c.dest = q.v3;
+			d.src = q.v3;
+			d.dest = q.v1;
+
+			if (e == a)
+			{
+			}
+			else if (e == b)
+			{
+			}
+			else if (e == c)
+			{
+			}
+			else if (e == d)
+			{
+			}
+
+		}
+	}
+
+	return map;
+}
+
+bool QuadSaliencyManager::isEdgeOnBorder(Edge &e, Size &size)
+{
+	return (e.src.x == 0 && e.dest.x == 0) || (e.src.y == 0 && e.dest.y == 0) || (e.src.x == size.width && e.dest.x == size.width) || (e.src.y == size.height && e.dest.y == size.height);
+}
