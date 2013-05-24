@@ -8,7 +8,7 @@ public:
 	QuadSaliencyManager(void);
 	~QuadSaliencyManager(void);
 	vector<pair<float, Quad>> assignSaliencyValuesToQuads(Mesh &m, Mat &saliencyMap);
-	map<Edge, float> assignSaliencyValuesToEdges(Mesh &m, vector<pair<float, Quad>> saliencyValues, Size &size);
+	vector<pair<Edge, float>> assignSaliencyValuesToEdges(Mesh &m, vector<pair<float, Quad>> saliencyValues, Size &size);
 private:
 	bool isEdgeOnBorder(Edge &e, Size &size);
 };

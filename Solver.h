@@ -17,10 +17,12 @@ private:
 	Mesh originalMesh;
 	Mesh deformedMesh; // result mesh after optimization
 	Mesh tmp; // stores the initial guess
-	vector<pair<float, Quad>> saliencyWeightMapping; //maps saliency weights to quads
+	vector<pair<float, Quad>> saliencyWeightMapping; // maps saliency weights to quads
 	Size oldSize;
 	Size newSize;
 	unsigned int iterationCount;
+	vector<pair<Edge, float>> edgeSaliency; // maps average saliency weights to edges
+
 	void initialGuess(Size &newSize, Size &originalSize);
 	double calculateLengthRatio(Edge &oldEdge, Edge &newEdge); // unknown in equation (4)
 	double calculateQuadScale(Quad &oldQuad, Quad &newQuad); // Wang et al. 2008 equation (2)

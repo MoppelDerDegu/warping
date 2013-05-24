@@ -1,5 +1,6 @@
 #include "Solver.h"
 #include "Helper.h"
+#include "QuadSaliencyManager.h"
 #include "WarpingMath.h"
 #include "lib/nlopt-2.3-dll/nlopt.hpp"
 
@@ -360,6 +361,9 @@ Mesh Solver::redistributeQuads(Mesh &m, vector<pair<float, Quad>> &wfMap)
 
 	this->deformedMesh = m;
 	this->saliencyWeightMapping = wfMap;
+	
+	QuadSaliencyManager qsm;
+	this->edgeSaliency = qsm.assignSaliencyValuesToEdges(m, saliencyWeightMapping, oldSize);
 
 	vector<double> x = Helper::meshToDoubleVec(deformedMesh);
 
@@ -374,8 +378,10 @@ Mesh Solver::redistributeQuads(Mesh &m, vector<pair<float, Quad>> &wfMap)
 	opt.set_min_objective(Solver::wrapperRedistributeObjectiveFunc, this);
 
 	opt.set_xtol_abs(1);
+	//opt.set_maxeval(1000);
 
 	double minf;
+
 	nlopt::result res = opt.optimize(x, minf);
 	
 	cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
@@ -394,15 +400,13 @@ double Solver::redistributeObjFunc(const vector<double> &x, vector<double> &grad
 {
 	++iterationCount;
 
-	double res;
-
 	if (!grad.empty())
 	{
 		// compute gradient here
 	}
 
 	Helper::doubleVecToMesh(x, deformedMesh);
-	res = totalRedistributionEnergy(deformedMesh);
+	double res = totalRedistributionEnergy(deformedMesh);
 
 	cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << res << ends;
 
@@ -412,11 +416,12 @@ double Solver::redistributeObjFunc(const vector<double> &x, vector<double> &grad
 double Solver::totalRedistributionEnergy(Mesh &newMesh)
 {
 	double sum = 0;
-	/*
+	
 	for (unsigned int i = 0; i < newMesh.edges.size(); i++)
 	{
-		sum += ((1 + edgeSaliency(newMesh, newMesh.edges.at(i))) * sqr(WarpingMath::euclideanNorm(newMesh.edges.at(i).src - newMesh.edges.at(i).dest)));
+		Edge e = newMesh.edges.at(i);
+		sum += ((1 + 10 * edgeSaliency.at(i).second) * sqr(WarpingMath::euclideanNorm(newMesh.edges.at(i).src - newMesh.edges.at(i).dest)));
 	}
-	*/
+	
 	return sum;
 }
