@@ -1,5 +1,6 @@
 #include "QuadSaliencyManager.h"
 #include "Helper.h"
+#include "WarpingMath.h"
 
 QuadSaliencyManager::QuadSaliencyManager(void)
 {
@@ -29,8 +30,8 @@ vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh 
 		x = m.quads.at(i).v1.x;
 		y = m.quads.at(i).v1.y;
 
-		roiWidth = (int) Helper::getDistance(m.quads.at(i).v1, m.quads.at(i).v2);
-		roiHeight = (int) Helper::getDistance(m.quads.at(i).v1, m.quads.at(i).v3);
+		roiWidth = (int) WarpingMath::getDistance(m.quads.at(i).v1, m.quads.at(i).v2);
+		roiHeight = (int) WarpingMath::getDistance(m.quads.at(i).v1, m.quads.at(i).v3);
 
 		imageROI = saliencyMap(Rect(x, y, roiWidth, roiHeight));
 		
@@ -47,7 +48,7 @@ vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh 
 			}
 		}
 
-		float wf = Helper::getAverageSaliency(sum, roiWidth * roiHeight);
+		float wf = WarpingMath::getAverageSaliency(sum, roiWidth * roiHeight);
 		pair.first = wf;
 		pair.second = m.quads.at(i);
 		result.push_back(pair);
@@ -66,7 +67,7 @@ vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh 
 	for (unsigned int i = 0; i < result.size(); i++)
 	{
 		float value = result.at(i).first;
-		float wf = Helper::normalize(value, quadmax);
+		float wf = WarpingMath::normalize(value, quadmax);
 		result.at(i).first = wf;
 	}
 	

@@ -5,10 +5,10 @@
 class Solver
 {
 public:
-	Solver(void);
+	Solver(Size &originalSize);
 	~Solver(void);
 	Mesh redistributeQuads(Mesh &m, vector<pair<float, Quad>> &wfMap); //draws quads towards salient regions
-	Mesh solveImageProblem(Mesh &m, Size &newSize, Size &originalSize, vector<pair<float, Quad>> &wfMap);
+	Mesh solveImageProblem(Mesh &m, Size &newSize, vector<pair<float, Quad>> &wfMap);
 	static double wrapperImageObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
 	static double wrapperRedistributeObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
 	Mesh getDeformedMesh();
@@ -28,9 +28,12 @@ private:
 	double totalQuadEnergy(Mesh &newMesh); // Wang et al. 2008 equation (3) 
 	double totalEdgeEnergy(Mesh &newMesh); // Wang et al. 2008 equation (4)
 	double imageObjFunc(const vector<double> &x, vector<double> &grad); // Wang et al. 2008 equation (5)
-	double redistributeObjFunc(const vector<double> &x, vector<double> &grad); // Wang et al. 2008 equation (9)
-	vector<double> computeLowerImageBoundConstraints(const vector<double> &x);
-	vector<double> computeUpperImageBoundConstraints(const vector<double> &x);
+	double redistributeObjFunc(const vector<double> &x, vector<double> &grad); 
+	double totalRedistributionEnergy(Mesh &newMesh); // Wang et al. 2008 equation (9)
+	double edgeSaliency(Mesh &m, Edge &e);
+	bool isEdgeOnBorder(Edge &e, Size &size);
+	vector<double> computeLowerImageBoundConstraints(const vector<double> &x, const Size size);
+	vector<double> computeUpperImageBoundConstraints(const vector<double> &x, const Size size);
 	double vTv(Vertex v1, Vertex v2); // returns v1^tr * v2
 };
 

@@ -25,31 +25,6 @@ Mat Helper::IplImageToMat(IplImage* im)
 	return m;
 }
 
-float Helper::getDistance(Vertex v1, Vertex v2)
-{
-	return sqrt(static_cast<float>(sqr(v1.x - v2.x) + sqr(v1.y - v2.y)));
-}
-
-float Helper::getAverageSaliency(int sumOfSaliencyValues, int numOfPixel)
-{
-	float res = ((float) sumOfSaliencyValues) / ((float) numOfPixel);
-
-	if (res < 0)
-		return 0;
-	else
-		return res;
-}
-
-float Helper::normalize(float value, float max)
-{
-	float res = value / max;
-	
-	if (res < 0)
-		return 0;
-	else
-		return res;
-}
-
 string Helper::getImageType(int number)
 {
     // find type
@@ -137,21 +112,6 @@ Mesh Helper::deepCopyMesh(const Mesh &m)
 	}
 
 	return result;
-}
-
-double Helper::euclideanNorm(const Vertex &v)
-{
-	return sqrt((double) (sqr(v.x) + sqr(v.y)));
-}
-
-float Helper::round (float f)
-{
-	return floor(f + 0.5);
-}
-
-double Helper::round (double d)
-{
-	return floor(d + 0.5);
 }
 
 vector<double> Helper::meshToDoubleVec(Mesh &m)

@@ -3,6 +3,7 @@
 #include "QuadSaliencyManager.h"
 #include "Solver.h"
 #include "Helper.h"
+#include "WarpingMath.h"
 #include "FileManager.h"
 
 ImageWarper::ImageWarper(void)
@@ -32,8 +33,8 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	initializeMesh(img);
 	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
 	
-	Solver solver;
-	deformedMesh = solver.solveImageProblem(initialMesh, destSize, oldSize, wfMap);
+	Solver solver(oldSize);
+	deformedMesh = solver.solveImageProblem(initialMesh, destSize, wfMap);
 	linearScaledMesh = solver.getInitialGuess();
 	
 	//linearly scale the image as starting point
@@ -80,8 +81,8 @@ void ImageWarper::initializeMesh(IplImage* img)
 {
 	cout << ">> Initialize mesh" << endl;
 
-	int quadSizeX = Helper::round((float) img->width / (float) QUAD_NUMBER_X);
-	int quadSizeY = Helper::round((float) img->height / (float) QUAD_NUMBER_Y);
+	int quadSizeX = WarpingMath::round((float) img->width / (float) QUAD_NUMBER_X);
+	int quadSizeY = WarpingMath::round((float) img->height / (float) QUAD_NUMBER_Y);
 
 	int x, y;
 
@@ -413,8 +414,8 @@ void ImageWarper::getImageROI(Quad &quad, Mat &roi, Mat &img)
 	topleft.y = roiY;
 	topleft.x = roiX;
 
-	roiWidth = (int) Helper::getDistance(topleft, topright);
-	roiHeight = (int) Helper::getDistance(topleft, bottomleft);
+	roiWidth = (int) WarpingMath::getDistance(topleft, topright);
+	roiHeight = (int) WarpingMath::getDistance(topleft, bottomleft);
 
 	roi = img(Rect(roiX, roiY, roiWidth, roiHeight));
 }
