@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "FileManager.h"
 #include "Helper.h"
+#include "WarpingMath.h"
 
 BOOL FileManager::mkDir(const char* &path)
 {
@@ -141,8 +142,8 @@ void FileManager::saveMeshROIAsImage(const string fileName, const string dir, co
 		_bottomleft.x = bottomleft.x;
 		_bottomleft.y = bottomleft.y;
 
-		roiWidth = (int) Helper::getDistance(_topleft, _topright);
-		roiHeight = (int) Helper::getDistance(_topleft, _bottomleft);
+		roiWidth = (int) WarpingMath::getDistance(_topleft, _topright);
+		roiHeight = (int) WarpingMath::getDistance(_topleft, _bottomleft);
 
 		bottomright.x = bottomleft.x + roiWidth;
 		bottomright.y = topright.y + roiHeight;

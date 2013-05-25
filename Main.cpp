@@ -175,9 +175,9 @@ int main(int argc, char* argv[])
 	*/
 
 	// read image
-	char* fileName = "D:/media/1.png";
+	char* fileName = "D:/media/testsaliency.png";
 	Mat mat = imread(fileName);
-	IplImage* img = &Helper::MatToIplImage(mat);
+	IplImage img = Helper::MatToIplImage(mat);
 
 	// initialization
 	ImageSaliencyDetector isd;
@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
 	GradientGenerator gd;
 
 	// compute saliency
-	Mat saliencyMap = isd.hContrast(img);
+	Mat saliencyMap = isd.hContrast(&img);
 
 	// compute gradient
 	Mat gradient;
@@ -203,10 +203,11 @@ int main(int argc, char* argv[])
 	FileManager::saveMat("blume_saliency + gradient.png", "D:\\warping\\saliency\\", combined);
 
 	// warp
+	
 	Size s;
 	s.height = 300;
 	s.width = 300;
-	iw.warpImage(img, s, combined);
+	iw.warpImage(&img, s, mat);
 
 	//cvReleaseCapture(&input);
 }
