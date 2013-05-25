@@ -8,13 +8,14 @@ public:
 	Solver(Size &originalSize);
 	~Solver(void);
 	Mesh redistributeQuads(Mesh &m, vector<pair<float, Quad>> &wfMap); //draws quads towards salient regions
-	Mesh solveImageProblem(Mesh &m, Size &newSize, vector<pair<float, Quad>> &wfMap);
+	Mesh solveImageProblem(Mesh &contentAwareMesh, Mesh &originalMesh, Size &newSize, vector<pair<float, Quad>> &wfMap);
 	static double wrapperImageObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
 	static double wrapperRedistributeObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
 	Mesh getDeformedMesh();
 	Mesh getInitialGuess();
 private:
-	Mesh originalMesh;
+	Mesh originalMesh; // uniform mesh over the original image
+	Mesh contentAwareMesh; // content aware mesh over the original image
 	Mesh deformedMesh; // result mesh after optimization
 	Mesh tmp; // stores the initial guess
 	vector<pair<float, Quad>> saliencyWeightMapping; // maps saliency weights to quads

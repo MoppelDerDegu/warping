@@ -30,11 +30,19 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	src = img;
 	dest = Mat::zeros(destSize, CV_32FC3);
 	QuadSaliencyManager qsm;
-	initializeMesh(img);
-	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
-	
 	Solver solver(oldSize);
-	deformedMesh = solver.solveImageProblem(initialMesh, destSize, wfMap);
+
+	initializeMesh(img);
+	
+	
+	//Mesh contentAwareMesh = solver.redistributeQuads(initialMesh, wfMap);
+	Mesh contentAwareMesh = FileManager::loadMesh("D:\\warping\\mesh\\redistributed_mesh.txt");
+	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(contentAwareMesh, saliency);
+
+	FileManager::saveMeshAsImage("redistributed_mesh.png", "D:\\warping\\mesh\\", contentAwareMesh, oldSize);
+	//FileManager::saveMeshAsText("redistributed_mesh.txt", "D:\\warping\\mesh\\", contentAwareMesh);
+
+	deformedMesh = solver.solveImageProblem(contentAwareMesh,initialMesh, destSize, wfMap);
 	linearScaledMesh = solver.getInitialGuess();
 	
 	//linearly scale the image as starting point
@@ -248,8 +256,8 @@ void ImageWarper::warp(int interpolation)
 	{
 		Quad deformedQuad = deformedMesh.quads.at(i); //current Quad
 		Quad linearQuad = linearScaledMesh.quads.at(i); // the corresponding quad in the linear scaled mesh
-		Quad deformedQuadRelative = getRelativeCoordinates(deformedQuad); //relative coordinates of quad
-		Quad linearQuadRelative = getRelativeCoordinates(linearQuad); //relative coordinates of quad
+		Quad deformedQuadRelative = Helper::getRelativeCoordinates(deformedQuad); //relative coordinates of quad
+		Quad linearQuadRelative = Helper::getRelativeCoordinates(linearQuad); //relative coordinates of quad
 
 		Mat deformedROI, linearROI;
 
@@ -268,8 +276,8 @@ void ImageWarper::warp(int interpolation)
 		_q = linearQuadRelative.v4 - linearQuadRelative.v2;
 
 		//set ROI over deformed quad, i.e. a rectangle that engulfs the quad completely
-		getImageROI(deformedQuad, deformedROI, dest);
-		getImageROI(linearQuad, linearROI, tmp);
+		Helper::getImageROI(deformedQuad, deformedROI, dest);
+		Helper::getImageROI(linearQuad, linearROI, tmp);
 
 		for (int j = 0; j < deformedROI.rows; j++)
 		{
@@ -374,52 +382,6 @@ void ImageWarper::warp(int interpolation)
 	}
 }
 
-void ImageWarper::getImageROI(Quad &quad, Mat &roi, Mat &img)
-{
-	int roiX, roiY, roiWidth, roiHeight;
-	Vertex topleft, topright, bottomleft;
-
-	if (quad.v1.y > quad.v2.y)
-	{
-		roiY = quad.v2.y;
-		topright.y = quad.v2.y;
-	}
-	else
-	{
-		roiY = quad.v1.y;
-		topright.y = quad.v1.y;
-	}
-
-	if (quad.v1.x > quad.v3.x)
-	{
-		roiX = quad.v3.x;
-		bottomleft.x = quad.v3.x;
-	}
-	else
-	{
-		roiX = quad.v1.x;
-		bottomleft.x = quad.v1.x;
-	}
-
-	if (quad.v2.x < quad.v4.x)
-		topright.x = quad.v4.x;
-	else
-		topright.x = quad.v2.x;
-
-	if (quad.v3.y < quad.v4.y)
-		bottomleft.y = quad.v4.y;
-	else
-		bottomleft.y = quad.v3.y;
-
-	topleft.y = roiY;
-	topleft.x = roiX;
-
-	roiWidth = (int) WarpingMath::getDistance(topleft, topright);
-	roiHeight = (int) WarpingMath::getDistance(topleft, bottomleft);
-
-	roi = img(Rect(roiX, roiY, roiWidth, roiHeight));
-}
-
 float ImageWarper::interpolateLinear(Vertex &x, int channel, Mat &image)
 {
 	float n, s, w, e;
@@ -470,28 +432,4 @@ float ImageWarper::interpolateCubic(Vertex &x, int channel, Mat &image)
 {
 	// TODO
 	return 0.0;
-}
-
-Quad ImageWarper::getRelativeCoordinates(Quad &quad)
-{
-	Vertex topleft;
-
-	if (quad.v1.y > quad.v2.y)
-		topleft.y = quad.v2.y;
-	else
-		topleft.y = quad.v1.y;
-
-	if (quad.v1.x > quad.v3.x)
-		topleft.x = quad.v3.x;
-	else
-		topleft.x = quad.v1.x;
-
-	Quad result;
-
-	result.v1 = quad.v1 - topleft;
-	result.v2 = quad.v2 - topleft;
-	result.v3 = quad.v3 - topleft;
-	result.v4 = quad.v4 - topleft;
-
-	return result;
 }

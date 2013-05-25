@@ -16,39 +16,41 @@ vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh 
 	cout << ">> Assigning saliency weights to mesh" << endl;
 
 	vector<pair<float, Quad>> result;
-	int x, y;
 	float quadmax = 0;
-	int roiWidth, roiHeight;
 	Mat imageROI;
 
 	for (unsigned int i = 0; i < m.quads.size(); i++)
 	{
 		int sum = 0;
+		int pixelCounter = 0;
 		float max = 0;
 		pair<float, Quad> pair;
+		Quad relative = Helper::getRelativeCoordinates(m.quads.at(i));
 
-		x = m.quads.at(i).v1.x;
-		y = m.quads.at(i).v1.y;
-
-		roiWidth = (int) WarpingMath::getDistance(m.quads.at(i).v1, m.quads.at(i).v2);
-		roiHeight = (int) WarpingMath::getDistance(m.quads.at(i).v1, m.quads.at(i).v3);
-
-		imageROI = saliencyMap(Rect(x, y, roiWidth, roiHeight));
+		Helper::getImageROI(m.quads.at(i), imageROI, saliencyMap);
 		
 		for (int j = 0; j < imageROI.rows; j++)
 		{
 			for (int k = 0; k < imageROI.cols; k++)
 			{
-				uchar value = imageROI.at<uchar> (j, k);
+				Point2i p(j, k);
 
-				if (value > max)
-					max = value;
+				if (isPixelInQuad(relative, p))
+				{
+					uchar value = imageROI.at<uchar> (j, k);
 
-				sum += value;
+					if (value > max)
+						max = value;
+
+					sum += value;
+					pixelCounter++;
+				}
+				else
+					continue;
 			}
 		}
 
-		float wf = WarpingMath::getAverageSaliency(sum, roiWidth * roiHeight);
+		float wf = WarpingMath::getAverageSaliency(sum, pixelCounter);
 		pair.first = wf;
 		pair.second = m.quads.at(i);
 		result.push_back(pair);
@@ -171,4 +173,44 @@ vector<pair<Edge, float>> QuadSaliencyManager::assignSaliencyValuesToEdges(Mesh 
 bool QuadSaliencyManager::isEdgeOnBorder(Edge &e, Size &size)
 {
 	return (e.src.x == 0 && e.dest.x == 0) || (e.src.y == 0 && e.dest.y == 0) || (e.src.x == size.width && e.dest.x == size.width) || (e.src.y == size.height && e.dest.y == size.height);
+}
+
+bool QuadSaliencyManager::isPixelInQuad(Quad &quad, Point2i &point)
+{
+	Vertex u, v, a, b, p, q;
+	u = quad.v3;
+	v = quad.v2;
+	a = quad.v4 - quad.v3;
+	b = quad.v1 - quad.v3;
+	p = quad.v1 - quad.v2;
+	q = quad.v4 - quad.v2;
+
+	double r = (double) (b.y * (point.x - u.x) + b.x * (u.y - point.y)) / (double) (b.y * a.x - b.x * a.y);
+	double s = (double) (point.y - r * a.y - u.y) / (double) b.y;
+
+	if (!(r < 0.0 || r > 1.0 || s < 0.0 || s > 1.0))
+	{
+		if (r + s < 1.0)
+			return true;
+		else
+		{
+			double _r = (double) (q.y * (point.x - v.x) + q.x * (v.y - point.y)) / (double) (q.y * p.x - q.x * p.y);
+			double _s = (double) (point.y - _r * p.y - v.y) / (double) q.y;
+
+			if (_r + _s <= 1 && !(_r < 0.0 || _r > 1.0 || _s < 0.0 || _s > 1.0))
+				return true;
+			else
+				return false;
+		}
+	}
+	else
+	{
+		double _r = (double) (q.y * (point.x - v.x) + q.x * (v.y - point.y)) / (double) (q.y * p.x - q.x * p.y);
+		double _s = (double) (point.y - _r * p.y - v.y) / (double) q.y;
+
+		if (_r + _s <= 1 && !(_r < 0.0 || _r > 1.0 || _s < 0.0 || _s > 1.0))
+			return true;
+		else
+			return false;
+	}
 }

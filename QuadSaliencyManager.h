@@ -11,5 +11,6 @@ public:
 	vector<pair<Edge, float>> assignSaliencyValuesToEdges(Mesh &m, vector<pair<float, Quad>> saliencyValues, Size &size);
 private:
 	bool isEdgeOnBorder(Edge &e, Size &size);
+	bool isPixelInQuad(Quad &quad, Point2i &point);
 };
 
