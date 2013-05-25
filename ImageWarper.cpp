@@ -41,7 +41,6 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	tmp.convertTo(tmp, CV_32FC3);
 
 	FileManager::saveMeshAsImage("blume_mesh.png", "D:\\warping\\mesh\\", deformedMesh, newSize);
-	FileManager::saveMeshAsImage("blume_mesh_initial_guess.png", "D:\\warping\\mesh\\", linearScaledMesh, newSize);
 	resize(saliency, saliency, newSize);
 	Helper::drawMeshOverMat(deformedMesh, saliency);
 	FileManager::saveMat("blume_combined_saliency + mesh.png", "D:\\warping\\mesh\\", saliency);
@@ -52,10 +51,10 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	// convert dest frame back to original type
 	dest.convertTo(dest, src.type());
 
-	string filename = "warped_image.png";
 	string dir = "D:\\warping\\result\\";
+	FileManager::saveMat("blume warped_image.png", dir, dest);
 	Helper::drawMeshOverMat(deformedMesh, dest);
-	FileManager::saveMat(filename, dir, dest);
+	FileManager::saveMat("blume warped_image + mesh.png", dir, dest);
 
 	return &Helper::MatToIplImage(dest);
 }
