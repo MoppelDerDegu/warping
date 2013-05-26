@@ -43,6 +43,9 @@ Mesh Solver::solveImageProblem(Mesh &contentAwareMesh, Mesh &originalMesh, Size 
 	deformedMesh = Helper::deepCopyMesh(tmp);
 	vector<double> x = Helper::meshToDoubleVec(deformedMesh);
 
+	QuadSaliencyManager qsm;
+	edgeSaliency = qsm.assignSaliencyValuesToEdges(contentAwareMesh, saliencyWeightMapping, oldSize);
+
 	// formulate optimization problem:
 
 	// derivative free optimization algorithm
@@ -201,6 +204,8 @@ double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 	du += (WarpingMath::euclideanNorm(newQuad.v1 - newQuad.v3) - WarpingMath::euclideanNorm(newQuad.v1 - newQuad.v2));
 	du += (WarpingMath::euclideanNorm(newQuad.v1 - newQuad.v3) - WarpingMath::euclideanNorm(newQuad.v4 - newQuad.v3));
 	du += (WarpingMath::euclideanNorm(newQuad.v1 - newQuad.v3) - WarpingMath::euclideanNorm(newQuad.v2 - newQuad.v4));
+	
+	du = sqr(du);
 	*/
 	return du;
 }
@@ -238,7 +243,7 @@ double Solver::totalEdgeEnergy(Mesh &newMesh)
 		v.x = WarpingMath::round(v.x * lij);
 		v.y = WarpingMath::round(v.y * lij);
 		
-		dl += sqr(WarpingMath::euclideanNorm(_v - v));
+		dl += ((1 + edgeSaliency.at(i).second) * sqr(WarpingMath::euclideanNorm(_v + v)));
 	}
 
 	return dl;
@@ -258,7 +263,7 @@ double Solver::imageObjFunc(const vector<double> &x, vector<double> &grad)
 	double edgeEnergy = totalEdgeEnergy(deformedMesh);
 	double quadEnergy = totalQuadEnergy(deformedMesh);
 
-	double res = edgeEnergy ;//+ quadEnergy;
+	double res = edgeEnergy + quadEnergy;
 
 	cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << res << ends;
 
