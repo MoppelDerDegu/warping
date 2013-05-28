@@ -23,6 +23,8 @@ private:
 	Size newSize;
 	unsigned int iterationCount;
 	vector<pair<Edge, float>> edgeSaliency; // maps average saliency weights to edges
+	vector<pair<Edge, float>> edgeLengthRatios; // lij
+	vector<pair<Quad, float>> scalingFactors; // sf
 
 	void initialGuess(Size &newSize, Size &originalSize);
 	double calculateLengthRatio(Edge &oldEdge, Edge &newEdge); // unknown in equation (4)
@@ -35,6 +37,7 @@ private:
 	double totalRedistributionEnergy(Mesh &newMesh); // Wang et al. 2008 equation (9)
 	vector<double> computeLowerImageBoundConstraints(const vector<double> &x, const Size size);
 	vector<double> computeUpperImageBoundConstraints(const vector<double> &x, const Size size);
-	double vTv(Vertex v1, Vertex v2); // returns v1^tr * v2
+	void calculateEdgeLengthRatios();
+	void calculateOptimalScaleFactors();
 };
 
