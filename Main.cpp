@@ -195,6 +195,8 @@ int main(int argc, char* argv[])
 	// combine saliency and gradient
 	Mat combined;
 	Helper::matXmat(saliencyMap, gradient, combined);
+	//saliencyMap.convertTo(saliencyMap, CV_8U);
+	//combined = gradient + saliencyMap;
 
 	FileManager::saveMat("blume_saliency.png", "D:\\warping\\saliency\\", saliencyMap);
 	FileManager::saveMat("blume_gradient.png", "D:\\warping\\saliency\\", gradient);

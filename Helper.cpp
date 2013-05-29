@@ -1,5 +1,6 @@
 #include "Helper.h"
 #include "stdafx.h"
+#include "WarpingMath.h"
 #include "FileManager.h"
 
 IplImage* Helper::getNthFrame(CvCapture* capture, int n)
@@ -395,4 +396,74 @@ void Helper::matXmat(const Mat &a, const Mat &b, Mat &dest)
 
 	a.convertTo(a, CV_32F, 255);
 	dest.convertTo(dest, b.type());
+}
+
+void Helper::getImageROI(Quad &quad, Mat &roi, Mat &img)
+{
+	int roiX, roiY, roiWidth, roiHeight;
+	Vertex topleft, topright, bottomleft;
+
+	if (quad.v1.y > quad.v2.y)
+	{
+		roiY = quad.v2.y;
+		topright.y = quad.v2.y;
+	}
+	else
+	{
+		roiY = quad.v1.y;
+		topright.y = quad.v1.y;
+	}
+
+	if (quad.v1.x > quad.v3.x)
+	{
+		roiX = quad.v3.x;
+		bottomleft.x = quad.v3.x;
+	}
+	else
+	{
+		roiX = quad.v1.x;
+		bottomleft.x = quad.v1.x;
+	}
+
+	if (quad.v2.x < quad.v4.x)
+		topright.x = quad.v4.x;
+	else
+		topright.x = quad.v2.x;
+
+	if (quad.v3.y < quad.v4.y)
+		bottomleft.y = quad.v4.y;
+	else
+		bottomleft.y = quad.v3.y;
+
+	topleft.y = roiY;
+	topleft.x = roiX;
+
+	roiWidth = (int) WarpingMath::getDistance(topleft, topright);
+	roiHeight = (int) WarpingMath::getDistance(topleft, bottomleft);
+
+	roi = img(Rect(roiX, roiY, roiWidth, roiHeight));
+}
+
+Quad Helper::getRelativeCoordinates(Quad &quad)
+{
+	Vertex topleft;
+
+	if (quad.v1.y > quad.v2.y)
+		topleft.y = quad.v2.y;
+	else
+		topleft.y = quad.v1.y;
+
+	if (quad.v1.x > quad.v3.x)
+		topleft.x = quad.v3.x;
+	else
+		topleft.x = quad.v1.x;
+
+	Quad result;
+
+	result.v1 = quad.v1 - topleft;
+	result.v2 = quad.v2 - topleft;
+	result.v3 = quad.v3 - topleft;
+	result.v4 = quad.v4 - topleft;
+
+	return result;
 }
