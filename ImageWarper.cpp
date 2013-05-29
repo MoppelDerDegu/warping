@@ -34,6 +34,10 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
 	
 	Solver solver(oldSize);
+	deformedMesh = solver.redistributeQuads(initialMesh, wfMap);
+	FileManager::saveMeshAsImage("redistributed quads.png", "D:\\warping\\mesh\\", deformedMesh, oldSize);
+
+	/*
 	deformedMesh = solver.solveImageProblem(initialMesh, destSize, wfMap);
 	linearScaledMesh = solver.getInitialGuess();
 	
@@ -58,7 +62,7 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	FileManager::saveMat("warped_image.png", dir, dest);
 	Helper::drawMeshOverMat(deformedMesh, dest);
 	FileManager::saveMat(filename, dir, dest);
-
+	*/
 	return &Helper::MatToIplImage(dest);
 }
 
