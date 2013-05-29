@@ -13,6 +13,7 @@ public:
 	static double wrapperRedistributeObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
 	Mesh getDeformedMesh();
 	Mesh getInitialGuess();
+
 private:
 	Mesh originalMesh; // uniform mesh over the original image
 	Mesh contentAwareMesh; // content aware mesh over the original image
@@ -25,6 +26,7 @@ private:
 	vector<pair<Edge, float>> edgeSaliency; // maps average saliency weights to edges
 	vector<pair<Edge, float>> edgeLengthRatios; // lij
 	vector<pair<Quad, float>> scalingFactors; // sf
+	double quadscale; // sf
 
 	void initialGuess(Size &newSize, Size &originalSize);
 	double calculateLengthRatio(Edge &oldEdge, Edge &newEdge); // unknown in equation (4)
@@ -39,5 +41,6 @@ private:
 	vector<double> computeUpperImageBoundConstraints(const vector<double> &x, const Size size);
 	void calculateEdgeLengthRatios();
 	void calculateOptimalScaleFactors();
+	void calculateQuadScale();
 };
 

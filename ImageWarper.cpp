@@ -34,8 +34,9 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 
 	initializeMesh(img);
 	
-	
-	//Mesh contentAwareMesh = solver.redistributeQuads(initialMesh, wfMap);
+	//vector<pair<float, Quad>> _wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
+	//Mesh contentAwareMesh = solver.redistributeQuads(initialMesh, _wfMap);
+	//FileManager::saveMeshAsText("redistributed_mesh.txt", "D:\\warping\\mesh\\", contentAwareMesh);
 	Mesh contentAwareMesh = FileManager::loadMesh("D:\\warping\\mesh\\redistributed_mesh.txt");
 	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(contentAwareMesh, saliency);
 
