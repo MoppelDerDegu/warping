@@ -18,6 +18,7 @@ private:
 	Mesh initialMesh; //the warping mesh
 	Mesh linearScaledMesh;
 	Mesh deformedMesh;
+
 	void initializeMesh(IplImage* img);
 	void warp(int interpolation = INTER_NEAREST); //warps the destImage according to deformedMesh
 	float interpolateLinear(Vertex &x, int channel, Mat &image);

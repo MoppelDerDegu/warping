@@ -175,7 +175,7 @@ int main(int argc, char* argv[])
 	*/
 
 	// read image
-	char* fileName = "D:/media/testsaliency.png";
+	char* fileName = "D:/media/1.png";
 	Mat mat = imread(fileName);
 	IplImage img = Helper::MatToIplImage(mat);
 
@@ -206,8 +206,8 @@ int main(int argc, char* argv[])
 	
 	Size s;
 	s.height = 300;
-	s.width = 300;
-	iw.warpImage(&img, s, mat);
+	s.width = 500;
+	iw.warpImage(&img, s, combined);
 
 	//cvReleaseCapture(&input);
 }
