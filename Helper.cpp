@@ -139,8 +139,8 @@ void Helper::doubleVecToMesh(const vector<double> &x, Mesh &result)
 	for (unsigned int i = 0; i < x.size(); i += 2)
 	{
 		Vertex v;
-		v.x = x.at(i);
-		v.y = x.at(i + 1);
+		v.x = WarpingMath::round(x.at(i));
+		v.y = WarpingMath::round(x.at(i + 1));
 
 		result.vertices.push_back(v);
 	}

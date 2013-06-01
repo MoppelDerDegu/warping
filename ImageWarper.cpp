@@ -34,15 +34,15 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 
 	initializeMesh(img);
 	
-	
+	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
 	//Mesh contentAwareMesh = solver.redistributeQuads(initialMesh, wfMap);
 	Mesh contentAwareMesh = FileManager::loadMesh("D:\\warping\\mesh\\redistributed_mesh.txt");
-	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(contentAwareMesh, saliency);
+	wfMap = qsm.assignSaliencyValuesToQuads(contentAwareMesh, saliency);
 
 	FileManager::saveMeshAsImage("redistributed_mesh.png", "D:\\warping\\mesh\\", contentAwareMesh, oldSize);
 	//FileManager::saveMeshAsText("redistributed_mesh.txt", "D:\\warping\\mesh\\", contentAwareMesh);
 
-	deformedMesh = solver.solveImageProblem(contentAwareMesh,initialMesh, destSize, wfMap);
+	deformedMesh = solver.solveImageProblem(contentAwareMesh, initialMesh, destSize, wfMap);
 	linearScaledMesh = solver.getInitialGuess();
 	
 	//linearly scale the image as starting point
