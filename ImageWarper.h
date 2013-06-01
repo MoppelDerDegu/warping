@@ -9,6 +9,7 @@ public:
 	~ImageWarper(void);
 	IplImage* warpImage(IplImage* img, Size &dest, Mat &saliency);
 	Mesh getDeformedMesh();
+
 private:
 	Size oldSize;
 	Size newSize;
@@ -19,11 +20,9 @@ private:
 	Mesh linearScaledMesh;
 	Mesh deformedMesh;
 
-	void initializeMesh(IplImage* img);
 	void warp(int interpolation = INTER_NEAREST); //warps the destImage according to deformedMesh
 	float interpolateLinear(Vertex &x, int channel, Mat &image);
 	float interpolateNN(Vertex &x, int channel, Mat &image);
 	float interpolateCubic(Vertex &x, int channel, Mat &image);
-	Quad getRelativeCoordinates(Quad &quad);
 };
 

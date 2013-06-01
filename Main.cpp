@@ -205,8 +205,8 @@ int main(int argc, char* argv[])
 	// warp
 	
 	Size s;
-	s.height = 300;
-	s.width = 500;
+	s.height = 200;
+	s.width = 300;
 	iw.warpImage(&img, s, combined);
 
 	//cvReleaseCapture(&input);

@@ -26,7 +26,6 @@ private:
 	vector<pair<Edge, float>> edgeSaliency; // maps average saliency weights to edges
 	vector<pair<Edge, float>> edgeLengthRatios; // lij
 	vector<pair<Quad, float>> scalingFactors; // sf
-	double quadscale; // sf
 
 	void initialGuess(Size &newSize, Size &originalSize);
 	double calculateLengthRatio(Edge &oldEdge, Edge &newEdge); // unknown in equation (4)

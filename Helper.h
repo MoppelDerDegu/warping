@@ -8,9 +8,6 @@ struct Helper
 	static IplImage MatToIplImage(Mat& m);
 	static Mat IplImageToMat(IplImage* im);
 	static string getImageType(int number);
-	static Mesh deepCopyMesh(const Mesh &m);
-	static vector<double> meshToDoubleVec(Mesh &m);
-	static void doubleVecToMesh(const vector<double> &x, Mesh &result);
 	static void drawMeshOverMat(const Mesh &mesh, Mat &mat);
 	static double stringToDouble(const string &s);
 	static Mat meshAsMat(const Mesh &mesh, const Size &s);

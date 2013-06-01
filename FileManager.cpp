@@ -2,6 +2,7 @@
 #include "FileManager.h"
 #include "Helper.h"
 #include "WarpingMath.h"
+#include "MeshManager.h"
 
 BOOL FileManager::mkDir(const char* &path)
 {
@@ -38,7 +39,9 @@ void FileManager::saveMat(const string fileName, const string dir, const Mat &ma
 
 void FileManager::saveMeshAsText(const string fileName, const string dir, Mesh &mesh)
 {
-	vector<double> vertices = Helper::meshToDoubleVec(mesh);
+	MeshManager* mm = MeshManager::getInstance();
+
+	vector<double> vertices = mm->meshToDoubleVec(mesh);
 
 	const char* _dir = (char*) dir.c_str();
 	mkDir(_dir);
@@ -48,6 +51,11 @@ void FileManager::saveMeshAsText(const string fileName, const string dir, Mesh &
 
 	if (myfile.is_open())
 	{
+		// write dimension of the mesh
+		myfile << mesh.quadNumberX << "\n";
+		myfile << mesh.quadNumberY << "\n";
+
+		// write coordinates
 		for (unsigned int i = 0; i < vertices.size(); i++)
 		{
 			if (i < vertices.size() - 1)
@@ -64,6 +72,8 @@ void FileManager::saveMeshAsText(const string fileName, const string dir, Mesh &
 
 Mesh FileManager::loadMesh(const string fileName)
 {
+	MeshManager* mm = MeshManager::getInstance();
+
 	vector<double> res;
 	Mesh resmesh;
 	string line;
@@ -72,13 +82,25 @@ Mesh FileManager::loadMesh(const string fileName)
 
 	if (myfile.is_open())
 	{
+		int count = 0;
 		while (myfile.good())
 		{
 			getline(myfile, line);
-			res.push_back(Helper::stringToDouble(line));
+
+			if (count < 2)
+			{
+				if (count == 0)
+					resmesh.quadNumberX = (int) Helper::stringToDouble(line);
+				else
+					resmesh.quadNumberY = (int) Helper::stringToDouble(line);
+
+				count++;
+			}
+			else
+				res.push_back(Helper::stringToDouble(line));
 		}
 
-		Helper::doubleVecToMesh(res, resmesh);
+		mm->doubleVecToMesh(res, resmesh);
 	}
 	else
 		cerr << "Unable to open file: " << fileName << endl;
