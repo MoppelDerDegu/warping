@@ -39,24 +39,22 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	//vector<pair<float, Quad>> _wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
 	//Mesh contentAwareMesh = solver.redistributeQuads(initialMesh, _wfMap);
 	//FileManager::saveMeshAsText("redistributed_mesh.txt", "D:\\warping\\mesh\\", contentAwareMesh);
-	//Mesh contentAwareMesh = FileManager::loadMesh("D:\\warping\\mesh\\redistributed_mesh.txt");
+	Mesh contentAwareMesh = FileManager::loadMesh("D:\\warping\\mesh\\redistributed_mesh.txt");
 	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
 
 	FileManager::saveMeshAsImage("redistributed_mesh.png", "D:\\warping\\mesh\\", initialMesh, oldSize);
 	//FileManager::saveMeshAsText("redistributed_mesh.txt", "D:\\warping\\mesh\\", contentAwareMesh);
 
-	deformedMesh = solver.solveImageProblem(initialMesh, initialMesh, destSize, wfMap);
+	deformedMesh = solver.solveImageProblem(contentAwareMesh, initialMesh, destSize, wfMap);
 	linearScaledMesh = solver.getInitialGuess();
 	
 	//linearly scale the image as starting point
 	resize(src, tmp, newSize);
 	tmp.convertTo(tmp, CV_32FC3);
 
-	FileManager::saveMeshAsImage("blume_mesh.png", "D:\\warping\\mesh\\", deformedMesh, newSize);
-	FileManager::saveMeshAsImage("blume_mesh_initial_guess.png", "D:\\warping\\mesh\\", linearScaledMesh, newSize);
-	resize(saliency, saliency, newSize);
-	Helper::drawMeshOverMat(deformedMesh, saliency);
-	FileManager::saveMat("blume_combined_saliency + mesh.png", "D:\\warping\\mesh\\", saliency);
+	FileManager::saveMat("linearly scaled image.png", "D:\\warping\\result\\", tmp);
+	FileManager::saveMeshAsImage("mesh.png", "D:\\warping\\mesh\\", deformedMesh, newSize);
+	FileManager::saveMeshAsImage("mesh_initial_guess.png", "D:\\warping\\mesh\\", linearScaledMesh, newSize);
 
 	// do the warping according to mesh
 	warp();

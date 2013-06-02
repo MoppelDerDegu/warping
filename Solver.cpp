@@ -9,7 +9,6 @@
 Solver::Solver(Size &originalSize)
 {
 	this->iterationCount = 0;
-	this->quadscale = 0.0;
 	this->oldSize = originalSize;
 }
 
@@ -251,7 +250,7 @@ double Solver::imageObjFunc(const vector<double> &x, vector<double> &grad)
 	//double edgeEnergy = totalEdgeEnergy(deformedMesh);
 	double quadEnergy = totalQuadEnergy(deformedMesh);
 
-	double res = /*edgeEnergy +*/ quadEnergy;
+	double res = /*(0.5 * edgeEnergy) +*/ quadEnergy;
 
 	cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << res << ends;
 
@@ -455,4 +454,20 @@ void Solver::calculateOptimalScaleFactors()
 
 		scalingFactors.push_back(p);
 	}
+}
+
+void Solver::calculateQuadScale()
+{
+	bool bigger = false;
+
+	int oldArea = oldSize.width * oldSize.height;
+	int newArea = newSize.width * newSize.height;
+
+	if (oldArea < newArea)
+		bigger = true;
+	
+	if (bigger)
+		quadscale = max(newSize.height / (float) oldSize.height, newSize.width / (float) oldSize.width);
+	else
+		quadscale = min(newSize.height / (float) oldSize.height, newSize.width / (float) oldSize.width);
 }
