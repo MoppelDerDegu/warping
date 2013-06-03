@@ -64,18 +64,20 @@ Mesh Solver::solveImageProblem(Mesh &contentAwareMesh, Mesh &originalMesh, Size 
 	opt.set_xtol_abs(1);
 
 	double minf;
-
-	//cout << "\n>>Solving problem for step " << i << endl;
-
-	//calculateEdgeLengthRatios();
-	//calculateOptimalScaleFactors();
-	calculateQuadScale();
-	edgeSaliency = qsm.assignSaliencyValuesToEdges(contentAwareMesh, saliencyWeightMapping, oldSize);
-	nlopt::result result = opt.optimize(x, minf);
 	
-	cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
-	iterationCount = 0;
+	for (int i = 0; i < 1; i++)
+	{
+		cout << "\n>>Solving problem for step " << i << endl;
+
+		calculateEdgeLengthRatios();
+		calculateOptimalScaleFactors();
+		//calculateQuadScale();
+		edgeSaliency = qsm.assignSaliencyValuesToEdges(contentAwareMesh, saliencyWeightMapping, oldSize);
+		nlopt::result result = opt.optimize(x, minf);
 	
+		cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
+		iterationCount = 0;
+	}
 
 	return deformedMesh;
 }
@@ -156,21 +158,6 @@ double Solver::calculateQuadScale(Quad &oldQuad, Quad &newQuad)
 
 	sf = sum1 / sum2;
 	
-	/*
-	sum1 += WarpingMath::vTv(oldQuad.v1, newQuad.v1);
-	sum2 += WarpingMath::vTv(oldQuad.v1, oldQuad.v1);
-
-	sum1 += WarpingMath::vTv(oldQuad.v2, newQuad.v2);
-	sum2 += WarpingMath::vTv(oldQuad.v2, oldQuad.v2);
-
-	sum1 += WarpingMath::vTv(oldQuad.v3, newQuad.v3);
-	sum2 += WarpingMath::vTv(oldQuad.v3, oldQuad.v3);
-	
-	sum1 += WarpingMath::vTv(oldQuad.v4, newQuad.v4);
-	sum2 += WarpingMath::vTv(oldQuad.v4, oldQuad.v4);
-
-	sf = sum1 / sum2;
-	*/
 	return sf;
 }
 
@@ -208,37 +195,6 @@ double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 
 	du += sqr(WarpingMath::euclideanNorm(_v - v));
 	
-	/*
-	Vertex v, _v;
-
-	v = oldQuad.v1;
-	_v = newQuad.v1;
-	v.x = WarpingMath::round(v.x * sf);
-	v.y = WarpingMath::round(v.y * sf);
-
-	du += sqr(WarpingMath::euclideanNorm(_v - v));
-
-	v = oldQuad.v2;
-	_v = newQuad.v2;
-	v.x = WarpingMath::round(v.x * sf);
-	v.y = WarpingMath::round(v.y * sf);
-
-	du += sqr(WarpingMath::euclideanNorm(_v - v));
-
-	v = oldQuad.v3;
-	_v = newQuad.v3;
-	v.x = WarpingMath::round(v.x * sf);
-	v.y = WarpingMath::round(v.y * sf);
-
-	du += sqr(WarpingMath::euclideanNorm(_v - v));
-
-	v = oldQuad.v4;
-	_v = newQuad.v4;
-	v.x = WarpingMath::round(v.x * sf);
-	v.y = WarpingMath::round(v.y * sf);
-
-	du += sqr(WarpingMath::euclideanNorm(_v - v));
-	*/
 	return du;
 }
 
@@ -249,11 +205,11 @@ double Solver::totalQuadEnergy(Mesh &newMesh)
 	// assuming #quads in oldmesh == #quads in new mesh
 	for (unsigned int i = 0; i < contentAwareMesh.quads.size(); i++)
 	{
-		double sf = quadscale;
+		double sf = scalingFactors.at(i).second;
 		double duf = quadEnergy(contentAwareMesh.quads.at(i), newMesh.quads.at(i), sf);
 
 		// du = du + wf * duf
-		du += ((0.05*saliencyWeightMapping.at(i).first) * duf);
+		du += ((255*saliencyWeightMapping.at(i).first) * duf);
 	}
 
 	return du;
@@ -268,7 +224,7 @@ double Solver::totalEdgeEnergy(Mesh &newMesh)
 		Vertex _v = newMesh.edges.at(i).src - newMesh.edges.at(i).dest;
 		Vertex v = contentAwareMesh.edges.at(i).src - contentAwareMesh.edges.at(i).dest;
 		
-		double lij = calculateLengthRatio(contentAwareMesh.edges.at(i), tmp.edges.at(i));
+		double lij = calculateLengthRatio(contentAwareMesh.edges.at(i), newMesh.edges.at(i));
 		v.x = WarpingMath::round(v.x * lij);
 		v.y = WarpingMath::round(v.y * lij);
 		

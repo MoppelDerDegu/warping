@@ -73,6 +73,13 @@ vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh 
 		result.at(i).first = wf;
 	}
 	
+	// set all saliency values < 0.1 to 0.1
+	for (unsigned int i = 0; i < result.size(); i++)
+	{
+		if (result.at(i).first < 0.1)
+			result.at(i).first = 0.1;
+	}
+
 	return result;
 }
 
