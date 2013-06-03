@@ -5,6 +5,7 @@
 #include "Helper.h"
 #include "WarpingMath.h"
 #include "FileManager.h"
+#include "MeshManager.h"
 
 ImageWarper::ImageWarper(void)
 {
@@ -31,31 +32,29 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	dest = Mat::zeros(destSize, CV_32FC3);
 	QuadSaliencyManager qsm;
 	Solver solver(oldSize);
-
-	initializeMesh(img);
+	MeshManager* mm = MeshManager::getInstance();
 	
+	mm->initializeMesh(initialMesh, oldSize);
+
 	//vector<pair<float, Quad>> _wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
 	//Mesh contentAwareMesh = solver.redistributeQuads(initialMesh, _wfMap);
 	//FileManager::saveMeshAsText("redistributed_mesh 20x20.txt", "D:\\warping\\mesh\\", contentAwareMesh);
 	Mesh contentAwareMesh = FileManager::loadMesh("D:\\warping\\mesh\\redistributed_mesh 20x20.txt");
-	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(contentAwareMesh, saliency);
+	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
 
-	FileManager::saveMeshAsImage("redistributed_mesh.png", "D:\\warping\\mesh\\", contentAwareMesh, oldSize);
+	FileManager::saveMeshAsImage("redistributed_mesh.png", "D:\\warping\\mesh\\", initialMesh, oldSize);
 	//FileManager::saveMeshAsText("redistributed_mesh.txt", "D:\\warping\\mesh\\", contentAwareMesh);
 
-	deformedMesh = solver.solveImageProblem(contentAwareMesh,initialMesh, destSize, wfMap);
+	deformedMesh = solver.solveImageProblem(contentAwareMesh, initialMesh, destSize, wfMap);
 	linearScaledMesh = solver.getInitialGuess();
 	
 	//linearly scale the image as starting point
 	resize(src, tmp, newSize);
 	tmp.convertTo(tmp, CV_32FC3);
 
-	FileManager::saveMat("linear_scaled.png", "D:\\warping\\result\\", tmp);
-	FileManager::saveMeshAsImage("blume_mesh.png", "D:\\warping\\mesh\\", deformedMesh, newSize);
-	FileManager::saveMeshAsImage("blume_mesh_initial_guess.png", "D:\\warping\\mesh\\", linearScaledMesh, newSize);
-	resize(saliency, saliency, newSize);
-	Helper::drawMeshOverMat(deformedMesh, saliency);
-	FileManager::saveMat("blume_combined_saliency + mesh.png", "D:\\warping\\mesh\\", saliency);
+	FileManager::saveMat("linearly scaled image.png", "D:\\warping\\result\\", tmp);
+	FileManager::saveMeshAsImage("mesh.png", "D:\\warping\\mesh\\", deformedMesh, newSize);
+	FileManager::saveMeshAsImage("mesh_initial_guess.png", "D:\\warping\\mesh\\", linearScaledMesh, newSize);
 
 	// do the warping according to mesh
 	warp();
@@ -70,165 +69,6 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	FileManager::saveMat(filename, dir, dest);
 
 	return &Helper::MatToIplImage(dest);
-}
-
-/*
-	The order of the vertices being pushed to the vector is as follows:
-
-	v1---v2---v13--v19
-	|	 |	  |		|
-	v3---v4---v14--v20
-	|	 |    |		|
-	v5---v6---v15--v21
-	|	 |	  |	    |
-	v7---v8---v16--v22
-	|	 |	  |		|
-	v9---v10--v17--v23
-	|	 |	  |	    |
-	v11--v12--v18--v24
-*/
-void ImageWarper::initializeMesh(IplImage* img)
-{
-	cout << ">> Initialize mesh" << endl;
-
-	int quadSizeX = WarpingMath::round((float) img->width / (float) QUAD_NUMBER_X);
-	int quadSizeY = WarpingMath::round((float) img->height / (float) QUAD_NUMBER_Y);
-
-	int x, y;
-
-	// traverses image column-wise and creates quads
-	for (int i = 0; i < QUAD_NUMBER_TOTAL; i++)
-	{
-		Quad q;
-		Edge e1, e2, e3, e4;
-
-		x = (int) i / QUAD_NUMBER_X;
-		y = i % QUAD_NUMBER_Y;
-
-		if (x < QUAD_NUMBER_X - 1 &&  y < QUAD_NUMBER_Y - 1)
-		{
-			// inner quads
-			q.v1.x = x * quadSizeX;
-			q.v1.y = y * quadSizeY;
-
-			q.v2.x = (x + 1) * quadSizeX;
-			q.v2.y = y * quadSizeY;
-
-			q.v3.x = x * quadSizeX;
-			q.v3.y = (y + 1) * quadSizeY;
-
-			q.v4.x = (x + 1) * quadSizeX;
-			q.v4.y = (y + 1) * quadSizeY;
-		}
-		else
-		{
-			if (x == QUAD_NUMBER_X - 1 && y != QUAD_NUMBER_Y -1)
-			{
-				// rightmost quads
-				q.v1.x = x * quadSizeX;
-				q.v1.y = y * quadSizeY;
-
-				q.v2.x = oldSize.width;
-				q.v2.y = y * quadSizeY;
-
-				q.v3.x = x * quadSizeX;
-				q.v3.y = (y + 1) * quadSizeY;
-
-				q.v4.x = oldSize.width;
-				q.v4.y = (y + 1) * quadSizeY;
-			}
-			else if (x != QUAD_NUMBER_X - 1 && y == QUAD_NUMBER_Y -1)
-			{
-				// bottom quads
-				q.v1.x = x * quadSizeX;
-				q.v1.y = y * quadSizeY;
-
-				q.v2.x = (x + 1) * quadSizeX;
-				q.v2.y = y * quadSizeY;
-
-				q.v3.x = x * quadSizeX;
-				q.v3.y = oldSize.height;
-
-				q.v4.x = (x + 1) * quadSizeX;
-				q.v4.y = oldSize.height;
-			}
-			else if (x == QUAD_NUMBER_X - 1 && y == QUAD_NUMBER_Y -1)
-			{
-				// bottom right quad
-				q.v1.x = x * quadSizeX;
-				q.v1.y = y * quadSizeY;
-
-				q.v2.x = oldSize.width;
-				q.v2.y = y * quadSizeY;
-
-				q.v3.x = x * quadSizeX;
-				q.v3.y = oldSize.height;
-
-				q.v4.x = oldSize.width;
-				q.v4.y = oldSize.height;
-			}
-		}
-
-		e1.src = q.v1;
-		e1.dest = q.v2;
-		e2.src = q.v2;
-		e2.dest = q.v4;
-		e3.src = q.v4;
-		e3.dest = q.v3;
-		e4.src = q.v3;
-		e4.dest = q.v1;
-
-		initialMesh.quads.push_back(q);
-
-		if (i == 0)
-		{
-			initialMesh.vertices.push_back(q.v1);
-			initialMesh.vertices.push_back(q.v2);
-			initialMesh.vertices.push_back(q.v3);
-			initialMesh.vertices.push_back(q.v4);
-			initialMesh.edges.push_back(e1);
-			initialMesh.edges.push_back(e2);
-			initialMesh.edges.push_back(e3);
-			initialMesh.edges.push_back(e4);
-		}
-		else
-		{
-			if (x == 0)
-			{
-				// don't add front edge of a quad since it's already part of the mesh
-				initialMesh.edges.push_back(e2);
-				initialMesh.edges.push_back(e3);
-				initialMesh.edges.push_back(e4);
-
-				// don't add v1 and v2 since they are redundant
-				initialMesh.vertices.push_back(q.v3);
-				initialMesh.vertices.push_back(q.v4);
-			}
-			else
-			{
-				if (y == 0)
-				{
-					// don't add the left-hand edge of a quad since it's redundant
-					initialMesh.edges.push_back(e1);
-					initialMesh.edges.push_back(e2);
-					initialMesh.edges.push_back(e3);
-
-					// don't add v1 and v3 since they are redundant
-					initialMesh.vertices.push_back(q.v2);
-					initialMesh.vertices.push_back(q.v4);
-				}
-				else
-				{
-					// don't add top and left-hand edge since they are redundant
-					initialMesh.edges.push_back(e2);
-					initialMesh.edges.push_back(e3);
-
-					// only add bottom right vertex
-					initialMesh.vertices.push_back(q.v4);
-				}
-			}
-		}
-	}
 }
 
 /*
@@ -427,7 +267,7 @@ float ImageWarper::interpolateNN(Vertex &x, int channel, Mat &image)
 	else if (x.x == image.cols)
 		return image.at<Vec3f> (x.y, x.x - 1) [channel];
 	else
-		return 5000;
+		return 0.0;
 }
 
 float ImageWarper::interpolateCubic(Vertex &x, int channel, Mat &image)

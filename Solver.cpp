@@ -4,12 +4,11 @@
 #include "WarpingMath.h"
 #include "FileManager.h"
 #include "lib/nlopt-2.3-dll/nlopt.hpp"
-
+#include "MeshManager.h"
 
 Solver::Solver(Size &originalSize)
 {
 	this->iterationCount = 0;
-	this->quadscale = 0.0;
 	this->oldSize = originalSize;
 }
 
@@ -36,12 +35,14 @@ Mesh Solver::solveImageProblem(Mesh &contentAwareMesh, Mesh &originalMesh, Size 
 	this->saliencyWeightMapping = wfMap;
 	this->newSize = newSize;
 
+	MeshManager* mm = MeshManager::getInstance();
+
 	// initial guess is stored in tmp
 	initialGuess(newSize, oldSize);
 	
 	// copy initial guess to resultmesh
-	deformedMesh = Helper::deepCopyMesh(tmp);
-	vector<double> x = Helper::meshToDoubleVec(deformedMesh);
+	deformedMesh = mm->deepCopyMesh(tmp);
+	vector<double> x = mm->meshToDoubleVec(deformedMesh);
 
 	QuadSaliencyManager qsm;
 	edgeSaliency = qsm.assignSaliencyValuesToEdges(contentAwareMesh, saliencyWeightMapping, oldSize);
@@ -65,14 +66,13 @@ Mesh Solver::solveImageProblem(Mesh &contentAwareMesh, Mesh &originalMesh, Size 
 
 	double minf;
 	
-	for (int i = 0; i < 1; i++)
+	for (int i = 0; i < 20; i++)
 	{
-		cout << "\n>>Solving problem for step " << i << endl;
+		cout << "\n>>Solving problem for step " << i + 1 << endl;
 
 		calculateEdgeLengthRatios();
 		calculateOptimalScaleFactors();
 		//calculateQuadScale();
-		edgeSaliency = qsm.assignSaliencyValuesToEdges(contentAwareMesh, saliencyWeightMapping, oldSize);
 		nlopt::result result = opt.optimize(x, minf);
 	
 		cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
@@ -91,6 +91,8 @@ double Solver::wrapperImageObjectiveFunc(const vector<double> &x, vector<double>
 // initial guess of the new vertex coordinates, i.e. linear scaling according to the new image size
 void Solver::initialGuess(Size &newSize, Size &originalSize)
 {
+	MeshManager* mm = MeshManager::getInstance();
+
 	int newWidth = newSize.width;
 	int newHeight = newSize.height;
 	int oldHeight = originalSize.height;
@@ -99,7 +101,7 @@ void Solver::initialGuess(Size &newSize, Size &originalSize)
 	float scaleX = (float) newWidth / (float) oldWidth;
 	float scaleY = (float) newHeight / (float) oldHeight;
 
-	tmp = Helper::deepCopyMesh(contentAwareMesh);
+	tmp = mm->deepCopyMesh(contentAwareMesh);
 
 	// scale vertices
 	for (unsigned int i = 0; i < tmp.vertices.size(); i++)
@@ -203,13 +205,13 @@ double Solver::totalQuadEnergy(Mesh &newMesh)
 	double du = 0.0;
 
 	// assuming #quads in oldmesh == #quads in new mesh
-	for (unsigned int i = 0; i < contentAwareMesh.quads.size(); i++)
+	for (unsigned int i = 0; i < originalMesh.quads.size(); i++)
 	{
 		double sf = scalingFactors.at(i).second;
-		double duf = quadEnergy(contentAwareMesh.quads.at(i), newMesh.quads.at(i), sf);
+		double duf = quadEnergy(originalMesh.quads.at(i), newMesh.quads.at(i), sf);
 
 		// du = du + wf * duf
-		du += ((255*saliencyWeightMapping.at(i).first) * duf);
+		du += ((saliencyWeightMapping.at(i).first) * duf);
 	}
 
 	return du;
@@ -219,12 +221,12 @@ double Solver::totalEdgeEnergy(Mesh &newMesh)
 {
 	double dl = 0.0;
 
-	for (unsigned int i = 0; i < contentAwareMesh.edges.size(); i++)
+	for (unsigned int i = 0; i < originalMesh.edges.size(); i++)
 	{	
 		Vertex _v = newMesh.edges.at(i).src - newMesh.edges.at(i).dest;
-		Vertex v = contentAwareMesh.edges.at(i).src - contentAwareMesh.edges.at(i).dest;
+		Vertex v = originalMesh.edges.at(i).src - originalMesh.edges.at(i).dest;
 		
-		double lij = calculateLengthRatio(contentAwareMesh.edges.at(i), newMesh.edges.at(i));
+		double lij = edgeLengthRatios.at(i).second;
 		v.x = WarpingMath::round(v.x * lij);
 		v.y = WarpingMath::round(v.y * lij);
 		
@@ -242,13 +244,14 @@ double Solver::imageObjFunc(const vector<double> &x, vector<double> &grad)
 	{
 		// compute gradient here
 	}
+	MeshManager* mm = MeshManager::getInstance();
 
-	Helper::doubleVecToMesh(x, deformedMesh);
+	mm->doubleVecToMesh(x, deformedMesh);
 
-	double edgeEnergy = totalEdgeEnergy(deformedMesh);
+	//double edgeEnergy = totalEdgeEnergy(deformedMesh);
 	double quadEnergy = totalQuadEnergy(deformedMesh);
 
-	double res = edgeEnergy + quadEnergy;
+	double res = /*(0.5 * edgeEnergy) +*/ quadEnergy;
 
 	cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << res << ends;
 
@@ -361,7 +364,9 @@ Mesh Solver::redistributeQuads(Mesh &m, vector<pair<float, Quad>> &wfMap)
 	QuadSaliencyManager qsm;
 	this->edgeSaliency = qsm.assignSaliencyValuesToEdges(m, saliencyWeightMapping, oldSize);
 
-	vector<double> x = Helper::meshToDoubleVec(deformedMesh);
+	MeshManager* mm = MeshManager::getInstance();
+
+	vector<double> x = mm->meshToDoubleVec(deformedMesh);
 
 	vector<double> lb = computeLowerImageBoundConstraints(x, oldSize);
 	vector<double> ub = computeUpperImageBoundConstraints(x, oldSize);
@@ -401,7 +406,9 @@ double Solver::redistributeObjFunc(const vector<double> &x, vector<double> &grad
 		// compute gradient here
 	}
 
-	Helper::doubleVecToMesh(x, deformedMesh);
+	MeshManager* mm = MeshManager::getInstance();
+
+	mm->doubleVecToMesh(x, deformedMesh);
 	double res = totalRedistributionEnergy(deformedMesh);
 
 	cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << res << ends;
@@ -430,7 +437,7 @@ void Solver::calculateEdgeLengthRatios()
 	{
 		pair<Edge, float> p;
 		p.first = deformedMesh.edges.at(i);
-		p.second = calculateLengthRatio(contentAwareMesh.edges.at(i), deformedMesh.edges.at(i));
+		p.second = calculateLengthRatio(originalMesh.edges.at(i), deformedMesh.edges.at(i));
 
 		edgeLengthRatios.push_back(p);
 	}
@@ -444,7 +451,7 @@ void Solver::calculateOptimalScaleFactors()
 	{
 		pair<Quad, float> p;
 		p.first = deformedMesh.quads.at(i);
-		p.second = calculateQuadScale(contentAwareMesh.quads.at(i), deformedMesh.quads.at(i));
+		p.second = calculateQuadScale(originalMesh.quads.at(i), deformedMesh.quads.at(i));
 
 		scalingFactors.push_back(p);
 	}

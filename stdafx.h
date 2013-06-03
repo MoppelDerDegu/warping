@@ -36,10 +36,8 @@ using namespace std;
 #define GRADIENT_SCHARR 2
 #define GRADIENT_SIMPLE 3
 
-// number of quads in the image in x and y direction respectively
-#define QUAD_NUMBER_X 20
-#define QUAD_NUMBER_Y 20
-#define QUAD_NUMBER_TOTAL QUAD_NUMBER_X * QUAD_NUMBER_Y
+// length and height of a quad
+#define QUAD_SIZE 20
 
 typedef struct Vertex
 {
@@ -76,6 +74,8 @@ typedef struct Quad
 
 typedef struct Mesh
 {
+	int quadNumberX;
+	int quadNumberY;
 	vector<Vertex> vertices;
 	vector<Edge> edges;
 	vector<Quad> quads;

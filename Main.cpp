@@ -198,15 +198,15 @@ int main(int argc, char* argv[])
 	//saliencyMap.convertTo(saliencyMap, CV_8U);
 	//combined = gradient + saliencyMap;
 
-	FileManager::saveMat("blume_saliency.png", "D:\\warping\\saliency\\", saliencyMap);
-	FileManager::saveMat("blume_gradient.png", "D:\\warping\\saliency\\", gradient);
-	FileManager::saveMat("blume_saliency + gradient.png", "D:\\warping\\saliency\\", combined);
+	FileManager::saveMat("saliency.png", "D:\\warping\\saliency\\", saliencyMap);
+	FileManager::saveMat("gradient.png", "D:\\warping\\saliency\\", gradient);
+	FileManager::saveMat("saliency + gradient.png", "D:\\warping\\saliency\\", combined);
 
 	// warp
 	
 	Size s;
-	s.height = 500;
-	s.width = 375;
+	s.height = 200;
+	s.width = 300;
 	iw.warpImage(&img, s, combined);
 
 	//cvReleaseCapture(&input);
