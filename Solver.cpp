@@ -65,14 +65,15 @@ Mesh Solver::solveImageProblem(Mesh &contentAwareMesh, Mesh &originalMesh, Size 
 	opt.set_xtol_abs(1);
 
 	double minf;
-	
+	calculateQuadScale();
+
 	for (int i = 0; i < 20; i++)
 	{
 		cout << "\n>>Solving problem for step " << i + 1 << endl;
-
-		calculateEdgeLengthRatios();
-		calculateOptimalScaleFactors();
-		//calculateQuadScale();
+		
+		//calculateEdgeLengthRatios();
+		//calculateOptimalScaleFactors();
+		
 		nlopt::result result = opt.optimize(x, minf);
 	
 		cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
@@ -168,7 +169,7 @@ double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 	double du = 0.0;
 	
 	Vertex _v, v;
-	
+	/*
 	_v = newQuad.v1 - newQuad.v2;
 	v = oldQuad.v1 - oldQuad.v2;
 	v.x = WarpingMath::round(v.x * sf);
@@ -196,6 +197,27 @@ double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
 	v.y = WarpingMath::round(v.y * sf);
 
 	du += sqr(WarpingMath::euclideanNorm(_v - v));
+	*/
+
+	_v = newQuad.v1 - newQuad.v2;
+	v = oldQuad.v1 - oldQuad.v2;
+
+	du += ((WarpingMath::euclideanNorm(_v)) - sf * (WarpingMath::euclideanNorm(v))); 
+
+	_v = newQuad.v2 - newQuad.v4;
+	v = oldQuad.v2 - oldQuad.v4;
+
+	du += ((WarpingMath::euclideanNorm(_v)) - sf * (WarpingMath::euclideanNorm(v))); 
+
+	_v = newQuad.v4 - newQuad.v3;
+	v = oldQuad.v4 - oldQuad.v3;
+
+	du += ((WarpingMath::euclideanNorm(_v)) - sf * (WarpingMath::euclideanNorm(v))); 
+
+	_v = newQuad.v3 - newQuad.v1;
+	v = oldQuad.v3 - oldQuad.v1;
+
+	du += ((WarpingMath::euclideanNorm(_v)) - sf * (WarpingMath::euclideanNorm(v))); 
 	
 	return du;
 }
@@ -207,7 +229,7 @@ double Solver::totalQuadEnergy(Mesh &newMesh)
 	// assuming #quads in oldmesh == #quads in new mesh
 	for (unsigned int i = 0; i < originalMesh.quads.size(); i++)
 	{
-		double sf = scalingFactors.at(i).second;
+		double sf = quadscale;
 		double duf = quadEnergy(originalMesh.quads.at(i), newMesh.quads.at(i), sf);
 
 		// du = du + wf * duf
