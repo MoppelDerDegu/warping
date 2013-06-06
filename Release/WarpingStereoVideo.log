@@ -1,0 +1,46 @@
+﻿Der Buildvorgang wurde am 6/3/2013 9:43:15 AM gestartet.
+     1>Projekt "D:\Programme\Microsoft Visual Studio 10.0\Projects\warping\WarpingStereoVideo.vcxproj" auf Knoten "2", build Ziel(e).
+     1>InitializeBuildStatus:
+         "Release\WarpingStereoVideo.unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+       ClCompile:
+         D:\Programme\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oy- /D WIN32 /D NDEBUG /D _CONSOLE /Gm- /EHsc /MD /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt ImageWarper.cpp Solver.cpp
+         ImageWarper.cpp
+         Solver.cpp
+         Code wird generiert...
+       ManifestResourceCompile:
+         Alle Ausgaben sind aktuell.
+       Link:
+         D:\Programme\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\Programme\Microsoft Visual Studio 10.0\Projects\warping\Release\WarpingStereoVideo.exe" /INCREMENTAL /NOLOGO opencv_calib3d245.lib opencv_contrib245.lib opencv_core245.lib opencv_features2d245.lib opencv_flann245.lib opencv_gpu245.lib opencv_highgui245.lib opencv_imgproc245.lib opencv_legacy245.lib opencv_ml245.lib opencv_nonfree245.lib opencv_objdetect245.lib opencv_photo245.lib opencv_stitching245.lib opencv_ts245.lib opencv_video245.lib opencv_videostab245.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib "libnlopt-0.lib" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Release\WarpingStereoVideo.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"D:\Programme\Microsoft Visual Studio 10.0\Projects\warping\Release\WarpingStereoVideo.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\Programme\Microsoft Visual Studio 10.0\Projects\warping\Release\WarpingStereoVideo.lib" /MACHINE:X86 Release\WarpingStereoVideo.exe.embed.manifest.res
+         Release\DisparityMapBuilder.obj
+         Release\FileManager.obj
+         Release\GradientGenerator.obj
+         Release\Helper.obj
+         Release\ImageEditor.obj
+         Release\ImageSaliencyDetector.obj
+         Release\ImageWarper.obj
+         Release\Main.obj
+         Release\MeshManager.obj
+         Release\MotionDetector.obj
+         Release\QuadSaliencyManager.obj
+         Release\Saliency.obj
+         Release\SaliencyMath.obj
+         "Release\segment-image.obj"
+         Release\Solver.obj
+         Release\stdafx.obj
+         Release\StereoImage.obj
+         Release\WarpingMath.obj
+     1>LINK : warning LNK4075: /INCREMENTAL wird aufgrund der Angabe von /OPT:ICF ignoriert.
+       Manifest:
+         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /out:"Release\WarpingStereoVideo.exe.embed.manifest" /manifest Release\WarpingStereoVideo.exe.intermediate.manifest
+         Alle Ausgaben sind aktuell.
+       LinkEmbedManifest:
+         Alle Ausgaben sind aktuell.
+         WarpingStereoVideo.vcxproj -> D:\Programme\Microsoft Visual Studio 10.0\Projects\warping\Release\WarpingStereoVideo.exe
+       FinalizeBuildStatus:
+         Die Datei "Release\WarpingStereoVideo.unsuccessfulbuild" wird gelöscht.
+         Aktualisieren des Timestamps von "Release\WarpingStereoVideo.lastbuildstate".
+     1>Die Erstellung des Projekts "D:\Programme\Microsoft Visual Studio 10.0\Projects\warping\WarpingStereoVideo.vcxproj" ist abgeschlossen, build Ziel(e).
+
+Das Erstellen war erfolgreich.
+
+Verstrichene Zeit 00:00:12.58

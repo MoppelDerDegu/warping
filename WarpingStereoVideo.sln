@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WarpingStereoVideo", "WarpingStereoVideo.vcxproj", "{BC546827-A46E-3985-BEAC-7240576A095E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WarpingStereoVideo", "WarpingStereoVideo.vcxproj", "{D118FD86-EF3C-7219-130C-D24679179D4E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,10 +9,10 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{BC546827-A46E-3985-BEAC-7240576A095E}.Debug|Win32.ActiveCfg = Debug|Win32
-		{BC546827-A46E-3985-BEAC-7240576A095E}.Debug|Win32.Build.0 = Debug|Win32
-		{BC546827-A46E-3985-BEAC-7240576A095E}.Release|Win32.ActiveCfg = Release|Win32
-		{BC546827-A46E-3985-BEAC-7240576A095E}.Release|Win32.Build.0 = Release|Win32
+		{D118FD86-EF3C-7219-130C-D24679179D4E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D118FD86-EF3C-7219-130C-D24679179D4E}.Debug|Win32.Build.0 = Debug|Win32
+		{D118FD86-EF3C-7219-130C-D24679179D4E}.Release|Win32.ActiveCfg = Release|Win32
+		{D118FD86-EF3C-7219-130C-D24679179D4E}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
