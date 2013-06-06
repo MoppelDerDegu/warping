@@ -36,13 +36,13 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	
 	mm->initializeMesh(initialMesh, oldSize);
 
-	//vector<pair<float, Quad>> _wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
-	//Mesh contentAwareMesh = solver.redistributeQuads(initialMesh, _wfMap);
-	//FileManager::saveMeshAsText("redistributed_mesh.txt", "D:\\warping\\mesh\\", contentAwareMesh);
-	Mesh contentAwareMesh = FileManager::loadMesh("D:\\warping\\mesh\\redistributed_mesh.txt");
+	vector<pair<float, Quad>> _wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
+	Mesh contentAwareMesh = solver.redistributeQuads(initialMesh, _wfMap);
+	FileManager::saveMeshAsText("redistributed_mesh.txt", "D:\\warping\\mesh\\", contentAwareMesh);
+	//Mesh contentAwareMesh = FileManager::loadMesh("D:\\warping\\mesh\\redistributed_mesh.txt");
 	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
 
-	FileManager::saveMeshAsImage("redistributed_mesh.png", "D:\\warping\\mesh\\", initialMesh, oldSize);
+	FileManager::saveMeshAsImage("redistributed_mesh.png", "D:\\warping\\mesh\\", contentAwareMesh, oldSize);
 	//FileManager::saveMeshAsText("redistributed_mesh.txt", "D:\\warping\\mesh\\", contentAwareMesh);
 
 	deformedMesh = solver.solveImageProblem(contentAwareMesh, initialMesh, destSize, wfMap);
