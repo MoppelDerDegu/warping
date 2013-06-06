@@ -11,12 +11,9 @@ MeshManager* MeshManager::getInstance()
     {
         single = new MeshManager();
         instanceFlag = true;
-        return single;
     }
-    else
-    {
-        return single;
-    }
+
+    return single;
 }
 
 /*

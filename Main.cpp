@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "ImageWarper.h"
+#include "MonoImageWarper.h"
 #include "Helper.h"
 #include "Saliency.h"
 #include "ImageSaliencyDetector.h"
@@ -181,33 +181,15 @@ int main(int argc, char* argv[])
 
 	// initialization
 	ImageSaliencyDetector isd;
-	ImageWarper iw;
+	MonoImageWarper miw;
 	GradientGenerator gd;
-
-	// compute saliency
-	Mat saliencyMap = isd.hContrast(&img);
-
-	// compute gradient
-	Mat gradient;
-	gd.generateGradient(mat, gradient);
-	gradient = gradient * 3;
-
-	// combine saliency and gradient
-	Mat combined;
-	Helper::matXmat(saliencyMap, gradient, combined);
-	//saliencyMap.convertTo(saliencyMap, CV_8U);
-	//combined = gradient + saliencyMap;
-
-	FileManager::saveMat("saliency.png", "D:\\warping\\saliency\\", saliencyMap);
-	FileManager::saveMat("gradient.png", "D:\\warping\\saliency\\", gradient);
-	FileManager::saveMat("saliency + gradient.png", "D:\\warping\\saliency\\", combined);
 
 	// warp
 	
 	Size s;
 	s.height = 200;
 	s.width = 300;
-	iw.warpImage(&img, s, combined);
+	miw.warpImage(&img, s);
 
 	//cvReleaseCapture(&input);
 }
