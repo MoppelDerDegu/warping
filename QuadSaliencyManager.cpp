@@ -2,13 +2,18 @@
 #include "Helper.h"
 #include "WarpingMath.h"
 
-QuadSaliencyManager::QuadSaliencyManager(void)
-{
-}
+bool QuadSaliencyManager::instanceFlag = false;
+QuadSaliencyManager* QuadSaliencyManager::single = NULL;
 
-
-QuadSaliencyManager::~QuadSaliencyManager(void)
+QuadSaliencyManager* QuadSaliencyManager::getInstance()
 {
+	if (!instanceFlag)
+	{
+		single = new QuadSaliencyManager();
+		instanceFlag = true;
+	}
+	
+	return single;
 }
 
 vector<pair<float, Quad>> QuadSaliencyManager::assignSaliencyValuesToQuads(Mesh &m, Mat &saliencyMap)

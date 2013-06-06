@@ -1,260 +1,46 @@
 #include "Solver.h"
-#include "Helper.h"
-#include "QuadSaliencyManager.h"
 #include "WarpingMath.h"
-#include "FileManager.h"
-#include "lib/nlopt-2.3-dll/nlopt.hpp"
 #include "MeshManager.h"
 
-Solver::Solver(Size &originalSize)
+void Solver::calculateEdgeLengthRatios(Mesh &originalMesh, Mesh &deformedMesh, vector<pair<Edge, float>> &edgeLengthRatios)
 {
-	this->iterationCount = 0;
-	this->oldSize = originalSize;
-}
+	edgeLengthRatios.clear();
 
-Solver::~Solver(void)
-{
-}
-
-Mesh Solver::getDeformedMesh()
-{
-	return deformedMesh;
-}
-
-Mesh Solver::getInitialGuess()
-{
-	return tmp;
-}
-
-Mesh Solver::solveImageProblem(Mesh &contentAwareMesh, Mesh &originalMesh, Size &newSize, vector<pair<float, Quad>> &wfMap)
-{
-	cout << ">> Solving image optimization problem..." << endl;
-
-	this->originalMesh = originalMesh;
-	this->contentAwareMesh = contentAwareMesh;
-	this->saliencyWeightMapping = wfMap;
-	this->newSize = newSize;
-
-	MeshManager* mm = MeshManager::getInstance();
-
-	// initial guess is stored in tmp
-	initialGuess(newSize, oldSize);
-	
-	// copy initial guess to resultmesh
-	deformedMesh = mm->deepCopyMesh(tmp);
-	vector<double> x = mm->meshToDoubleVec(deformedMesh);
-
-	QuadSaliencyManager qsm;
-	edgeSaliency = qsm.assignSaliencyValuesToEdges(contentAwareMesh, saliencyWeightMapping, oldSize);
-
-	// formulate optimization problem:
-
-	// derivative free optimization algorithm
-	nlopt::opt opt(nlopt::LN_NELDERMEAD, x.size());
-
-	// lower and upper bounds of vertex coordinates
-	vector<double> lb = computeLowerImageBoundConstraints(x, newSize);
-	vector<double> ub = computeUpperImageBoundConstraints(x, newSize);
-	opt.set_lower_bounds(lb);
-	opt.set_upper_bounds(ub);
-
-	// minimize objective function
-	opt.set_min_objective(Solver::wrapperImageObjectiveFunc, this);
-
-	// convergence criteria
-	opt.set_xtol_abs(1);
-
-	double minf;
-	
-	for (int i = 0; i < 20; i++)
+	for (unsigned int i = 0; i < deformedMesh.edges.size(); i++)
 	{
-		cout << "\n>>Solving problem for step " << i + 1 << endl;
+		pair<Edge, float> p;
+		p.first = deformedMesh.edges.at(i);
+		p.second = calculateLengthRatio(originalMesh.edges.at(i), deformedMesh.edges.at(i));
 
-		calculateEdgeLengthRatios();
-		calculateOptimalScaleFactors();
-		nlopt::result result = opt.optimize(x, minf);
-	
-		cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
-		iterationCount = 0;
+		edgeLengthRatios.push_back(p);
 	}
-
-	return deformedMesh;
 }
 
-double Solver::wrapperImageObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data)
+void Solver::calculateOptimalScaleFactors(Mesh &originalMesh, Mesh &deformedMesh, vector<pair<Quad, float>> &scalingFactors)
 {
-	Solver* solv = reinterpret_cast<Solver*> (my_func_data);
-	return solv->imageObjFunc(x, grad);
-}
+	scalingFactors.clear();
 
-// initial guess of the new vertex coordinates, i.e. linear scaling according to the new image size
-void Solver::initialGuess(Size &newSize, Size &originalSize)
-{
-	MeshManager* mm = MeshManager::getInstance();
-
-	int newWidth = newSize.width;
-	int newHeight = newSize.height;
-	int oldHeight = originalSize.height;
-	int oldWidth = originalSize.width;
-
-	float scaleX = (float) newWidth / (float) oldWidth;
-	float scaleY = (float) newHeight / (float) oldHeight;
-
-	tmp = mm->deepCopyMesh(contentAwareMesh);
-
-	// scale vertices
-	for (unsigned int i = 0; i < tmp.vertices.size(); i++)
+	for (unsigned int i = 0; i < deformedMesh.quads.size(); i++)
 	{
-		tmp.vertices.at(i).x = WarpingMath::round(tmp.vertices.at(i).x * scaleX);
-		tmp.vertices.at(i).y = WarpingMath::round(tmp.vertices.at(i).y * scaleY);
-	}
+		pair<Quad, float> p;
+		p.first = deformedMesh.quads.at(i);
+		p.second = calculateQuadScale(originalMesh.quads.at(i), deformedMesh.quads.at(i));
 
-	for (unsigned int i = 0; i < tmp.quads.size(); i++)
+		scalingFactors.push_back(p);
+	}
+}
+
+double Solver::totalRedistributionEnergy(Mesh &newMesh, vector<pair<Edge, float>> edgeSaliency)
+{
+	double sum = 0;
+	
+	for (unsigned int i = 0; i < newMesh.edges.size(); i++)
 	{
-		tmp.quads.at(i).v1.x = WarpingMath::round(tmp.quads.at(i).v1.x * scaleX);
-		tmp.quads.at(i).v1.y = WarpingMath::round(tmp.quads.at(i).v1.y * scaleY);
-
-		tmp.quads.at(i).v2.x = WarpingMath::round(tmp.quads.at(i).v2.x * scaleX);
-		tmp.quads.at(i).v2.y = WarpingMath::round(tmp.quads.at(i).v2.y * scaleY);
-
-		tmp.quads.at(i).v3.x = WarpingMath::round(tmp.quads.at(i).v3.x * scaleX);
-		tmp.quads.at(i).v3.y = WarpingMath::round(tmp.quads.at(i).v3.y * scaleY);
-
-		tmp.quads.at(i).v4.x = WarpingMath::round(tmp.quads.at(i).v4.x * scaleX);
-		tmp.quads.at(i).v4.y = WarpingMath::round(tmp.quads.at(i).v4.y * scaleY);
+		Edge e = newMesh.edges.at(i);
+		sum += ((1 + edgeSaliency.at(i).second) * sqr(WarpingMath::euclideanNorm(newMesh.edges.at(i).src - newMesh.edges.at(i).dest)));
 	}
-
-	for (unsigned int i = 0; i < tmp.edges.size(); i++)
-	{
-		tmp.edges.at(i).src.x = WarpingMath::round(tmp.edges.at(i).src.x * scaleX);
-		tmp.edges.at(i).src.y = WarpingMath::round(tmp.edges.at(i).src.y * scaleY);
-
-		tmp.edges.at(i).dest.x = WarpingMath::round(tmp.edges.at(i).dest.x * scaleX);
-		tmp.edges.at(i).dest.y = WarpingMath::round(tmp.edges.at(i).dest.y * scaleY);
-	}
-}
-
-double Solver::calculateLengthRatio(Edge &oldEdge, Edge &newEdge)
-{
-	return (WarpingMath::euclideanNorm(newEdge.src - newEdge.dest)) / (WarpingMath::euclideanNorm(oldEdge.src - oldEdge.dest));
-}
-
-double Solver::calculateQuadScale(Quad &oldQuad, Quad &newQuad)
-{
-	double sf;
-	double sum1 = 0.0;
-	double sum2 = 0.0;
 	
-	sum1 += WarpingMath::vTv(oldQuad.v1 - oldQuad.v2, newQuad.v1 - newQuad.v2);
-	sum2 += sqr(WarpingMath::euclideanNorm(oldQuad.v1 - oldQuad.v2));
-
-	sum1 += WarpingMath::vTv(oldQuad.v2 - oldQuad.v4, newQuad.v2 - newQuad.v4);
-	sum2 += sqr(WarpingMath::euclideanNorm(oldQuad.v2 - oldQuad.v4));
-
-	sum1 += WarpingMath::vTv(oldQuad.v4 - oldQuad.v3, newQuad.v4 - newQuad.v3);
-	sum2 += sqr(WarpingMath::euclideanNorm(oldQuad.v4 - oldQuad.v3));
-
-	sum1 += WarpingMath::vTv(oldQuad.v3 - oldQuad.v1, newQuad.v3 - newQuad.v1);
-	sum2 += sqr(WarpingMath::euclideanNorm(oldQuad.v3 - oldQuad.v1));
-
-	sf = sum1 / sum2;
-	
-	return sf;
-}
-
-double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
-{
-	double du = 0.0;
-	
-	Vertex _v, v;
-	
-	_v = newQuad.v1 - newQuad.v2;
-	v = oldQuad.v1 - oldQuad.v2;
-	v.x = WarpingMath::round(v.x * sf);
-	v.y = WarpingMath::round(v.y * sf);
-
-	du += sqr(WarpingMath::euclideanNorm(_v - v));
-
-	_v = newQuad.v2 - newQuad.v4;
-	v = oldQuad.v2 - oldQuad.v4;
-	v.x = WarpingMath::round(v.x * sf);
-	v.y = WarpingMath::round(v.y * sf);
-
-	du += sqr(WarpingMath::euclideanNorm(_v - v));
-
-	_v = newQuad.v4 - newQuad.v3;
-	v = oldQuad.v4 - oldQuad.v3;
-	v.x = WarpingMath::round(v.x * sf);
-	v.y = WarpingMath::round(v.y * sf);
-
-	du += sqr(WarpingMath::euclideanNorm(_v - v));
-
-	_v = newQuad.v3 - newQuad.v1;
-	v = oldQuad.v3 - oldQuad.v1;
-	v.x = WarpingMath::round(v.x * sf);
-	v.y = WarpingMath::round(v.y * sf);
-
-	du += sqr(WarpingMath::euclideanNorm(_v - v));
-	
-	return du;
-}
-
-double Solver::totalQuadEnergy(Mesh &newMesh)
-{
-	double du = 0.0;
-
-	// assuming #quads in oldmesh == #quads in new mesh
-	for (unsigned int i = 0; i < originalMesh.quads.size(); i++)
-	{
-		double sf = scalingFactors.at(i).second;
-		double duf = quadEnergy(originalMesh.quads.at(i), newMesh.quads.at(i), sf);
-
-		// du = du + wf * duf
-		du += ((saliencyWeightMapping.at(i).first) * duf);
-	}
-
-	return du;
-}
-
-double Solver::totalEdgeEnergy(Mesh &newMesh)
-{
-	double dl = 0.0;
-
-	for (unsigned int i = 0; i < originalMesh.edges.size(); i++)
-	{	
-		Vertex _v = newMesh.edges.at(i).src - newMesh.edges.at(i).dest;
-		Vertex v = originalMesh.edges.at(i).src - originalMesh.edges.at(i).dest;
-		
-		double lij = edgeLengthRatios.at(i).second;
-		v.x = WarpingMath::round(v.x * lij);
-		v.y = WarpingMath::round(v.y * lij);
-		
-		dl += sqr(WarpingMath::euclideanNorm(_v - v));
-	}
-
-	return dl;
-}
-
-double Solver::imageObjFunc(const vector<double> &x, vector<double> &grad)
-{
-	++iterationCount;
-
-	if (!grad.empty())
-	{
-		// compute gradient here
-	}
-	MeshManager* mm = MeshManager::getInstance();
-
-	mm->doubleVecToMesh(x, deformedMesh);
-
-	//double edgeEnergy = totalEdgeEnergy(deformedMesh);
-	double quadEnergy = totalQuadEnergy(deformedMesh);
-
-	double res = /*(0.5 * edgeEnergy) +*/ quadEnergy;
-
-	cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << res << ends;
-
-	return res;
+	return sum;
 }
 
 vector<double> Solver::computeLowerImageBoundConstraints(const vector<double> &x, const Size size)
@@ -353,121 +139,149 @@ vector<double> Solver::computeUpperImageBoundConstraints(const vector<double> &x
 	return ub;
 }
 
-Mesh Solver::redistributeQuads(Mesh &m, vector<pair<float, Quad>> &wfMap)
+double Solver::calculateLengthRatio(Edge &oldEdge, Edge &newEdge)
 {
-	cout << ">> Solving optimization problem to redistribute quads..." << endl;
+	return (WarpingMath::euclideanNorm(newEdge.src - newEdge.dest)) / (WarpingMath::euclideanNorm(oldEdge.src - oldEdge.dest));
+}
 
-	this->deformedMesh = m;
-	this->saliencyWeightMapping = wfMap;
+double Solver::calculateQuadScale(Quad &oldQuad, Quad &newQuad)
+{
+	double sf;
+	double sum1 = 0.0;
+	double sum2 = 0.0;
 	
-	QuadSaliencyManager qsm;
-	this->edgeSaliency = qsm.assignSaliencyValuesToEdges(m, saliencyWeightMapping, oldSize);
+	sum1 += WarpingMath::vTv(oldQuad.v1 - oldQuad.v2, newQuad.v1 - newQuad.v2);
+	sum2 += sqr(WarpingMath::euclideanNorm(oldQuad.v1 - oldQuad.v2));
 
+	sum1 += WarpingMath::vTv(oldQuad.v2 - oldQuad.v4, newQuad.v2 - newQuad.v4);
+	sum2 += sqr(WarpingMath::euclideanNorm(oldQuad.v2 - oldQuad.v4));
+
+	sum1 += WarpingMath::vTv(oldQuad.v4 - oldQuad.v3, newQuad.v4 - newQuad.v3);
+	sum2 += sqr(WarpingMath::euclideanNorm(oldQuad.v4 - oldQuad.v3));
+
+	sum1 += WarpingMath::vTv(oldQuad.v3 - oldQuad.v1, newQuad.v3 - newQuad.v1);
+	sum2 += sqr(WarpingMath::euclideanNorm(oldQuad.v3 - oldQuad.v1));
+
+	sf = sum1 / sum2;
+	
+	return sf;
+}
+
+double Solver::quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf)
+{
+	double du = 0.0;
+	
+	Vertex _v, v;
+	
+	_v = newQuad.v1 - newQuad.v2;
+	v = oldQuad.v1 - oldQuad.v2;
+	v.x = WarpingMath::round(v.x * sf);
+	v.y = WarpingMath::round(v.y * sf);
+
+	du += sqr(WarpingMath::euclideanNorm(_v - v));
+
+	_v = newQuad.v2 - newQuad.v4;
+	v = oldQuad.v2 - oldQuad.v4;
+	v.x = WarpingMath::round(v.x * sf);
+	v.y = WarpingMath::round(v.y * sf);
+
+	du += sqr(WarpingMath::euclideanNorm(_v - v));
+
+	_v = newQuad.v4 - newQuad.v3;
+	v = oldQuad.v4 - oldQuad.v3;
+	v.x = WarpingMath::round(v.x * sf);
+	v.y = WarpingMath::round(v.y * sf);
+
+	du += sqr(WarpingMath::euclideanNorm(_v - v));
+
+	_v = newQuad.v3 - newQuad.v1;
+	v = oldQuad.v3 - oldQuad.v1;
+	v.x = WarpingMath::round(v.x * sf);
+	v.y = WarpingMath::round(v.y * sf);
+
+	du += sqr(WarpingMath::euclideanNorm(_v - v));
+	
+	return du;
+}
+
+double Solver::totalQuadEnergy(Mesh &originalMesh, Mesh &newMesh, const vector<pair<Quad, float>> &scalingFactors, const vector<pair<float, Quad>> &saliencyWeightMapping)
+{
+	double du = 0.0;
+
+	// assuming #quads in oldmesh == #quads in new mesh
+	for (unsigned int i = 0; i < originalMesh.quads.size(); i++)
+	{
+		double sf = scalingFactors.at(i).second;
+		double duf = quadEnergy(originalMesh.quads.at(i), newMesh.quads.at(i), sf);
+
+		// du = du + wf * duf
+		du += ((saliencyWeightMapping.at(i).first) * duf);
+	}
+
+	return du;
+}
+
+double Solver::totalEdgeEnergy(Mesh &originalMesh, Mesh &newMesh, const vector<pair<Edge, float>> &edgeLengthRatios)
+{
+	double dl = 0.0;
+
+	for (unsigned int i = 0; i < originalMesh.edges.size(); i++)
+	{	
+		Vertex _v = newMesh.edges.at(i).src - newMesh.edges.at(i).dest;
+		Vertex v = originalMesh.edges.at(i).src - originalMesh.edges.at(i).dest;
+		
+		double lij = edgeLengthRatios.at(i).second;
+		v.x = WarpingMath::round(v.x * lij);
+		v.y = WarpingMath::round(v.y * lij);
+		
+		dl += sqr(WarpingMath::euclideanNorm(_v - v));
+	}
+
+	return dl;
+}
+
+void Solver::initialGuess(Mesh &src, Mesh& dest, Size &newSize, Size &originalSize)
+{
 	MeshManager* mm = MeshManager::getInstance();
 
-	vector<double> x = mm->meshToDoubleVec(deformedMesh);
+	int newWidth = newSize.width;
+	int newHeight = newSize.height;
+	int oldHeight = originalSize.height;
+	int oldWidth = originalSize.width;
 
-	vector<double> lb = computeLowerImageBoundConstraints(x, oldSize);
-	vector<double> ub = computeUpperImageBoundConstraints(x, oldSize);
+	float scaleX = (float) newWidth / (float) oldWidth;
+	float scaleY = (float) newHeight / (float) oldHeight;
 
-	nlopt::opt opt(nlopt::LN_PRAXIS, x.size());
+	dest = mm->deepCopyMesh(src);
 
-	opt.set_lower_bounds(lb);
-	opt.set_upper_bounds(ub);
-
-	opt.set_min_objective(Solver::wrapperRedistributeObjectiveFunc, this);
-
-	opt.set_xtol_abs(1);
-	//opt.set_maxeval(1000);
-
-	double minf;
-
-	nlopt::result res = opt.optimize(x, minf);
-	
-	cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
-
-	iterationCount = 0;
-	return deformedMesh;
-}
-
-double Solver::wrapperRedistributeObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data)
-{
-	Solver* solver = reinterpret_cast<Solver*> (my_func_data);
-	return solver->redistributeObjFunc(x, grad);
-}
-
-double Solver::redistributeObjFunc(const vector<double> &x, vector<double> &grad)
-{
-	++iterationCount;
-
-	if (!grad.empty())
+	// scale vertices
+	for (unsigned int i = 0; i < dest.vertices.size(); i++)
 	{
-		// compute gradient here
+		dest.vertices.at(i).x = WarpingMath::round(dest.vertices.at(i).x * scaleX);
+		dest.vertices.at(i).y = WarpingMath::round(dest.vertices.at(i).y * scaleY);
 	}
 
-	MeshManager* mm = MeshManager::getInstance();
-
-	mm->doubleVecToMesh(x, deformedMesh);
-	double res = totalRedistributionEnergy(deformedMesh);
-
-	cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << res << ends;
-
-	return res;
-}
-
-double Solver::totalRedistributionEnergy(Mesh &newMesh)
-{
-	double sum = 0;
-	
-	for (unsigned int i = 0; i < newMesh.edges.size(); i++)
+	for (unsigned int i = 0; i < dest.quads.size(); i++)
 	{
-		Edge e = newMesh.edges.at(i);
-		sum += ((1 + edgeSaliency.at(i).second) * sqr(WarpingMath::euclideanNorm(newMesh.edges.at(i).src - newMesh.edges.at(i).dest)));
+		dest.quads.at(i).v1.x = WarpingMath::round(dest.quads.at(i).v1.x * scaleX);
+		dest.quads.at(i).v1.y = WarpingMath::round(dest.quads.at(i).v1.y * scaleY);
+
+		dest.quads.at(i).v2.x = WarpingMath::round(dest.quads.at(i).v2.x * scaleX);
+		dest.quads.at(i).v2.y = WarpingMath::round(dest.quads.at(i).v2.y * scaleY);
+
+		dest.quads.at(i).v3.x = WarpingMath::round(dest.quads.at(i).v3.x * scaleX);
+		dest.quads.at(i).v3.y = WarpingMath::round(dest.quads.at(i).v3.y * scaleY);
+
+		dest.quads.at(i).v4.x = WarpingMath::round(dest.quads.at(i).v4.x * scaleX);
+		dest.quads.at(i).v4.y = WarpingMath::round(dest.quads.at(i).v4.y * scaleY);
 	}
-	
-	return sum;
-}
 
-void Solver::calculateEdgeLengthRatios()
-{
-	edgeLengthRatios.clear();
-
-	for (unsigned int i = 0; i < deformedMesh.edges.size(); i++)
+	for (unsigned int i = 0; i < dest.edges.size(); i++)
 	{
-		pair<Edge, float> p;
-		p.first = deformedMesh.edges.at(i);
-		p.second = calculateLengthRatio(originalMesh.edges.at(i), deformedMesh.edges.at(i));
+		dest.edges.at(i).src.x = WarpingMath::round(dest.edges.at(i).src.x * scaleX);
+		dest.edges.at(i).src.y = WarpingMath::round(dest.edges.at(i).src.y * scaleY);
 
-		edgeLengthRatios.push_back(p);
+		dest.edges.at(i).dest.x = WarpingMath::round(dest.edges.at(i).dest.x * scaleX);
+		dest.edges.at(i).dest.y = WarpingMath::round(dest.edges.at(i).dest.y * scaleY);
 	}
-}
-
-void Solver::calculateOptimalScaleFactors()
-{
-	scalingFactors.clear();
-
-	for (unsigned int i = 0; i < deformedMesh.quads.size(); i++)
-	{
-		pair<Quad, float> p;
-		p.first = deformedMesh.quads.at(i);
-		p.second = calculateQuadScale(originalMesh.quads.at(i), deformedMesh.quads.at(i));
-
-		scalingFactors.push_back(p);
-	}
-}
-
-void Solver::calculateQuadScale()
-{
-	bool bigger = false;
-
-	int oldArea = oldSize.width * oldSize.height;
-	int newArea = newSize.width * newSize.height;
-
-	if (oldArea < newArea)
-		bigger = true;
-	
-	if (bigger)
-		quadscale = max(newSize.height / (float) oldSize.height, newSize.width / (float) oldSize.width);
-	else
-		quadscale = min(newSize.height / (float) oldSize.height, newSize.width / (float) oldSize.width);
 }

@@ -1,75 +1,5 @@
 #include "ImageWarper.h"
-#include "stdafx.h"
-#include "QuadSaliencyManager.h"
-#include "Solver.h"
 #include "Helper.h"
-#include "WarpingMath.h"
-#include "FileManager.h"
-#include "MeshManager.h"
-
-ImageWarper::ImageWarper(void)
-{
-}
-
-ImageWarper::~ImageWarper(void)
-{
-}
-
-Mesh ImageWarper::getDeformedMesh()
-{
-	return this->deformedMesh;
-}
-
-IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
-{
-	cout << "\nStart image warping" << endl;
-
-	//initialisation
-	oldSize.height = img->height;
-	oldSize.width = img->width;
-	newSize = destSize;
-	src = img;
-	dest = Mat::zeros(destSize, CV_32FC3);
-	QuadSaliencyManager qsm;
-	Solver solver(oldSize);
-	MeshManager* mm = MeshManager::getInstance();
-	
-	mm->initializeMesh(initialMesh, oldSize);
-
-	vector<pair<float, Quad>> _wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
-	Mesh contentAwareMesh = solver.redistributeQuads(initialMesh, _wfMap);
-	FileManager::saveMeshAsText("redistributed_mesh.txt", "D:\\warping\\mesh\\", contentAwareMesh);
-	//Mesh contentAwareMesh = FileManager::loadMesh("D:\\warping\\mesh\\redistributed_mesh.txt");
-	vector<pair<float, Quad>> wfMap = qsm.assignSaliencyValuesToQuads(initialMesh, saliency);
-
-	FileManager::saveMeshAsImage("redistributed_mesh.png", "D:\\warping\\mesh\\", contentAwareMesh, oldSize);
-	//FileManager::saveMeshAsText("redistributed_mesh.txt", "D:\\warping\\mesh\\", contentAwareMesh);
-
-	deformedMesh = solver.solveImageProblem(contentAwareMesh, initialMesh, destSize, wfMap);
-	linearScaledMesh = solver.getInitialGuess();
-	
-	//linearly scale the image as starting point
-	resize(src, tmp, newSize);
-	tmp.convertTo(tmp, CV_32FC3);
-
-	FileManager::saveMat("linearly scaled image.png", "D:\\warping\\result\\", tmp);
-	FileManager::saveMeshAsImage("mesh.png", "D:\\warping\\mesh\\", deformedMesh, newSize);
-	FileManager::saveMeshAsImage("mesh_initial_guess.png", "D:\\warping\\mesh\\", linearScaledMesh, newSize);
-
-	// do the warping according to mesh
-	warp();
-
-	// convert dest frame back to original type
-	dest.convertTo(dest, src.type());
-
-	string filename = "warped_image + mesh.png";
-	string dir = "D:\\warping\\result\\";
-	FileManager::saveMat("warped_image.png", dir, dest);
-	Helper::drawMeshOverMat(deformedMesh, dest);
-	FileManager::saveMat(filename, dir, dest);
-
-	return &Helper::MatToIplImage(dest);
-}
 
 /*
 	For convenience the following vertices are treated as 2-dimensional vectors.
@@ -84,7 +14,7 @@ IplImage* ImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliency)
 	u------->
 		a
 */
-void ImageWarper::warp(int interpolation)
+void ImageWarper::warp(Mesh &linearScaledMesh, Mesh &deformedMesh, Mat &linearScaledImage, Mat& dest, int interpolation)
 {
 	cout << ">> Warp image" << endl;
 
@@ -119,7 +49,7 @@ void ImageWarper::warp(int interpolation)
 
 		//set ROI over deformed quad, i.e. a rectangle that engulfs the quad completely
 		Helper::getImageROI(deformedQuad, deformedROI, dest);
-		Helper::getImageROI(linearQuad, linearROI, tmp);
+		Helper::getImageROI(linearQuad, linearROI, linearScaledImage);
 
 		for (int j = 0; j < deformedROI.rows; j++)
 		{
