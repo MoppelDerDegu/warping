@@ -380,3 +380,38 @@ int MeshManager::determineQuadNumber(Size & size, int &quadNumberX, int &quadNum
 
 	return xnumber * ynumber;
 }
+
+Mesh MeshManager::generateRightEyeMesh(Mesh &leftEyeMesh, StereoImage* img, Size &rightEyeSize)
+{
+	Mesh result;
+	
+	vector<Point2f> initial;
+	vector<Point2f> detected;
+
+	// maps indices of the vector to the index of the vertex in the mesh
+	map<int, int> indexMap;
+
+	int key = 0; // index of the tracked points
+
+	// track only inner points of the mesh
+	for (unsigned int i = 0; i < leftEyeMesh.vertices.size(); i++)
+	{
+		// assuming lefteye size == righteye size
+		if (!(leftEyeMesh.vertices.at(i).x == 0 || leftEyeMesh.vertices.at(i).x == rightEyeSize.width ||
+			leftEyeMesh.vertices.at(i).y == 0 || leftEyeMesh.vertices.at(i).y == rightEyeSize.height))
+		{
+			Point2f p;
+			p.x = leftEyeMesh.vertices.at(i).x;
+			p.y = leftEyeMesh.vertices.at(i).y;
+			
+			initial.push_back(p);
+
+			indexMap.insert(pair<int, int>(key, i));
+			key++;
+		}
+	}
+
+	// TODO look for feature points in the right eye view
+
+	return result;
+}

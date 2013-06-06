@@ -6,6 +6,8 @@
 #include "ImageSaliencyDetector.h"
 #include "GradientGenerator.h"
 #include "FileManager.h"
+#include "StereoImage.h"
+#include "ImageEditor.h"
 
 #if 0
 
@@ -167,30 +169,23 @@ int main(int argc, char* argv[])
 #if 1
 int main(int argc, char* argv[])
 {
-	/*CvCapture* input;
-	char* fileName = "D:/media/big_buck_bunny_480p_stereo.avi";
+	CvCapture* input;
+	char* fileName = "D:/media/hhi1-1-3.avi";
 	input = cvCaptureFromFile(fileName);
 
-	IplImage* img = Helper::getNthFrame(input, 100);
-	*/
-
-	// read image
-	char* fileName = "D:/media/1.png";
-	Mat mat = imread(fileName);
-	IplImage img = Helper::MatToIplImage(mat);
+	IplImage* img = Helper::getNthFrame(input, 10);
+	
+	Size size = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
 
 	// initialization
 	ImageSaliencyDetector isd;
 	MonoImageWarper miw;
 	GradientGenerator gd;
+	StereoImage* frame = new StereoImage(size, img->depth, img->nChannels);
+	ImageEditor* ie = new ImageEditor(cvSize(size.width/2, size.height), img->depth, img->nChannels);
+	frame = ie->split_vertical(frame);
 
-	// warp
-	
-	Size s;
-	s.height = 200;
-	s.width = 300;
-	miw.warpImage(&img, s);
-
-	//cvReleaseCapture(&input);
+	cvReleaseCapture(&input);
+	delete frame;
 }
 #endif

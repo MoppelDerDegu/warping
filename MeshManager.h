@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
+#include "StereoImage.h"
 
 class MeshManager
 {
@@ -23,5 +24,6 @@ public:
 	Mesh deepCopyMesh(const Mesh &m);
 	vector<double> meshToDoubleVec(Mesh &m);
 	void doubleVecToMesh(const vector<double> &x, Mesh &result);
+	Mesh generateRightEyeMesh(Mesh &leftEyeMesh, StereoImage* img, Size &rightEyeSize);
 };
 
