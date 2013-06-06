@@ -28,3 +28,5 @@ _ReSharper*/
 lib/nlopt-2.3-dll/*.exp
 lib/nlopt-2.3-dll/*.lib
 *.ipch
+*.cpp.orig
+*.h.orig
