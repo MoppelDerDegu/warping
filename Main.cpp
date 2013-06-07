@@ -8,6 +8,7 @@
 #include "FileManager.h"
 #include "StereoImage.h"
 #include "ImageEditor.h"
+#include "MeshManager.h"
 
 #if 0
 
@@ -174,18 +175,30 @@ int main(int argc, char* argv[])
 	input = cvCaptureFromFile(fileName);
 
 	IplImage* img = Helper::getNthFrame(input, 10);
-	
-	Size size = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
+
+	Size originalSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
 
 	// initialization
 	ImageSaliencyDetector isd;
 	MonoImageWarper miw;
 	GradientGenerator gd;
-	StereoImage* frame = new StereoImage(size, img->depth, img->nChannels);
-	ImageEditor* ie = new ImageEditor(cvSize(size.width/2, size.height), img->depth, img->nChannels);
+	MeshManager* mm = MeshManager::getInstance();
+	StereoImage* frame = new StereoImage(originalSize, img->depth, img->nChannels);
+	ImageEditor* ie = new ImageEditor(cvSize(originalSize.width/2, originalSize.height), img->depth, img->nChannels);
+
+	frame->setBoth_eye(img);
 	frame = ie->split_vertical(frame);
 
+	Size leftSize = Size(frame->getLeft_eye()->width, frame->getLeft_eye()->height);
+	Size rightSize = Size(frame->getRight_eye()->width, frame->getRight_eye()->height);
+
+	Mesh left;
+	mm->initializeMesh(left, leftSize);
+
+	Mesh right = mm->generateRightEyeMesh(left, frame, rightSize);
+
+	FileManager::saveMeshAsImage("rightmesh.png", "D:\\", right, rightSize);
+
 	cvReleaseCapture(&input);
-	delete frame;
 }
 #endif

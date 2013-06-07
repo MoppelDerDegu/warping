@@ -33,7 +33,7 @@ MeshManager* MeshManager::getInstance()
 */
 void MeshManager::initializeMesh(Mesh &result, Size &size)
 {
-	cout << ">> Initialize mesh" << endl;
+	cout << ">> Initialize mesh for the left view" << endl;
 
 	int x, y, numberOfQuads, quadNumberX, quadNumberY;
 	numberOfQuads = determineQuadNumber(size, quadNumberX, quadNumberY);
@@ -260,105 +260,7 @@ void MeshManager::doubleVecToMesh(const vector<double> &x, Mesh &result)
 		result.vertices.push_back(v);
 	}
 
-	int vertexCount = 0;
-	int diff = quadNumberY * 2 + 1;
-	int xfac, yfac;
-
-	// quads and edges
-	for (int i = 0; i < totalNumber; i++)
-	{
-		Quad q;
-		Edge e1, e2, e3, e4;
-
-		xfac = (int) i / quadNumberY;
-		yfac = i % quadNumberY;
-
-		if (vertexCount <= quadNumberY * 2)
-		{
-			// first column of mesh
-			q.v1 = result.vertices.at(vertexCount);
-			q.v2 = result.vertices.at(vertexCount + 1);
-			q.v3 = result.vertices.at(vertexCount + 2);
-			q.v4 = result.vertices.at(vertexCount + 3);
-
-			if (vertexCount < (quadNumberY - 1) * 2)
-				vertexCount += 2;
-			else
-				vertexCount += 4;
-		}
-		else
-		{
-			if (xfac < 2)
-			{
-				// second column
-				q.v1 = result.vertices.at(vertexCount - diff);
-				q.v2 = result.vertices.at(vertexCount);
-				q.v3 = result.vertices.at(vertexCount + 1 - (diff - 1));
-				q.v4 = result.vertices.at(vertexCount + 1);
-			}
-			else
-			{
-				// all other columns
-				q.v1 = result.vertices.at(vertexCount - diff);
-				q.v2 = result.vertices.at(vertexCount);
-				q.v3 = result.vertices.at(vertexCount + 1 - diff);
-				q.v4 = result.vertices.at(vertexCount + 1);
-			}
-
-			if (i < quadNumberY * 2)
-				diff--;	
-
-			if (yfac == quadNumberY - 1)
-				vertexCount += 2;
-			else
-				vertexCount++;
-		}
-
-		e1.src = q.v1;
-		e1.dest = q.v2;
-		e2.src = q.v2;
-		e2.dest = q.v4;
-		e3.src = q.v4;
-		e3.dest = q.v3;
-		e4.src = q.v3;
-		e4.dest = q.v1;
-
-		result.quads.push_back(q);
-
-		if (i == 0)
-		{
-			result.edges.push_back(e1);
-			result.edges.push_back(e2);
-			result.edges.push_back(e3);
-			result.edges.push_back(e4);
-		}
-		else
-		{
-			if (xfac == 0)
-			{
-				// don't add front edge of a quad since it's already part of the mesh
-				result.edges.push_back(e2);
-				result.edges.push_back(e3);
-				result.edges.push_back(e4);
-			}
-			else
-			{
-				if (yfac == 0)
-				{
-					// don't add the left-hand edge of a quad since it's redundant
-					result.edges.push_back(e1);
-					result.edges.push_back(e2);
-					result.edges.push_back(e3);
-				}
-				else
-				{
-					// don't add top and left-hand edge since they are redundant
-					result.edges.push_back(e2);
-					result.edges.push_back(e3);
-				}
-			}
-		}
-	}
+	buildQuadsAndEdges(result);
 }
 
 int MeshManager::determineQuadNumber(Size & size, int &quadNumberX, int &quadNumberY)
@@ -383,19 +285,33 @@ int MeshManager::determineQuadNumber(Size & size, int &quadNumberX, int &quadNum
 
 Mesh MeshManager::generateRightEyeMesh(Mesh &leftEyeMesh, StereoImage* img, Size &rightEyeSize)
 {
+	cout << ">> Generate mesh for the right view" << endl;
+
 	Mesh result;
 	
+	Mat left, right, leftgray, rightgray;
+
+	vector<uchar> status;
+	vector<float> err;
+
 	vector<Point2f> initial;
 	vector<Point2f> detected;
 
-	// maps indices of the vector to the index of the vertex in the mesh
+	// maps indices of the feature point vector to the index of the vertex in the mesh
 	map<int, int> indexMap;
 
 	int key = 0; // index of the tracked points
 
+	left = img->getLeft_eye();
+	right = img->getRight_eye();
+
+	cvtColor(left, leftgray, CV_BGR2GRAY);
+	cvtColor(right, rightgray, CV_BGR2GRAY);
+
 	// track only inner points of the mesh
 	for (unsigned int i = 0; i < leftEyeMesh.vertices.size(); i++)
 	{
+		
 		// assuming lefteye size == righteye size
 		if (!(leftEyeMesh.vertices.at(i).x == 0 || leftEyeMesh.vertices.at(i).x == rightEyeSize.width ||
 			leftEyeMesh.vertices.at(i).y == 0 || leftEyeMesh.vertices.at(i).y == rightEyeSize.height))
@@ -411,7 +327,159 @@ Mesh MeshManager::generateRightEyeMesh(Mesh &leftEyeMesh, StereoImage* img, Size
 		}
 	}
 
-	// TODO look for feature points in the right eye view
+	// find vertices in the right image
+	calcOpticalFlowPyrLK(leftgray, rightgray, initial, detected, status, err, Size(100, 100), 3);
+
+	/*
+	Mat flow;
+	calcOpticalFlowFarneback(leftgray, rightgray, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
+
+
+	for(int y = 0; y < left.rows; y += 20)
+		for(int x = 0; x < left.cols; x += 20)
+	        {
+	            const Point2f& fxy = flow.at<Point2f>(y, x);
+	            line(left, Point(x,y), Point(cvRound(x+fxy.x), cvRound(y+fxy.y)),
+	                 CV_RGB(0, 255, 0));
+	            circle(left, Point(x,y), 2, CV_RGB(0, 255, 0), -1);
+	        }
+
+
+
+		imwrite("D:\\flow.png", left);
+	*/
+
+	// create righteye mesh:
+
+	// copy vertices
+	result.vertices = leftEyeMesh.vertices;
+	
+	// copy quadnumbers
+	result.quadNumberX = leftEyeMesh.quadNumberX;
+	result.quadNumberY = leftEyeMesh.quadNumberY;
+	
+	// edit innervertices
+	map<int, int>::iterator it = indexMap.begin();
+	
+	while (it != indexMap.end())
+	{
+		int featureIndex = it->first;
+		int vertexIndex = it->second;
+		
+		if (status.at(featureIndex) != 0)
+		{
+			result.vertices.at(vertexIndex).x = WarpingMath::round(detected.at(featureIndex).x);
+			result.vertices.at(vertexIndex).y = WarpingMath::round(detected.at(featureIndex).y);
+		}
+
+		++it;
+	}
+	
+	buildQuadsAndEdges(result);
 
 	return result;
+}
+
+void MeshManager::buildQuadsAndEdges(Mesh &mesh)
+{
+	int vertexCount = 0;
+	int diff = mesh.quadNumberY * 2 + 1;
+	int xfac, yfac;
+	int totalNumber = mesh.quadNumberX * mesh.quadNumberY;
+
+	// quads and edges
+	for (int i = 0; i < totalNumber; i++)
+	{
+		Quad q;
+		Edge e1, e2, e3, e4;
+
+		xfac = (int) i / mesh.quadNumberY;
+		yfac = i % mesh.quadNumberY;
+
+		if (vertexCount <= mesh.quadNumberY * 2)
+		{
+			// first column of mesh
+			q.v1 = mesh.vertices.at(vertexCount);
+			q.v2 = mesh.vertices.at(vertexCount + 1);
+			q.v3 = mesh.vertices.at(vertexCount + 2);
+			q.v4 = mesh.vertices.at(vertexCount + 3);
+
+			if (vertexCount < (mesh.quadNumberY - 1) * 2)
+				vertexCount += 2;
+			else
+				vertexCount += 4;
+		}
+		else
+		{
+			if (xfac < 2)
+			{
+				// second column
+				q.v1 = mesh.vertices.at(vertexCount - diff);
+				q.v2 = mesh.vertices.at(vertexCount);
+				q.v3 = mesh.vertices.at(vertexCount + 1 - (diff - 1));
+				q.v4 = mesh.vertices.at(vertexCount + 1);
+			}
+			else
+			{
+				// all other columns
+				q.v1 = mesh.vertices.at(vertexCount - diff);
+				q.v2 = mesh.vertices.at(vertexCount);
+				q.v3 = mesh.vertices.at(vertexCount + 1 - diff);
+				q.v4 = mesh.vertices.at(vertexCount + 1);
+			}
+
+			if (i < mesh.quadNumberY * 2)
+				diff--;	
+
+			if (yfac == mesh.quadNumberY - 1)
+				vertexCount += 2;
+			else
+				vertexCount++;
+		}
+
+		e1.src = q.v1;
+		e1.dest = q.v2;
+		e2.src = q.v2;
+		e2.dest = q.v4;
+		e3.src = q.v4;
+		e3.dest = q.v3;
+		e4.src = q.v3;
+		e4.dest = q.v1;
+
+		mesh.quads.push_back(q);
+
+		if (i == 0)
+		{
+			mesh.edges.push_back(e1);
+			mesh.edges.push_back(e2);
+			mesh.edges.push_back(e3);
+			mesh.edges.push_back(e4);
+		}
+		else
+		{
+			if (xfac == 0)
+			{
+				// don't add front edge of a quad since it's already part of the mesh
+				mesh.edges.push_back(e2);
+				mesh.edges.push_back(e3);
+				mesh.edges.push_back(e4);
+			}
+			else
+			{
+				if (yfac == 0)
+				{
+					// don't add the left-hand edge of a quad since it's redundant
+					mesh.edges.push_back(e1);
+					mesh.edges.push_back(e2);
+					mesh.edges.push_back(e3);
+				}
+				else
+				{
+					// don't add top and left-hand edge since they are redundant
+					mesh.edges.push_back(e2);
+					mesh.edges.push_back(e3);
+				}
+			}
+		}
+	}
 }

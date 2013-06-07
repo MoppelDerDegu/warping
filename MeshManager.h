@@ -6,20 +6,22 @@
 class MeshManager
 {
 private:
-	static bool instanceFlag;
-	static MeshManager *single;
-	int determineQuadNumber(Size & size, int &quadNumberX, int &quadNumberY);
 	MeshManager()
 	{
 	}
 
+	static bool instanceFlag;
+	static MeshManager *single;
+	int determineQuadNumber(Size & size, int &quadNumberX, int &quadNumberY);
+	void buildQuadsAndEdges(Mesh &mesh); // builds quads and edges from given vertices
+
 public:
-    static MeshManager* getInstance();
     ~MeshManager()
     {
         instanceFlag = false;
     }
 
+	static MeshManager* getInstance();
 	void initializeMesh(Mesh &result, Size &size);
 	Mesh deepCopyMesh(const Mesh &m);
 	vector<double> meshToDoubleVec(Mesh &m);
