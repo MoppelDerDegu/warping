@@ -9,6 +9,6 @@ public:
 	MonoImageWarper(void);
 	~MonoImageWarper(void);
 
-	IplImage* warpImage(IplImage* img, Size &destSize);
+	IplImage* warpImage(IplImage* img, Size &destSize, Mat &saliencyMap);
 };
 

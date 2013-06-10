@@ -9,6 +9,7 @@
 #include "StereoImage.h"
 #include "ImageEditor.h"
 #include "MeshManager.h"
+#include "StereoSolver.h"
 
 #if 0
 
@@ -177,10 +178,11 @@ int main(int argc, char* argv[])
 	IplImage* img = Helper::getNthFrame(input, 10);
 
 	Size originalSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
+	Size newSize(800, 600);
 
 	// initialization
 	ImageSaliencyDetector isd;
-	MonoImageWarper miw;
+	StereoSolver siw;
 	GradientGenerator gd;
 	MeshManager* mm = MeshManager::getInstance();
 	StereoImage* frame = new StereoImage(originalSize, img->depth, img->nChannels);
@@ -197,7 +199,19 @@ int main(int argc, char* argv[])
 
 	Mesh right = mm->generateRightEyeMesh(left, frame, rightSize);
 
-	FileManager::saveMeshAsImage("rightmesh.png", "D:\\", right, rightSize);
+	/*
+	// compute saliency
+	Mat saliencyMap = isd.hContrast(img);
+
+	// compute gradient
+	Mat gradient;
+	gg.generateGradient(src, gradient);
+	gradient = gradient * 3;
+
+	// combine saliency and gradient
+	Mat combined;
+	Helper::matXmat(saliencyMap, gradient, combined);
+	*/
 
 	cvReleaseCapture(&input);
 }

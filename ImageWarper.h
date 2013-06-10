@@ -4,9 +4,6 @@
 
 class ImageWarper
 {
-public:
-	virtual IplImage* warpImage(IplImage* img, Size &destSize) = 0;
-
 protected:
 	Size oldSize;
 	Size newSize;

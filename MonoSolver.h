@@ -10,8 +10,7 @@ public:
 	~MonoSolver(void);
 	Mesh redistributeQuads(Mesh &originalMesh, vector<pair<float, Quad>> &wfMap); //draws quads towards salient regions
 	Mesh solveImageProblem(Mesh &contentAwareMesh, Mesh &originalMesh, Size &newSize, vector<pair<float, Quad>> &wfMap);
-	static double wrapperImageObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
-	static double wrapperRedistributeObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
+	
 	Mesh getDeformedMesh();
 	Mesh getInitialGuess();
 
@@ -23,12 +22,13 @@ private:
 	vector<pair<float, Quad>> saliencyWeightMapping; // maps saliency weights to quads
 	Size oldSize;
 	Size newSize;
-	unsigned int iterationCount;
 	vector<pair<Edge, float>> edgeSaliency; // maps average saliency weights to edges
 	vector<pair<Edge, float>> edgeLengthRatios; // lij
 	vector<pair<Quad, float>> scalingFactors; // sf
 	double quadscale;
 
+	static double wrapperImageObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
+	static double wrapperRedistributeObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
 	double imageObjFunc(const vector<double> &x, vector<double> &grad);
 	double redistributeObjFunc(const vector<double> &x, vector<double> &grad); 
 };

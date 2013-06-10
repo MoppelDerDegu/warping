@@ -5,6 +5,8 @@
 class Solver
 {
 protected:
+	unsigned int iterationCount;
+
 	double calculateLengthRatio(Edge &oldEdge, Edge &newEdge); // unknown in equation (4)
 	double calculateQuadScale(Quad &oldQuad, Quad &newQuad); // Wang et al. 2008 equation (2)
 	double quadEnergy(Quad &oldQuad, Quad &newQuad, const double sf); // Wang et al. 2008 equation (1)

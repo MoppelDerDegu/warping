@@ -67,7 +67,7 @@ Mesh MonoSolver::solveImageProblem(Mesh &contentAwareMesh, Mesh &originalMesh, S
 	{
 		cout << "\n>>Solving problem for step " << i + 1 << endl;
 		
-		calculateEdgeLengthRatios(tmp, deformedMesh, edgeLengthRatios);
+		calculateEdgeLengthRatios(originalMesh, deformedMesh, edgeLengthRatios);
 		calculateOptimalScaleFactors(originalMesh, deformedMesh, scalingFactors);
 		
 		nlopt::result result = opt.optimize(x, minf);

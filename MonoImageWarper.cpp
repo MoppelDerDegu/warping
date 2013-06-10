@@ -18,7 +18,7 @@ MonoImageWarper::~MonoImageWarper(void)
 {
 }
 
-IplImage* MonoImageWarper::warpImage(IplImage* img, Size &destSize)
+IplImage* MonoImageWarper::warpImage(IplImage* img, Size &destSize, Mat &saliencyMap)
 {
 	cout << "\nStart image warping" << endl;
 
@@ -32,26 +32,12 @@ IplImage* MonoImageWarper::warpImage(IplImage* img, Size &destSize)
 	MonoSolver solver(oldSize);
 	MeshManager* mm = MeshManager::getInstance();
 	Mesh initialMesh;
-	ImageSaliencyDetector isd;
-	GradientGenerator gg;
 
 	// place regular grid mesh over image
 	mm->initializeMesh(initialMesh, oldSize);
 
-	// compute saliency
-	Mat saliencyMap = isd.hContrast(img);
-
-	// compute gradient
-	Mat gradient;
-	gg.generateGradient(src, gradient);
-	gradient = gradient * 3;
-
-	// combine saliency and gradient
-	Mat combined;
-	Helper::matXmat(saliencyMap, gradient, combined);
-
 	// assign saliency values to quads
-	vector<pair<float, Quad>> wfMap = qsm->assignSaliencyValuesToQuads(initialMesh, combined);
+	vector<pair<float, Quad>> wfMap = qsm->assignSaliencyValuesToQuads(initialMesh, saliencyMap);
 
 	Mesh deformedMesh = solver.solveImageProblem(initialMesh, initialMesh, destSize, wfMap);
 	Mesh linearScaledMesh = solver.getInitialGuess();
