@@ -30,3 +30,6 @@ lib/nlopt-2.3-dll/*.lib
 *.ipch
 *.cpp.orig
 *.h.orig
+*.sln
+Debug/*.lastbuildstate
+Release/*.lastbuildstate
