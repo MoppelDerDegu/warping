@@ -55,7 +55,7 @@ void DisparityMapBuilder::computeDepthPercentage(int numPixels)
 //Block Matching
 CvMat* DisparityMapBuilder::buildDisparityMapBM(StereoImage* source)
 {
-	cout << " CALCULATING DISPARITY MAP BASED ON BM " << endl;
+	cout << "CALCULATING DISPARITY MAP BASED ON BM " << endl;
 	
     cvReleaseMat(&this->saliencyMap);
 	
@@ -122,7 +122,7 @@ CvMat* DisparityMapBuilder::buildDisparityMapBM(StereoImage* source)
 //Semi Global Block Matching
 CvMat* DisparityMapBuilder::buildDisparityMapSGBM(StereoImage* source)
 {
-	cout << " CALCULATING DISPARITY MAP BASED ON SGBM " << endl;
+	cout << "CALCULATING DISPARITY MAP BASED ON SGBM " << endl;
 	
 	cvReleaseMat(&this->saliencyMap);
 
@@ -200,7 +200,7 @@ CvMat* DisparityMapBuilder::buildDisparityMapSGBM(StereoImage* source)
 //Graph Cut
 CvMat* DisparityMapBuilder::buildDisparityMapGC(StereoImage* source)
 {
-	cout << " CALCULATING DISPARITY MAP BASED ON GC " << endl;
+	cout << "CALCULATING DISPARITY MAP BASED ON GC " << endl;
 		
 	cvReleaseMat(&this->saliencyMap);
 

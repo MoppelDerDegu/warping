@@ -9,7 +9,7 @@
 #include "StereoImage.h"
 #include "ImageEditor.h"
 #include "MeshManager.h"
-#include "StereoSolver.h"
+#include "StereoImageWarper.h"
 
 #include "ImageEditor.h"
 #include "DisparityMapBuilder.h"
@@ -184,17 +184,17 @@ int main(int argc, char* argv[])
 int main(int argc, char* argv[])
 {
 	CvCapture* input;
-	char* fileName = "D:/media/hhi1-1-3.avi";
+	char* fileName = "D:/media/flymetothemoon.mp4";
 	input = cvCaptureFromFile(fileName);
 
 	IplImage* img = Helper::getNthFrame(input, 10);
 
 	Size originalSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
-	Size newSize(800, 600);
+	Size newSize(360, 600);
 
 	// initialization
-	StereoSolver siw;
 	GradientGenerator gd;
+	StereoImageWarper siw;
 	MeshManager* mm = MeshManager::getInstance();
 	StereoImage* frame = new StereoImage(originalSize, img->depth, img->nChannels);
 	ImageEditor* ie = new ImageEditor(cvSize(originalSize.width/2, originalSize.height), img->depth, img->nChannels);
@@ -251,6 +251,11 @@ int main(int argc, char* argv[])
 	dispmat.convertTo(dispmat, CV_8U);
 	hconmat.convertTo(hconmat, CV_8U);
 	final = dispmat + hconmat + gradient;
+
+	FileManager::saveMat("combined saliency.png", "D:\\warping\\saliency\\", final);
+
+	// warp the stereo frame
+	siw.warpImage(frame, newSize, final);
 
 	cvReleaseCapture(&input);
 	cvReleaseMat(&combinedSaliency);

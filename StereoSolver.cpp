@@ -2,9 +2,11 @@
 #include "MeshManager.h"
 #include "lib/nlopt-2.3-dll/nlopt.hpp"
 #include "WarpingMath.h"
+#include "FileManager.h"
 
 StereoSolver::StereoSolver(void)
 {
+	iterationCount = 0;
 }
 
 StereoSolver::~StereoSolver(void)
@@ -49,7 +51,9 @@ pair<Mesh, Mesh> StereoSolver::solveStereoImageProblem(Mesh &originalLeft, Mesh 
 
 	// compute image boundaries
 	vector<double> lb = computeLowerImageBoundConstraints(x, newLeftSize);
+	lb.insert(lb.end(), lb.begin(), lb.end());
 	vector<double> ub = computeUpperImageBoundConstraints(x, newLeftSize);
+	ub.insert(ub.end(), ub.begin(), ub.end());
 
 	// right mesh
 	vector<double> _x = mm->meshToDoubleVec(deformedRight);
@@ -69,11 +73,15 @@ pair<Mesh, Mesh> StereoSolver::solveStereoImageProblem(Mesh &originalLeft, Mesh 
 	// convergence criteria
 	opt.set_xtol_abs(1);
 
+	// set boundary constraints
+	opt.set_lower_bounds(lb);
+	opt.set_upper_bounds(ub);
+
 	double minf;
 
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < 1; i++)
 	{
-		cout << "\n>>Solving problem for step " << i + 1 << endl;
+		cout << ">>Solving problem for step " << i + 1 << endl;
 		
 		calculateEdgeLengthRatios(originalLeft, deformedLeft, edgeLengthRatiosLeft);
 		calculateEdgeLengthRatios(originalRight, deformedRight, edgeLengthRatiosRight);
@@ -129,6 +137,8 @@ double StereoSolver::stereoImageObjFunc(const vector<double> &x, vector<double> 
 	double disparityEnergy = stereoEnergy(originalLeft, originalRight, deformedLeft, deformedRight);
 
 	double totalEnergy = totalQuadEnergy + totalEdgeEnergy + disparityEnergy;
+
+	cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << totalEnergy << ends;
 
 	return totalEnergy;
 }
