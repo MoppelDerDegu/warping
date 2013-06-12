@@ -3,11 +3,11 @@
 #include "QuadSaliencyManager.h"
 #include "StereoSolver.h"
 #include "StereoImage.h"
+#include "Helper.h"
 
 StereoImageWarper::StereoImageWarper(void)
 {
 }
-
 
 StereoImageWarper::~StereoImageWarper(void)
 {
@@ -60,7 +60,12 @@ IplImage* StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mat &sa
 	destLeft.convertTo(destLeft, src.type());
 	destRight.convertTo(destRight, src.type());
 
-	// TODO merge left and right warped image
+	// merge left and right warped image
+	Mat dest = Mat::zeros(Size(destLeft.size().width * 2, destLeft.size().height), src.type());
+	Mat roi = dest(Rect(0, 0, destLeft.size().width, destLeft.size().height));
+	destLeft.copyTo(roi);
+	roi = dest(Rect(destLeft.size().width, 0, destLeft.size().width, destLeft.size().height));
+	destRight.copyTo(roi);
 
-	return NULL;
+	return &Helper::MatToIplImage(dest);
 }

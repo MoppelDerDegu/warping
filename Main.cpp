@@ -11,6 +11,13 @@
 #include "MeshManager.h"
 #include "StereoSolver.h"
 
+#include "ImageEditor.h"
+#include "DisparityMapBuilder.h"
+#include "MotionDetector.h"
+#include "SaliencyMath.h"
+#include "ImageSaliencyDetector.h"
+
+
 #if 0
 
 int main(int argc, char* argv[])
@@ -93,7 +100,8 @@ int main(int argc, char* argv[])
 //--------------------Comput Image Saliency-------------------------------
 //------------------------------------------------------------------------
 		
-		sm->setImageSaliencyMap(isd->hContrast(frame->getLeft_eye()));
+		CvMat hcon = isd->hContrast(frame->getLeft_eye());
+		sm->setImageSaliencyMap(&hcon);
 				
 //------------------------------------------------------------------------
 //--------------------Dectect Motion--------------------------------------
@@ -130,6 +138,10 @@ int main(int argc, char* argv[])
 		if(x>0)
 		{
 			combinedSaliency = sm->computeSaliency();
+
+			Mat m = combinedSaliency;
+
+			FileManager::saveMat("combinedSaliency.png", "D:\\", m);
 
 			outputFrame = ie->smoothImage(combinedSaliency, frame, isd->getNumColors());
 
@@ -181,25 +193,28 @@ int main(int argc, char* argv[])
 	Size newSize(800, 600);
 
 	// initialization
-	ImageSaliencyDetector isd;
 	StereoSolver siw;
 	GradientGenerator gd;
 	MeshManager* mm = MeshManager::getInstance();
 	StereoImage* frame = new StereoImage(originalSize, img->depth, img->nChannels);
 	ImageEditor* ie = new ImageEditor(cvSize(originalSize.width/2, originalSize.height), img->depth, img->nChannels);
+	CvMat* combinedSaliency = cvCreateMat(originalSize.width/2, originalSize.height, CV_8UC1);
+	DisparityMapBuilder* dmb = new DisparityMapBuilder(cvSize(originalSize.width/2, originalSize.height));
+	MotionDetector* md = new MotionDetector();
+	SaliencyMath* sm = new SaliencyMath(originalSize.width/2, originalSize.height);
+	ImageSaliencyDetector* isd = new ImageSaliencyDetector();
 
 	frame->setBoth_eye(img);
 	frame = ie->split_vertical(frame);
 
 	Size leftSize = Size(frame->getLeft_eye()->width, frame->getLeft_eye()->height);
 	Size rightSize = Size(frame->getRight_eye()->width, frame->getRight_eye()->height);
-
+	/*
 	Mesh left;
 	mm->initializeMesh(left, leftSize);
 
 	Mesh right = mm->generateRightEyeMesh(left, frame, rightSize);
 
-	/*
 	// compute saliency
 	Mat saliencyMap = isd.hContrast(img);
 
@@ -213,6 +228,33 @@ int main(int argc, char* argv[])
 	Helper::matXmat(saliencyMap, gradient, combined);
 	*/
 
+	// compute image saliency
+	CvMat hcon = isd->hContrast(frame->getLeft_eye());
+	sm->setImageSaliencyMap(&hcon);
+
+	// compute motion saliency
+	CvMat* motion = md->detectMotion(frame->getLeft_eye());
+	sm->setMotionSaliencyMap(motion);
+
+	// compute disparity map
+	CvMat* disp = dmb->buildDisparityMapBM(frame);
+	sm->setStereoSaliencyMap(disp);
+
+	// compute gradient map
+	Mat gradient;
+	gd.generateGradient(frame->getLeft_eye(), gradient);
+
+	// combine saliency maps
+	Mat final;
+	Mat dispmat = disp;
+	Mat hconmat = &hcon;
+	dispmat.convertTo(dispmat, CV_8U);
+	hconmat.convertTo(hconmat, CV_8U);
+	final = dispmat + hconmat + gradient;
+
 	cvReleaseCapture(&input);
+	cvReleaseMat(&combinedSaliency);
+	delete dmb;
+	delete md;
 }
 #endif
