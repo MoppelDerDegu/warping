@@ -52,22 +52,23 @@ IplImage* StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mat &sa
 
 	FileManager::saveMeshAsImage("deformed left.png", "D:\\warping\\mesh\\", deformedLeft, destLeftSize);
 	FileManager::saveMeshAsImage("deformed right.png", "D:\\warping\\mesh\\", deformedRight, destLeftSize);
-	FileManager::saveMeshAsText("deformed left.txt", "D:\\warping\\mesh\\", deformedLeft);
-	FileManager::saveMeshAsText("deformed right.txt", "D:\\warping\\mesh\\", deformedRight);
 
 	linearScaledLeft = ss.getInitialLeft();
 	linearScaledRight = ss.getInitialRight();
-	
+
 	FileManager::saveMeshAsImage("linear scaled left.png", "D:\\warping\\mesh\\", linearScaledLeft, destLeftSize);
 	FileManager::saveMeshAsImage("linear scaled right.png", "D:\\warping\\mesh\\", linearScaledRight, destLeftSize);
 
 	// linear scaled images of left and right view
 	Mat linearLeft, linearRight;
-	Mat leftEye = img->getBoth_eye();
-	Mat rightEye = img->getBoth_eye();
+	Mat leftEye = img->getLeft_eye();
+	Mat rightEye = img->getRight_eye();
 	
 	resize(leftEye, linearLeft, destLeftSize);
 	resize(rightEye, linearRight, destLeftSize);
+
+	linearLeft.convertTo(linearLeft, CV_32FC3);
+	linearRight.convertTo(linearRight, CV_32FC3);
 
 	// warp left and right view
 	warp(linearScaledLeft, deformedLeft, linearLeft, destLeft);
@@ -83,7 +84,15 @@ IplImage* StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mat &sa
 	roi = dest(Rect(destLeft.size().width, 0, destLeft.size().width, destLeft.size().height));
 	destRight.copyTo(roi);
 
+	// merge left and right linear scaled image
+	Mat linearBoth = Mat::zeros(Size(destLeft.size().width * 2, destLeft.size().height), linearLeft.type());
+	roi = linearBoth(Rect(0, 0, destLeft.size().width, destLeft.size().height));
+	linearLeft.copyTo(roi);
+	roi = linearBoth(Rect(destLeft.size().width, 0, destLeft.size().width, destLeft.size().height));
+	linearRight.copyTo(roi);
+
 	FileManager::saveMat("result.png", "D:\\warping\\result\\", dest);
+	FileManager::saveMat("linear scaled.png", "D:\\warping\\result\\", linearBoth);
 
 	return &Helper::MatToIplImage(dest);
 }

@@ -28,7 +28,7 @@ Mesh MonoSolver::getInitialGuess()
 
 Mesh MonoSolver::solveImageProblem(Mesh &contentAwareMesh, Mesh &originalMesh, Size &newSize, vector<pair<float, Quad>> &wfMap)
 {
-	cout << ">> Solving image optimization problem..." << endl;
+	cout << "> Solving image optimization problem..." << endl;
 
 	this->originalMesh = originalMesh;
 	this->contentAwareMesh = contentAwareMesh;

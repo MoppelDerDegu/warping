@@ -2,7 +2,6 @@
 #include "MeshManager.h"
 #include "lib/nlopt-2.3-dll/nlopt.hpp"
 #include "WarpingMath.h"
-#include "FileManager.h"
 
 StereoSolver::StereoSolver(void)
 {
@@ -25,7 +24,7 @@ Mesh StereoSolver::getInitialRight()
 
 pair<Mesh, Mesh> StereoSolver::solveStereoImageProblem(Mesh &originalLeft, Mesh &originalRight, Size &oldSize, Size &newSize, vector<pair<float, Quad>> &wfMapLeft, vector<pair<float, Quad>> &wfMapRight)
 {
-	cout << ">> Solving stereo image optimization problem..." << endl;
+	cout << "> Solving stereo image optimization problem..." << endl;
 
 	MeshManager* mm = MeshManager::getInstance();
 
@@ -79,7 +78,7 @@ pair<Mesh, Mesh> StereoSolver::solveStereoImageProblem(Mesh &originalLeft, Mesh 
 
 	double minf;
 
-	for (int i = 0; i < 1; i++)
+	for (int i = 0; i < 20; i++)
 	{
 		cout << ">>Solving problem for step " << i + 1 << endl;
 		
@@ -128,15 +127,15 @@ double StereoSolver::stereoImageObjFunc(const vector<double> &x, vector<double> 
 	double quadEnergyRight = totalQuadEnergy(originalRight, deformedRight, scalingFactorsRight, saliencyWeightMappingRight);
 
 	double totalQuadEnergy = quadEnergyLeft + quadEnergyRight;
-
+	/*
 	double edgeEnergyLeft = totalEdgeEnergy(originalLeft, deformedLeft, edgeLengthRatiosLeft);
 	double edgeEnergyRight = totalEdgeEnergy(originalRight, deformedRight, edgeLengthRatiosRight);
 
 	double totalEdgeEnergy = edgeEnergyLeft + edgeEnergyRight;
-
+	*/
 	double disparityEnergy = stereoEnergy(originalLeft, originalRight, deformedLeft, deformedRight);
 
-	double totalEnergy = totalQuadEnergy + totalEdgeEnergy + disparityEnergy;
+	double totalEnergy = totalQuadEnergy + /*totalEdgeEnergy +*/ disparityEnergy;
 
 	cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << totalEnergy << ends;
 

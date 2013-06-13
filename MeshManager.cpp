@@ -33,7 +33,7 @@ MeshManager* MeshManager::getInstance()
 */
 void MeshManager::initializeMesh(Mesh &result, Size &size)
 {
-	cout << ">> Initialize mesh for the left view" << endl;
+	cout << "> Initialize mesh for the left view" << endl;
 
 	int x, y, numberOfQuads, quadNumberX, quadNumberY;
 	numberOfQuads = determineQuadNumber(size, quadNumberX, quadNumberY);
@@ -285,7 +285,7 @@ int MeshManager::determineQuadNumber(Size & size, int &quadNumberX, int &quadNum
 
 Mesh MeshManager::generateRightEyeMesh(Mesh &leftEyeMesh, StereoImage* img, Size &rightEyeSize)
 {
-	cout << ">> Generate mesh for the right view" << endl;
+	cout << "> Generate mesh for the right view" << endl;
 
 	Mesh result;
 	
