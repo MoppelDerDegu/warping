@@ -70,7 +70,7 @@ pair<Mesh, Mesh> StereoSolver::solveStereoImageProblem(Mesh &originalLeft, Mesh 
 	opt.set_min_objective(StereoSolver::wrapperStereoImageObjectiveFunc, this);
 
 	// convergence criteria
-	opt.set_xtol_abs(1);
+	opt.set_xtol_abs(10);
 
 	// set boundary constraints
 	opt.set_lower_bounds(lb);

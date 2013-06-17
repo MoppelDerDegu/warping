@@ -50,6 +50,8 @@ IplImage* StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mat &sa
 	deformedLeft = deformedMeshes.first;
 	deformedRight = deformedMeshes.second;
 
+	FileManager::saveMeshAsText("deformed left.txt", "D:\\warping\\mesh\\", deformedLeft);
+	FileManager::saveMeshAsText("deformed right.txt", "D:\\warping\\mesh\\", deformedRight);
 	FileManager::saveMeshAsImage("deformed left.png", "D:\\warping\\mesh\\", deformedLeft, destLeftSize);
 	FileManager::saveMeshAsImage("deformed right.png", "D:\\warping\\mesh\\", deformedRight, destLeftSize);
 
@@ -84,6 +86,15 @@ IplImage* StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mat &sa
 	roi = dest(Rect(destLeft.size().width, 0, destLeft.size().width, destLeft.size().height));
 	destRight.copyTo(roi);
 
+	// draw mesh over left and right image
+	Helper::drawMeshOverMat(deformedLeft, destLeft);
+	Helper::drawMeshOverMat(deformedRight, destRight);
+	Mat destwithmesh = Mat::zeros(Size(destLeft.size().width * 2, destLeft.size().height), src.type());
+	roi = destwithmesh(Rect(0, 0, destLeft.size().width, destLeft.size().height));
+	destLeft.copyTo(roi);
+	roi = destwithmesh(Rect(destLeft.size().width, 0, destLeft.size().width, destLeft.size().height));
+	destRight.copyTo(roi);
+
 	// merge left and right linear scaled image
 	Mat linearBoth = Mat::zeros(Size(destLeft.size().width * 2, destLeft.size().height), linearLeft.type());
 	roi = linearBoth(Rect(0, 0, destLeft.size().width, destLeft.size().height));
@@ -93,6 +104,7 @@ IplImage* StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mat &sa
 
 	FileManager::saveMat("result.png", "D:\\warping\\result\\", dest);
 	FileManager::saveMat("linear scaled.png", "D:\\warping\\result\\", linearBoth);
+	FileManager::saveMat("result with mesh.png", "D:\\warping\\result\\", destwithmesh);
 
 	return &Helper::MatToIplImage(dest);
 }

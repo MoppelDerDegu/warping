@@ -190,7 +190,7 @@ int main(int argc, char* argv[])
 	IplImage* img = Helper::getNthFrame(input, 10);
 
 	Size originalSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
-	Size newSize(360, 600);
+	Size newSize(1280, 480);
 
 	// initialization
 	GradientGenerator gd;
