@@ -22,10 +22,21 @@ public:
     }
 
 	static MeshManager* getInstance();
-	void initializeMesh(Mesh &result, Size &size);
+	
 	Mesh deepCopyMesh(const Mesh &m);
+
 	vector<double> meshToDoubleVec(Mesh &m);
 	void doubleVecToMesh(const vector<double> &x, Mesh &result);
+
+	void initializeMesh(Mesh &result, Size &size);
 	Mesh generateRightEyeMesh(Mesh &leftEyeMesh, StereoImage* img, Size &rightEyeSize);
+
+	vector<double> xCoordsToDoubleVec(Mesh &m);
+	void xCoordsToMesh(const vector<double> &x, Mesh &result);
+
+	vector<double> yCoordsToDoubleVec(Mesh &m);
+	void yCoordsToMesh(const vector<double> &y, Mesh &result);
+
+	void mergeXandYMeshes(Mesh &xMesh, Mesh &yMesh, Mesh &result);
 };
 
