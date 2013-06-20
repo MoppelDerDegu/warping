@@ -2,6 +2,7 @@
 #include "MeshManager.h"
 #include "lib/nlopt-2.3-dll/nlopt.hpp"
 #include "WarpingMath.h"
+#include "FileManager.h"
 
 StereoSolver::StereoSolver(void)
 {
@@ -398,7 +399,7 @@ double StereoSolver::stereoImageObjFuncX(const vector<double> &x, vector<double>
 
 	// split array into left and right mesh
 	vector<double> left(x.begin(), x.begin() + splitIndexSeperate);
-	vector<double> right(x.begin() + splitIndex, x.end());
+	vector<double> right(x.begin() + splitIndexSeperate, x.end());
 
 	mm->xCoordsToMesh(left, deformedLeftXOnly);
 	mm->xCoordsToMesh(right, deformedRightXOnly);
@@ -430,7 +431,7 @@ double StereoSolver::stereoImageObjFuncY(const vector<double> &x, vector<double>
 
 	// split array into left and right mesh
 	vector<double> left(x.begin(), x.begin() + splitIndexSeperate);
-	vector<double> right(x.begin() + splitIndex, x.end());
+	vector<double> right(x.begin() + splitIndexSeperate, x.end());
 
 	mm->yCoordsToMesh(left, deformedLeftYOnly);
 	mm->yCoordsToMesh(right, deformedRightYOnly);
@@ -536,7 +537,7 @@ pair<Mesh, Mesh> StereoSolver::solveStereoImageProblemSeperately(Mesh &originalL
 
 	double minfX, minfY;
 
-	for (int i = 0 ; i < 20; i++)
+	for (int i = 0 ; i < 1; i++)
 	{	
 		calculateEdgeLengthRatios(originalLeft, deformedLeft, edgeLengthRatiosLeft);
 		calculateEdgeLengthRatios(originalRight, deformedRight, edgeLengthRatiosRight);
@@ -544,22 +545,28 @@ pair<Mesh, Mesh> StereoSolver::solveStereoImageProblemSeperately(Mesh &originalL
 		calculateOptimalScaleFactors(originalLeft, deformedLeft, scalingFactorsLeft);
 		calculateOptimalScaleFactors(originalRight, deformedRight, scalingFactorsRight);
 			
-		cout << ">>Solving for x coordinates for step " << i + 1 << endl;
+		cout << ">> Solving for x coordinates for step " << i + 1 << endl;
 		nlopt::result resultX = optX.optimize(xLeft, minfX);
-		cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
+		cout << "\n>>> Solution found after " << iterationCount << " iterations" << endl;
 		iterationCount = 0;
 
-		cout << ">>Solving for y coordinates for step " << i + 1 << endl;
+		cout << ">> Solving for y coordinates for step " << i + 1 << endl;
 		nlopt::result resultY = optY.optimize(yLeft, minfY);
-		cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
+		cout << "\n>>> Solution found after " << iterationCount << " iterations" << endl;
 		iterationCount = 0;
+
+		// merge x and y coordinates of left mesh
+		mm->mergeXandYMeshes(deformedLeftXOnly, deformedLeftYOnly, deformedLeft);
+
+		// merge x and y coordinates of right mesh
+		mm->mergeXandYMeshes(deformedRightXOnly, deformedRightYOnly, deformedRight);
 	}
 
-	// merge x and y coordinates of left mesh
-	mm->mergeXandYMeshes(deformedLeftXOnly, deformedLeftYOnly, deformedLeft);
-
-	// merge x and y coordinates of right mesh
-	mm->mergeXandYMeshes(deformedRightXOnly, deformedRightYOnly, deformedRight);
+	FileManager::saveMeshAsImage("deformed left x coords.png", "D:\\warping\\mesh\\", deformedLeftXOnly, newSize);
+	FileManager::saveMeshAsImage("deformed left y coords.png", "D:\\warping\\mesh\\", deformedLeftYOnly, newSize);
+	
+	FileManager::saveMeshAsImage("deformed right x coords.png", "D:\\warping\\mesh\\", deformedRightXOnly, newSize);
+	FileManager::saveMeshAsImage("deformed right y coords.png", "D:\\warping\\mesh\\", deformedRightYOnly, newSize);
 
 	pair<Mesh, Mesh> p(deformedLeft, deformedRight);
 

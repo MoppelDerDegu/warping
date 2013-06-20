@@ -500,7 +500,7 @@ void MeshManager::xCoordsToMesh(const vector<double> &x, Mesh &result)
 	result.quads.clear();
 
 	// vertices
-	for (unsigned int i = 0; i < x.size() * 2; i += 2)
+	for (unsigned int i = 0; i < x.size(); i++)
 	{
 		Vertex v;
 		v.x = WarpingMath::round(x.at(i));
@@ -533,7 +533,7 @@ void MeshManager::yCoordsToMesh(const vector<double> &y, Mesh &result)
 	result.quads.clear();
 
 	// vertices
-	for (unsigned int i = 0; i < y.size() * 2; i += 2)
+	for (unsigned int i = 0; i < y.size(); i++)
 	{
 		Vertex v;
 		v.x = 0;
@@ -553,6 +553,7 @@ void MeshManager::mergeXandYMeshes(Mesh &xMesh, Mesh &yMesh, Mesh &result)
 
 	for (unsigned int i = 0; i < xMesh.vertices.size(); i++)
 	{
+
 		Vertex v;
 		v.x = xMesh.vertices.at(i).x;
 		v.y = yMesh.vertices.at(i).y;

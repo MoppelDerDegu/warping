@@ -45,7 +45,7 @@ IplImage* StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mat &sa
 	vector<pair<float, Quad>> wfMapRight = qsm->assignSaliencyValuesToQuads(initialRight, saliencyMap);
 
 	// warp left and right mesh
-	pair<Mesh, Mesh> deformedMeshes = ss.solveStereoImageProblem(initialLeft, initialRight, oldSize, destSize, wfMapLeft, wfMapRight);
+	pair<Mesh, Mesh> deformedMeshes = ss.solveStereoImageProblemSeperately(initialLeft, initialRight, oldSize, destSize, wfMapLeft, wfMapRight);
 	
 	deformedLeft = deformedMeshes.first;
 	deformedRight = deformedMeshes.second;
