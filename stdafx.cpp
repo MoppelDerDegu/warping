@@ -35,5 +35,29 @@ bool Quad::operator== (Quad &q)
 	return (q.v1 == v1 && q.v2 == v2 && q.v3 == v3 && q.v4 == v4);
 }
 
+Vertex Vertex::operator* (float param)
+{
+	Vertex tmp;
+	tmp.x = x * param;
+	tmp.y = y * param;
+	return tmp;
+}
+
+Vertex Vertex::operator* (double param)
+{
+	Vertex tmp;
+	tmp.x = x * param;
+	tmp.y = y * param;
+	return tmp;
+}
+
+Vertex Vertex::operator* (int param)
+{
+	Vertex tmp;
+	tmp.x = x * param;
+	tmp.y = y * param;
+	return tmp;
+}
+
 // TODO: Auf zusätzliche Header verweisen, die in STDAFX.H
 // und nicht in dieser Datei erforderlich sind.

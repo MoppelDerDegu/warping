@@ -5,7 +5,7 @@
 class StereoSolver : public Solver
 {
 public:
-	StereoSolver(void);
+	StereoSolver(unsigned int);
 	~StereoSolver(void);
 
 	pair<Mesh, Mesh> solveStereoImageProblem(Mesh &originalLeft, Mesh &originalRight, Size &oldSize, Size &newSize, vector<pair<float, Quad>> &wfMapLeft, vector<pair<float, Quad>> &wfMapRight);
@@ -25,6 +25,8 @@ private:
 	Mesh deformedLeftYOnly;
 	Mesh deformedRightXOnly;
 	Mesh deformedRightYOnly;
+
+	unsigned int maxEval; // maximum number of alternating optimization steps
 
 	int splitIndex;
 	int splitIndexSeperate;

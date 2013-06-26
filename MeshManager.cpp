@@ -324,7 +324,7 @@ Mesh MeshManager::generateRightEyeMesh(Mesh &leftEyeMesh, StereoImage* img, Size
 	}
 
 	// find vertices in the right image
-	calcOpticalFlowPyrLK(leftgray, rightgray, initial, detected, status, err, Size(150, 150), 3);
+	calcOpticalFlowPyrLK(leftgray, rightgray, initial, detected, status, err, Size(200, 200), 3);
 
 #if 0
 	Mat flow;
@@ -562,4 +562,23 @@ void MeshManager::mergeXandYMeshes(Mesh &xMesh, Mesh &yMesh, Mesh &result)
 	}
 
 	buildQuadsAndEdges(result);
+}
+
+Mesh MeshManager::interpolateMesh(Mesh &first, Mesh &second, float alpha)
+{
+	if (first.quadNumberX != second.quadNumberX || first.quadNumberY != second.quadNumberY)
+		throw invalid_argument("Meshes must have the same number of quads");
+	
+	Mesh result;
+
+	for (unsigned int i = 0; i < result.vertices.size(); i++)
+	{
+		Vertex v;
+		v.x = WarpingMath::round(first.vertices.at(i).x * (1 - alpha) + second.vertices.at(i).x * alpha);
+		v.y = WarpingMath::round(first.vertices.at(i).y * (1 - alpha) + second.vertices.at(i).y * alpha);
+	}
+
+	buildQuadsAndEdges(result);
+
+	return result;
 }

@@ -30,6 +30,7 @@ public:
 
 	void initializeMesh(Mesh &result, Size &size);
 	Mesh generateRightEyeMesh(Mesh &leftEyeMesh, StereoImage* img, Size &rightEyeSize);
+	Mesh interpolateMesh(Mesh &first, Mesh &second, float alpha);
 
 	vector<double> xCoordsToDoubleVec(Mesh &m);
 	void xCoordsToMesh(const vector<double> &x, Mesh &result);

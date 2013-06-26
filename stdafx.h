@@ -11,6 +11,7 @@
 #pragma warning (disable : 4244)
 #pragma warning (disable : 4091)
 #pragma warning (disable : 4305)
+#pragma warning (disable : 4018)
 
 #include "targetver.h"
 
@@ -45,6 +46,9 @@ typedef struct Vertex
 	int x, y;
 	Vertex operator+ (Vertex);
 	Vertex operator- (Vertex);
+	Vertex operator* (float);
+	Vertex operator* (double);
+	Vertex operator* (int);
 	bool operator== (Vertex &v);
 };
 

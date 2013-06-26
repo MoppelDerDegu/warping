@@ -178,3 +178,103 @@ void FileManager::saveMeshROIAsImage(const string fileName, const string dir, co
 
 	imwrite(dir + fileName, mat);
 }
+
+void FileManager::saveMeshesAsText(const string fileName, const string dir, vector<Mesh> &meshes)
+{
+	MeshManager* mm = MeshManager::getInstance();
+	vector<vector<double>> vertices;
+
+	for (unsigned int i = 0; i < meshes.size(); i++)
+	{
+		vector<double> tmp = mm->meshToDoubleVec(meshes.at(i));
+		vertices.push_back(tmp);
+	}
+
+	const char* _dir = (char*) dir.c_str();
+	mkDir(_dir);
+
+	ofstream myfile;
+	myfile.open(dir + fileName);
+
+	if (myfile.is_open())
+	{
+		for (unsigned int i = 0; i < vertices.size(); i++)
+		{
+			// write dimension of the mesh
+			myfile << "-" << "\n";
+			myfile << meshes.at(i).quadNumberX << "\n";
+			myfile << meshes.at(i).quadNumberY << "\n";
+
+			// write coordinates
+			for (unsigned int j = 0; j < vertices.at(i).size(); j++)
+			{
+				if (j < vertices.at(i).size() - 1)
+					myfile << vertices.at(i).at(j) << "\n";
+				else
+				{
+					if (i < vertices.size() - 1)
+						myfile << vertices.at(i).at(j) << "\n";
+					else
+						myfile << vertices.at(i).at(j) << "\n" << "-";
+				}
+			}
+		}
+
+		myfile.close();
+	}
+	else
+		cerr << "Unable to open file: " << fileName << endl;
+}
+
+vector<Mesh> FileManager::loadMeshes(const string fileName)
+{
+	MeshManager* mm = MeshManager::getInstance();
+
+	Mesh mesh;
+	vector<double> vertexCoords;
+	vector<Mesh> res;
+	string line;
+	ifstream myfile;
+	myfile.open(fileName);
+
+	if (myfile.is_open())
+	{
+		int count = 0;
+		bool first = true;
+		while (myfile.good())
+		{
+			getline(myfile, line);
+
+			if (line.compare("-") == 0)
+			{
+				if (!first)
+				{
+					mm->doubleVecToMesh(vertexCoords, mesh);
+					res.push_back(mesh);
+					vertexCoords.clear();
+				}
+				
+				count = 0;
+				first = false;
+			}
+			else
+			{
+				if (count < 2)
+				{
+					if (count == 0)
+						mesh.quadNumberX = (int) Helper::stringToDouble(line);
+					else
+						mesh.quadNumberY = (int) Helper::stringToDouble(line);
+
+					count++;
+				}
+				else
+					vertexCoords.push_back(Helper::stringToDouble(line));
+			}
+		}
+	}
+	else
+		cerr << "Unable to open file: " << fileName << endl;
+
+	return res;
+}

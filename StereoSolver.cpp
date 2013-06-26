@@ -4,9 +4,10 @@
 #include "WarpingMath.h"
 #include "FileManager.h"
 
-StereoSolver::StereoSolver(void)
+StereoSolver::StereoSolver(unsigned int maxEval)
 {
 	iterationCount = 0;
+	this->maxEval = maxEval;
 }
 
 StereoSolver::~StereoSolver(void)
@@ -71,7 +72,7 @@ pair<Mesh, Mesh> StereoSolver::solveStereoImageProblem(Mesh &originalLeft, Mesh 
 	opt.set_min_objective(StereoSolver::wrapperStereoImageObjectiveFunc, this);
 
 	// convergence criteria
-	opt.set_xtol_abs(10);
+	opt.set_xtol_abs(5);
 
 	// set boundary constraints
 	opt.set_lower_bounds(lb);
@@ -79,7 +80,7 @@ pair<Mesh, Mesh> StereoSolver::solveStereoImageProblem(Mesh &originalLeft, Mesh 
 
 	double minf;
 
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < maxEval; i++)
 	{
 		cout << ">>Solving problem for step " << i + 1 << endl;
 		
@@ -537,7 +538,7 @@ pair<Mesh, Mesh> StereoSolver::solveStereoImageProblemSeperately(Mesh &originalL
 
 	double minfX, minfY;
 
-	for (int i = 0 ; i < 1; i++)
+	for (int i = 0 ; i < maxEval; i++)
 	{	
 		calculateEdgeLengthRatios(originalLeft, deformedLeft, edgeLengthRatiosLeft);
 		calculateEdgeLengthRatios(originalRight, deformedRight, edgeLengthRatiosRight);

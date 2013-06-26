@@ -10,6 +10,8 @@
 #include "ImageEditor.h"
 #include "MeshManager.h"
 #include "StereoImageWarper.h"
+#include "StereoSolver.h"
+#include "QuadSaliencyManager.h"
 
 #include "ImageEditor.h"
 #include "DisparityMapBuilder.h"
@@ -183,11 +185,34 @@ int main(int argc, char* argv[])
 #if 1
 int main(int argc, char* argv[])
 {
-	CvCapture* input;
-	char* fileName = "D:/media/flymetothemoon.mp4";
-	input = cvCaptureFromFile(fileName);
+	int n = 10; // every n-th frame
+	int currentFrame = 1;
 
-	IplImage* img = Helper::getNthFrame(input, 10);
+	CvCapture* input;
+	VideoCapture captmp;
+	char* fileName = "D:/media/flymetothemoon.mp4";
+	string _fileName = fileName;
+
+	captmp.open(_fileName);
+	double totalFrameNumber = captmp.get(CV_CAP_PROP_FRAME_COUNT);
+	captmp.release();
+
+
+	input = cvCaptureFromFile(fileName);
+	
+	if (!input)
+	{
+		cerr << "CAN NOT OPEN FILE!" << endl;
+		return -1;
+	}
+
+	IplImage* img = cvQueryFrame(input);
+
+	if (!img)
+	{
+		cerr << "THERE IS NO FRAME TO DECODE!" << endl;
+		return -1;
+	}
 
 	Size originalSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
 	Size newSize(1280, 480);
@@ -195,70 +220,127 @@ int main(int argc, char* argv[])
 	// initialization
 	GradientGenerator gd;
 	StereoImageWarper siw;
+	StereoSolver ss(20);
+	Size leftSize, rightSize;
+	CvMat* combinedSaliency = cvCreateMat( originalSize.width/2, originalSize.height, CV_8UC1);
 	MeshManager* mm = MeshManager::getInstance();
+	QuadSaliencyManager* qsm = QuadSaliencyManager::getInstance();
 	StereoImage* frame = new StereoImage(originalSize, img->depth, img->nChannels);
 	ImageEditor* ie = new ImageEditor(cvSize(originalSize.width/2, originalSize.height), img->depth, img->nChannels);
-	CvMat* combinedSaliency = cvCreateMat(originalSize.width/2, originalSize.height, CV_8UC1);
 	DisparityMapBuilder* dmb = new DisparityMapBuilder(cvSize(originalSize.width/2, originalSize.height));
 	MotionDetector* md = new MotionDetector();
 	SaliencyMath* sm = new SaliencyMath(originalSize.width/2, originalSize.height);
 	ImageSaliencyDetector* isd = new ImageSaliencyDetector();
 
-	frame->setBoth_eye(img);
-	frame = ie->split_vertical(frame);
+	Mat finalSaliency;
 
-	Size leftSize = Size(frame->getLeft_eye()->width, frame->getLeft_eye()->height);
-	Size rightSize = Size(frame->getRight_eye()->width, frame->getRight_eye()->height);
-	/*
-	Mesh left;
-	mm->initializeMesh(left, leftSize);
+	vector<Mesh> leftMeshes, rightMeshes;
 
-	Mesh right = mm->generateRightEyeMesh(left, frame, rightSize);
+	vector<pair<float, Quad>> wfMapLeft, wfMapRight;
 
-	// compute saliency
-	Mat saliencyMap = isd.hContrast(img);
+	pair<Mesh, Mesh> deformedMeshes;
 
-	// compute gradient
-	Mat gradient;
-	gg.generateGradient(src, gradient);
-	gradient = gradient * 3;
+	Mesh initialLeft, initialRight;
 
-	// combine saliency and gradient
-	Mat combined;
-	Helper::matXmat(saliencyMap, gradient, combined);
-	*/
+	int x = 0;
 
-	// compute image saliency
-	CvMat hcon = isd->hContrast(frame->getLeft_eye());
-	sm->setImageSaliencyMap(&hcon);
+	// deform meshes for every n-th frame and the first and last frame
+	while (true)
+	{
+		if (!img)
+			break;
 
-	// compute motion saliency
-	CvMat* motion = md->detectMotion(frame->getLeft_eye());
-	sm->setMotionSaliencyMap(motion);
+		frame->setBoth_eye(img);
+		frame = ie->split_vertical(frame);
 
-	// compute disparity map
-	CvMat* disp = dmb->buildDisparityMapBM(frame);
-	sm->setStereoSaliencyMap(disp);
+		leftSize = Size(frame->getLeft_eye()->width, frame->getLeft_eye()->height);
+		rightSize = Size(frame->getRight_eye()->width, frame->getRight_eye()->height);
 
-	// compute gradient map
-	Mat gradient;
-	gd.generateGradient(frame->getLeft_eye(), gradient);
+		// compute image saliency
+		CvMat hcon = isd->hContrast(frame->getLeft_eye());
+		sm->setImageSaliencyMap(&hcon);
 
-	// combine saliency maps
-	Mat final;
-	Mat dispmat = disp;
-	Mat hconmat = &hcon;
-	dispmat.convertTo(dispmat, CV_8U);
-	hconmat.convertTo(hconmat, CV_8U);
-	final = dispmat + hconmat + gradient;
+		// compute motion saliency
+		CvMat* motion = md->detectMotion(frame->getLeft_eye());
+		sm->setMotionSaliencyMap(motion);
 
-	FileManager::saveMat("combined saliency.png", "D:\\warping\\saliency\\", final);
+		// compute disparity map
+		CvMat* disp = dmb->buildDisparityMapBM(frame);
+		sm->setStereoSaliencyMap(disp);
 
-	// warp the stereo frame
-	siw.warpImage(frame, newSize, final);
+		// compute gradient map
+		Mat gradient;
+		gd.generateGradient(frame->getLeft_eye(), gradient);
 
+		// saliency weights
+		sm->computeWeights(isd->getMaxColorDistance(), dmb->getPercentageOfDepth());
+
+		// initialize mesh for left and right view
+		mm->initializeMesh(initialLeft, Size(originalSize.width / 2, originalSize.height));
+		initialRight = mm->generateRightEyeMesh(initialLeft, frame, Size(originalSize.width / 2, originalSize.height));
+
+		if (x > 0)
+		{
+			combinedSaliency = sm->computeSaliency();
+			finalSaliency = combinedSaliency;
+
+			// assign saliency values to quads of left and right view
+			wfMapLeft = qsm->assignSaliencyValuesToQuads(initialLeft, finalSaliency);
+			wfMapRight = qsm->assignSaliencyValuesToQuads(initialRight, finalSaliency);
+
+			// warp left and right mesh
+			deformedMeshes = ss.solveStereoImageProblem(initialLeft, initialRight, originalSize, newSize, wfMapLeft, wfMapRight);
+
+			leftMeshes.push_back(deformedMeshes.first);
+			rightMeshes.push_back(deformedMeshes.second);
+		}
+		else
+		{
+			// first frame
+
+			Mat dispmat = disp;
+			Mat hconmat = &hcon;
+			dispmat.convertTo(dispmat, CV_8U);
+			hconmat.convertTo(hconmat, CV_8U);
+			finalSaliency = dispmat + hconmat + gradient;
+
+			// assign saliency values to quads of left and right view
+			wfMapLeft = qsm->assignSaliencyValuesToQuads(initialLeft, finalSaliency);
+			wfMapRight = qsm->assignSaliencyValuesToQuads(initialRight, finalSaliency);
+
+			// warp left and right mesh
+			deformedMeshes = ss.solveStereoImageProblem(initialLeft, initialRight, originalSize, newSize, wfMapLeft, wfMapRight);
+
+			leftMeshes.push_back(deformedMeshes.first);
+			rightMeshes.push_back(deformedMeshes.second);
+
+			x++;
+			currentFrame = n + 1;
+		}
+
+		if (currentFrame < totalFrameNumber)
+			img = Helper::getNthFrame(input, currentFrame);
+		else
+			img = Helper::getNthFrame(input, totalFrameNumber);
+		
+		currentFrame = currentFrame + n;
+	}
+
+	// write left and right meshes to file
+	FileManager::saveMeshesAsText("left meshes.txt", "D:\\warping\\mesh\\", leftMeshes);
+	FileManager::saveMeshesAsText("right meshes.txt", "D:\\warping\\mesh\\", rightMeshes);
+	
 	cvReleaseCapture(&input);
 	cvReleaseMat(&combinedSaliency);
+
+//-------------------------------------------------------------------
+//---------INTERPOLATE MESHES AND WARP EVERY SINGLE IMAGE------------
+//-------------------------------------------------------------------
+
+	//input = cvCaptureFromFile(fileName);
+
+	// TODO
+
 	delete dmb;
 	delete md;
 }
