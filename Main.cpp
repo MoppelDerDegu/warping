@@ -190,13 +190,12 @@ int main(int argc, char* argv[])
 
 	CvCapture* input;
 	VideoCapture captmp;
-	char* fileName = "D:/media/flymetothemoon.mp4";
+	char* fileName = "D:/media/Flower.avi";
 	string _fileName = fileName;
 
 	captmp.open(_fileName);
 	double totalFrameNumber = captmp.get(CV_CAP_PROP_FRAME_COUNT);
 	captmp.release();
-
 
 	input = cvCaptureFromFile(fileName);
 	
@@ -206,6 +205,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+	// decode the first frame
 	IplImage* img = cvQueryFrame(input);
 
 	if (!img)
@@ -215,18 +215,24 @@ int main(int argc, char* argv[])
 	}
 
 	Size originalSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
-	Size newSize(1280, 480);
+	Size newSize(360, 300);
 
 	// initialization
 	GradientGenerator gd;
 	StereoImageWarper siw;
 	StereoSolver ss(20);
-	Size leftSize, rightSize;
-	CvMat* combinedSaliency = cvCreateMat( originalSize.width/2, originalSize.height, CV_8UC1);
+
 	MeshManager* mm = MeshManager::getInstance();
 	QuadSaliencyManager* qsm = QuadSaliencyManager::getInstance();
+
+	Size leftSize, rightSize;
+
+	CvMat* combinedSaliency = cvCreateMat( originalSize.width/2, originalSize.height, CV_8UC1);
+	
 	StereoImage* frame = new StereoImage(originalSize, img->depth, img->nChannels);
+
 	ImageEditor* ie = new ImageEditor(cvSize(originalSize.width/2, originalSize.height), img->depth, img->nChannels);
+
 	DisparityMapBuilder* dmb = new DisparityMapBuilder(cvSize(originalSize.width/2, originalSize.height));
 	MotionDetector* md = new MotionDetector();
 	SaliencyMath* sm = new SaliencyMath(originalSize.width/2, originalSize.height);
@@ -243,6 +249,7 @@ int main(int argc, char* argv[])
 	Mesh initialLeft, initialRight;
 
 	int x = 0;
+	bool lastFrameDecoded = false;
 
 	// deform meshes for every n-th frame and the first and last frame
 	while (true)
@@ -250,9 +257,11 @@ int main(int argc, char* argv[])
 		if (!img)
 			break;
 
+		cout << "\n Current Frame: " << currentFrame << endl;
+
 		frame->setBoth_eye(img);
 		frame = ie->split_vertical(frame);
-
+		
 		leftSize = Size(frame->getLeft_eye()->width, frame->getLeft_eye()->height);
 		rightSize = Size(frame->getRight_eye()->width, frame->getRight_eye()->height);
 
@@ -271,6 +280,7 @@ int main(int argc, char* argv[])
 		// compute gradient map
 		Mat gradient;
 		gd.generateGradient(frame->getLeft_eye(), gradient);
+		gradient = gradient * 2;
 
 		// saliency weights
 		sm->computeWeights(isd->getMaxColorDistance(), dmb->getPercentageOfDepth());
@@ -278,16 +288,19 @@ int main(int argc, char* argv[])
 		// initialize mesh for left and right view
 		mm->initializeMesh(initialLeft, Size(originalSize.width / 2, originalSize.height));
 		initialRight = mm->generateRightEyeMesh(initialLeft, frame, Size(originalSize.width / 2, originalSize.height));
+		
+		FileManager::saveMeshAsImage("test right.png", "D:\\", initialRight, originalSize);
 
 		if (x > 0)
 		{
+			
 			combinedSaliency = sm->computeSaliency();
-			finalSaliency = combinedSaliency;
+			finalSaliency = combinedSaliency + gradient;
 
 			// assign saliency values to quads of left and right view
 			wfMapLeft = qsm->assignSaliencyValuesToQuads(initialLeft, finalSaliency);
 			wfMapRight = qsm->assignSaliencyValuesToQuads(initialRight, finalSaliency);
-
+			
 			// warp left and right mesh
 			deformedMeshes = ss.solveStereoImageProblem(initialLeft, initialRight, originalSize, newSize, wfMapLeft, wfMapRight);
 
@@ -297,7 +310,7 @@ int main(int argc, char* argv[])
 		else
 		{
 			// first frame
-
+			
 			Mat dispmat = disp;
 			Mat hconmat = &hcon;
 			dispmat.convertTo(dispmat, CV_8U);
@@ -307,21 +320,34 @@ int main(int argc, char* argv[])
 			// assign saliency values to quads of left and right view
 			wfMapLeft = qsm->assignSaliencyValuesToQuads(initialLeft, finalSaliency);
 			wfMapRight = qsm->assignSaliencyValuesToQuads(initialRight, finalSaliency);
-
+			
 			// warp left and right mesh
 			deformedMeshes = ss.solveStereoImageProblem(initialLeft, initialRight, originalSize, newSize, wfMapLeft, wfMapRight);
 
 			leftMeshes.push_back(deformedMeshes.first);
 			rightMeshes.push_back(deformedMeshes.second);
-
+			
 			x++;
 			currentFrame = n + 1;
 		}
 
 		if (currentFrame < totalFrameNumber)
+		{
+			cvReleaseCapture(&input);
+			input = cvCaptureFromFile(fileName);
 			img = Helper::getNthFrame(input, currentFrame);
+		}
 		else
-			img = Helper::getNthFrame(input, totalFrameNumber);
+		{
+			if (lastFrameDecoded)
+				break;
+
+			cvReleaseCapture(&input);
+			input = cvCaptureFromFile(fileName);
+			img = Helper::getNthFrame(input, totalFrameNumber - 2);
+
+			lastFrameDecoded = true;
+		}
 		
 		currentFrame = currentFrame + n;
 	}

@@ -35,6 +35,10 @@ void MeshManager::initializeMesh(Mesh &result, Size &size)
 {
 	cout << "> Initialize mesh for the left view" << endl;
 
+	result.edges.clear();
+	result.vertices.clear();
+	result.quads.clear();
+
 	int x, y, numberOfQuads, quadNumberX, quadNumberY;
 	numberOfQuads = determineQuadNumber(size, quadNumberX, quadNumberY);
 
@@ -324,7 +328,7 @@ Mesh MeshManager::generateRightEyeMesh(Mesh &leftEyeMesh, StereoImage* img, Size
 	}
 
 	// find vertices in the right image
-	calcOpticalFlowPyrLK(leftgray, rightgray, initial, detected, status, err, Size(200, 200), 3);
+	calcOpticalFlowPyrLK(leftgray, rightgray, initial, detected, status, err, Size(250, 250), 3);
 
 #if 0
 	Mat flow;
