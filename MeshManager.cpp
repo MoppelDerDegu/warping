@@ -574,12 +574,15 @@ Mesh MeshManager::interpolateMesh(Mesh &first, Mesh &second, float alpha)
 		throw invalid_argument("Meshes must have the same number of quads");
 	
 	Mesh result;
+	result.quadNumberX = first.quadNumberX;
+	result.quadNumberY = first.quadNumberY;
 
-	for (unsigned int i = 0; i < result.vertices.size(); i++)
+	for (unsigned int i = 0; i < first.vertices.size(); i++)
 	{
 		Vertex v;
 		v.x = WarpingMath::round(first.vertices.at(i).x * (1 - alpha) + second.vertices.at(i).x * alpha);
 		v.y = WarpingMath::round(first.vertices.at(i).y * (1 - alpha) + second.vertices.at(i).y * alpha);
+		result.vertices.push_back(v);
 	}
 
 	buildQuadsAndEdges(result);

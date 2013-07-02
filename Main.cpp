@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
 
 	Mat finalSaliency;
 
-	vector<Mesh> leftMeshes, rightMeshes;
+	vector<Mesh> leftDeformedMeshes, rightDeformedMeshes, leftLinearMeshes, rightLinearMeshes;
 
 	vector<pair<float, Quad>> wfMapLeft, wfMapRight;
 
@@ -250,14 +250,14 @@ int main(int argc, char* argv[])
 
 	int x = 0;
 	bool lastFrameDecoded = false;
-
+	/*
 	// deform meshes for every n-th frame and the first and last frame
 	while (true)
 	{
 		if (!img)
 			break;
 
-		cout << "\n Current Frame: " << currentFrame << endl;
+		cout << "\nCurrent Frame: " << currentFrame << endl;
 
 		frame->setBoth_eye(img);
 		frame = ie->split_vertical(frame);
@@ -288,12 +288,11 @@ int main(int argc, char* argv[])
 		// initialize mesh for left and right view
 		mm->initializeMesh(initialLeft, Size(originalSize.width / 2, originalSize.height));
 		initialRight = mm->generateRightEyeMesh(initialLeft, frame, Size(originalSize.width / 2, originalSize.height));
-		
-		FileManager::saveMeshAsImage("test right.png", "D:\\", initialRight, originalSize);
 
 		if (x > 0)
 		{
-			
+			// every other frame
+
 			combinedSaliency = sm->computeSaliency();
 			finalSaliency = combinedSaliency + gradient;
 
@@ -304,8 +303,11 @@ int main(int argc, char* argv[])
 			// warp left and right mesh
 			deformedMeshes = ss.solveStereoImageProblem(initialLeft, initialRight, originalSize, newSize, wfMapLeft, wfMapRight);
 
-			leftMeshes.push_back(deformedMeshes.first);
-			rightMeshes.push_back(deformedMeshes.second);
+			leftDeformedMeshes.push_back(deformedMeshes.first);
+			rightDeformedMeshes.push_back(deformedMeshes.second);
+
+			leftLinearMeshes.push_back(ss.getInitialLeft());
+			rightLinearMeshes.push_back(ss.getInitialRight());
 		}
 		else
 		{
@@ -324,8 +326,11 @@ int main(int argc, char* argv[])
 			// warp left and right mesh
 			deformedMeshes = ss.solveStereoImageProblem(initialLeft, initialRight, originalSize, newSize, wfMapLeft, wfMapRight);
 
-			leftMeshes.push_back(deformedMeshes.first);
-			rightMeshes.push_back(deformedMeshes.second);
+			leftLinearMeshes.push_back(ss.getInitialLeft());
+			rightLinearMeshes.push_back(ss.getInitialRight());
+
+			leftDeformedMeshes.push_back(deformedMeshes.first);
+			rightDeformedMeshes.push_back(deformedMeshes.second);
 			
 			x++;
 			currentFrame = n + 1;
@@ -353,21 +358,44 @@ int main(int argc, char* argv[])
 	}
 
 	// write left and right meshes to file
-	FileManager::saveMeshesAsText("left meshes.txt", "D:\\warping\\mesh\\", leftMeshes);
-	FileManager::saveMeshesAsText("right meshes.txt", "D:\\warping\\mesh\\", rightMeshes);
+	FileManager::saveMeshesAsText("left meshes.txt", "D:\\warping\\mesh\\", leftDeformedMeshes);
+	FileManager::saveMeshesAsText("right meshes.txt", "D:\\warping\\mesh\\", rightDeformedMeshes);
 	
+	FileManager::saveMeshesAsText("left linear meshes.txt", "D:\\warping\\mesh\\", leftLinearMeshes);
+	FileManager::saveMeshesAsText("right linear meshes.txt", "D:\\warping\\mesh\\", rightLinearMeshes);
+	*/
 	cvReleaseCapture(&input);
 	cvReleaseMat(&combinedSaliency);
-
+	
 //-------------------------------------------------------------------
 //---------INTERPOLATE MESHES AND WARP EVERY SINGLE IMAGE------------
 //-------------------------------------------------------------------
 
-	//input = cvCaptureFromFile(fileName);
+	input = cvCaptureFromFile(fileName);
 
-	// TODO
+	leftDeformedMeshes.clear();
+	rightDeformedMeshes.clear();
 
-	delete dmb;
-	delete md;
+	leftLinearMeshes.clear();
+	rightLinearMeshes.clear();
+
+	leftDeformedMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\left meshes.txt");
+	rightDeformedMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\right meshes.txt");
+
+	leftLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\left linear meshes.txt");
+	rightLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\right linear meshes.txt");
+
+	// decode the first frame
+	img = cvQueryFrame(input);
+
+	frame = new StereoImage(originalSize, img->depth, img->nChannels);
+	frame->setBoth_eye(img);
+
+	ie->split_vertical(frame);
+
+	cvShowImage("bla", siw.warpImage(frame, newSize, leftDeformedMeshes.at(0), rightDeformedMeshes.at(0), leftLinearMeshes.at(0), rightLinearMeshes.at(0)));
+
+	//delete dmb;
+	//delete md;
 }
 #endif

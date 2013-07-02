@@ -108,3 +108,45 @@ IplImage* StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mat &sa
 
 	return &Helper::MatToIplImage(dest);
 }
+
+IplImage* StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mesh &deformedLeft, Mesh &deformedRight, Mesh &linearScaledLeft, Mesh &linearScaledRight)
+{
+	cout << "\nStart stereo image warping" << endl;
+
+	newSize = destSize;
+	Mat src = img->getBoth_eye();
+
+	Size destLeftSize(newSize.width / 2, newSize.height);
+	Mat destLeft = Mat::zeros(destLeftSize, CV_32FC3);
+	Mat destRight = Mat::zeros(destLeftSize, CV_32FC3);
+
+	Mat linearLeft, linearRight;
+	Mat leftEye = img->getLeft_eye();
+	Mat rightEye = img->getRight_eye();
+
+	// scale down left and right for reference during the image warping
+	resize(leftEye, linearLeft, destLeftSize);
+	resize(rightEye, linearRight, destLeftSize);
+
+	linearLeft.convertTo(linearLeft, CV_32FC3);
+	linearRight.convertTo(linearRight, CV_32FC3);
+
+	// warp left and right view
+	warp(linearScaledLeft, deformedLeft, linearLeft, destLeft);
+	warp(linearScaledRight, deformedRight, linearRight, destRight);
+
+	destLeft.convertTo(destLeft, src.type());
+	destRight.convertTo(destRight, src.type());
+
+	// merge left and right warped image
+	Mat dest = Mat::zeros(Size(destLeft.size().width * 2, destLeft.size().height), src.type());
+	Mat roi = dest(Rect(0, 0, destLeft.size().width, destLeft.size().height));
+	destLeft.copyTo(roi);
+	roi = dest(Rect(destLeft.size().width, 0, destLeft.size().width, destLeft.size().height));
+	destRight.copyTo(roi);
+
+	IplImage tmp = dest;
+	this->output = &tmp;
+
+	return this->output;
+}
