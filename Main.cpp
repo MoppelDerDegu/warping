@@ -191,6 +191,9 @@ int main(int argc, char* argv[])
 	CvCapture* input;
 	VideoCapture captmp;
 	char* fileName = "D:/media/Flower.avi";
+	char* outputFilenameInterpolated = "D:/warping/result/interpolated output";
+	char* container = ".avi";
+	char output[50];
 	string _fileName = fileName;
 
 	captmp.open(_fileName);
@@ -217,7 +220,10 @@ int main(int argc, char* argv[])
 	Size originalSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
 	Size newSize(360, 300);
 
-	// initialization
+//------------------------------------------------------------------------
+//--------------------Start Initialization--------------------------------
+//------------------------------------------------------------------------
+
 	GradientGenerator gd;
 	StereoImageWarper siw;
 	StereoSolver ss(20);
@@ -230,7 +236,7 @@ int main(int argc, char* argv[])
 	CvMat* combinedSaliency = cvCreateMat( originalSize.width/2, originalSize.height, CV_8UC1);
 	
 	StereoImage* frame = new StereoImage(originalSize, img->depth, img->nChannels);
-
+	
 	ImageEditor* ie = new ImageEditor(cvSize(originalSize.width/2, originalSize.height), img->depth, img->nChannels);
 
 	DisparityMapBuilder* dmb = new DisparityMapBuilder(cvSize(originalSize.width/2, originalSize.height));
@@ -247,6 +253,10 @@ int main(int argc, char* argv[])
 	pair<Mesh, Mesh> deformedMeshes;
 
 	Mesh initialLeft, initialRight;
+
+//-------------------------------------------------------------------
+//---------DEFORM AND OPTIMIZE MESHES FOR EVERY N-TH FRAME-----------
+//-------------------------------------------------------------------
 
 	int x = 0;
 	bool lastFrameDecoded = false;
@@ -364,14 +374,28 @@ int main(int argc, char* argv[])
 	FileManager::saveMeshesAsText("left linear meshes.txt", "D:\\warping\\mesh\\", leftLinearMeshes);
 	FileManager::saveMeshesAsText("right linear meshes.txt", "D:\\warping\\mesh\\", rightLinearMeshes);
 	*/
+
+	// clean up
 	cvReleaseCapture(&input);
 	cvReleaseMat(&combinedSaliency);
+	//delete dmb;
+	//delete md;
+	delete frame;
 	
 //-------------------------------------------------------------------
 //---------INTERPOLATE MESHES AND WARP EVERY SINGLE IMAGE------------
 //-------------------------------------------------------------------
 
 	input = cvCaptureFromFile(fileName);
+	VideoWriter outputVideoInterpolated;
+
+	double fps = cvGetCaptureProperty(input, CV_CAP_PROP_FPS);
+
+	//Add containter format to the output filename
+	sprintf(output, outputFilenameInterpolated);
+	strcat(output,container);
+
+	outputVideoInterpolated.open(output, CV_FOURCC('X','2','6','4'), fps , newSize, true);
 
 	leftDeformedMeshes.clear();
 	rightDeformedMeshes.clear();
@@ -388,14 +412,64 @@ int main(int argc, char* argv[])
 	// decode the first frame
 	img = cvQueryFrame(input);
 
+	// create output frame
+	//IplImage* outputFrameInterPolated = cvCreateImage(newSize, img->depth, img->nChannels);
+
+	// index of the current frame
+	currentFrame = 1;
+
 	frame = new StereoImage(originalSize, img->depth, img->nChannels);
-	frame->setBoth_eye(img);
+	
+	// used to fetch the different meshes from the vector
+	int meshIndex = 0;
 
-	ie->split_vertical(frame);
+	// alpha factor for interpolation with meshes
+	float alphaFactor = 1.0 / n;
 
-	cvShowImage("bla", siw.warpImage(frame, newSize, leftDeformedMeshes.at(0), rightDeformedMeshes.at(0), leftLinearMeshes.at(0), rightLinearMeshes.at(0)));
+	while (true)
+	{
+		if (!img)
+			break;
 
-	//delete dmb;
-	//delete md;
+		frame->setBoth_eye(img);
+		frame = ie->split_vertical(frame);
+
+		if ((currentFrame - 1) % n == 0)
+		{
+			// take optimized mesh
+			Mat tmp = siw.warpImage(frame, newSize, leftDeformedMeshes.at(meshIndex), rightDeformedMeshes.at(meshIndex), leftLinearMeshes.at(meshIndex), rightLinearMeshes.at(meshIndex));
+			outputVideoInterpolated.write(tmp);
+
+			currentFrame++;
+			meshIndex++;
+		}
+		else
+		{
+			// interpolate meshes
+
+			cout << "Interpolate meshes" << endl;
+
+			float alpha = alphaFactor * ((currentFrame - 1) % n);
+			Mesh leftDeformed = mm->interpolateMesh(leftDeformedMeshes.at(meshIndex - 1), leftDeformedMeshes.at(meshIndex), alpha);
+			Mesh rightDeformed = mm->interpolateMesh(rightDeformedMeshes.at(meshIndex - 1), rightDeformedMeshes.at(meshIndex), alpha);
+			Mesh leftLinear = mm->interpolateMesh(leftLinearMeshes.at(meshIndex - 1), leftLinearMeshes.at(meshIndex), alpha);
+			Mesh rightLinear = mm->interpolateMesh(rightLinearMeshes.at(meshIndex - 1), rightLinearMeshes.at(meshIndex), alpha);
+
+			Mat tmp = siw.warpImage(frame, newSize, leftDeformed, rightDeformed, leftLinear, rightLinear);
+
+			outputVideoInterpolated.write(tmp);
+
+			currentFrame++;
+		}
+
+		// load next frame
+		img = cvQueryFrame(input);
+	}
+
+	// clean up
+	//cvReleaseImage(&outputFrameInterPolated);
+	//cvReleaseCapture(&input);
+	//outputVideoInterpolated.~VideoWriter();
+	//delete frame;
 }
 #endif

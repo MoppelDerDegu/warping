@@ -14,7 +14,7 @@ StereoImageWarper::~StereoImageWarper(void)
 {
 }
 
-IplImage* StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mat &saliencyMap)
+Mat StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mat &saliencyMap)
 {
 	cout << "\nStart stereo image warping" << endl;
 
@@ -106,10 +106,10 @@ IplImage* StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mat &sa
 	FileManager::saveMat("linear scaled.png", "D:\\warping\\result\\", linearBoth);
 	FileManager::saveMat("result with mesh.png", "D:\\warping\\result\\", destwithmesh);
 
-	return &Helper::MatToIplImage(dest);
+	return dest;
 }
 
-IplImage* StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mesh &deformedLeft, Mesh &deformedRight, Mesh &linearScaledLeft, Mesh &linearScaledRight)
+Mat StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mesh &deformedLeft, Mesh &deformedRight, Mesh &linearScaledLeft, Mesh &linearScaledRight)
 {
 	cout << "\nStart stereo image warping" << endl;
 
@@ -145,8 +145,5 @@ IplImage* StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mesh &d
 	roi = dest(Rect(destLeft.size().width, 0, destLeft.size().width, destLeft.size().height));
 	destRight.copyTo(roi);
 
-	IplImage tmp = dest;
-	this->output = &tmp;
-
-	return this->output;
+	return dest;
 }
