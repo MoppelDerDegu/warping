@@ -330,25 +330,6 @@ Mesh MeshManager::generateRightEyeMesh(Mesh &leftEyeMesh, StereoImage* img, Size
 	// find vertices in the right image
 	calcOpticalFlowPyrLK(leftgray, rightgray, initial, detected, status, err, Size(250, 250), 3);
 
-#if 0
-	Mat flow;
-	calcOpticalFlowFarneback(leftgray, rightgray, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
-
-
-	for(int y = 0; y < left.rows; y += 20)
-		for(int x = 0; x < left.cols; x += 20)
-	        {
-	            const Point2f& fxy = flow.at<Point2f>(y, x);
-	            line(left, Point(x,y), Point(cvRound(x+fxy.x), cvRound(y+fxy.y)),
-	                 CV_RGB(0, 255, 0));
-	            circle(left, Point(x,y), 2, CV_RGB(0, 255, 0), -1);
-	        }
-
-
-
-		imwrite("D:\\flow.png", left);
-#endif
-
 	// create righteye mesh:
 
 	// copy vertices
