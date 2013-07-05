@@ -41,6 +41,28 @@ using namespace std;
 // length and height of a quad
 #define QUAD_SIZE 20
 
+typedef struct Pathline
+{
+	// frame index and location in the frame
+	vector<pair<int, Point2f>> path;
+
+	// indicates on which vertex this path line was originally seeded
+	unsigned int seedIndex;
+};
+
+typedef struct PathlineAdjacencies
+{
+	// stores neighboring pathlines
+	vector<pair<unsigned int, unsigned int>> neighbors;
+};
+
+typedef struct PathlineSets
+{
+	// inner vector specifies pathlines between frame i, i+1, ... , j
+	// outer vector is the set of all these pathlines in the whole video, i.e. between frame 1 ... n
+	vector<vector<Pathline>> pathlines;
+};
+
 typedef struct Vertex
 {
 	int x, y;

@@ -25,6 +25,8 @@ public:
 	
 	Mesh deepCopyMesh(const Mesh &m);
 
+	vector<Vertex> getInnerVertices(const Mesh &m, Size size);
+
 	vector<double> meshToDoubleVec(Mesh &m);
 	void doubleVecToMesh(const vector<double> &x, Mesh &result);
 

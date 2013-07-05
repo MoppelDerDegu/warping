@@ -570,3 +570,18 @@ Mesh MeshManager::interpolateMesh(Mesh &first, Mesh &second, float alpha)
 
 	return result;
 }
+
+vector<Vertex> MeshManager::getInnerVertices(const Mesh &m, Size size)
+{
+	vector<Vertex> inner;
+
+	for (unsigned int i = 0; i < m.vertices.size(); i++)
+	{
+		Vertex v = m.vertices.at(i);
+
+		if (!((v.x == 0 || v.x == size.width) || (v.y == 0 || v.y == size.height)))
+			inner.push_back(v);
+	}
+
+	return inner;
+}
