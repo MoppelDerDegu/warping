@@ -6,6 +6,6 @@ class IFrameProcessor
 {
 
 protected:
-	virtual void process(Mat &input) = 0;
+	virtual void process(Mat &currentFrame, Mat &prevFrame) = 0;
 };
 

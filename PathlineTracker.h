@@ -3,6 +3,7 @@
 #include "stdafx.h"
 #include "IFrameProcessor.h"
 #include "StereoImage.h"
+#include "ImageEditor.h"
 
 class PathlineTracker : public IFrameProcessor
 {
@@ -24,15 +25,19 @@ private:
 	bool warpedVideo;
 
 	CvCapture* input;
-	PathlineSets sets;
+	PathlineSets sets; // set of all pathlines of the video
+	vector<Pathline> pathlines; // pathlines between frame i, i+1, ... , j
 	Mesh seedLeft, seedRight;
 	int frameCounter;
+	int maxFrames;
 	bool addNewPoints;
 	Size videoSize;
 	Size leftSize, rightSize;
 
 	vector<Mesh> leftSeedMeshes, rightSeedMeshes;
 	Mesh leftSeedMesh, rightSeedMesh;
+
+	ImageEditor ie;
 
 	Mat currentGray, prevGray;
 	StereoImage current, prev;
@@ -41,12 +46,14 @@ private:
 	vector<Point2f> initial;
 	vector<Point2f> detected;
 
-	bool acceptPoint(unsigned i, Point2f p);
+	bool acceptPoint(unsigned int i, Point2f p);
 	void handleTrackedPoints();
 	void seedNewPoints();
 	void seedNewPoints(Mesh &left, Mesh &right);
+	void addSeedPointsToPathlines();
+	void appendTrackedPointsToPathlines();
 
 protected:
-	void process(Mat &input);
+	void process(Mat &currentFrame, Mat &prevFrame);
 };
 

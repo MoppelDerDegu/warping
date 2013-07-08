@@ -1,7 +1,6 @@
 #include "PathlineTracker.h"
 #include "MeshManager.h"
 
-
 PathlineTracker::PathlineTracker(CvCapture* input)
 {
 	this->input = input;
@@ -9,17 +8,23 @@ PathlineTracker::PathlineTracker(CvCapture* input)
 	addNewPoints = true;
 	warpedVideo = false;
 	videoSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
+	leftSize = Size(videoSize.width / 2, videoSize.height);
+	rightSize = Size(videoSize.width / 2, videoSize.height);
+	maxFrames = (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT);
 }
 
 PathlineTracker::PathlineTracker(CvCapture* input, vector<Mesh> &leftSeedMeshes, vector<Mesh> &rightSeedMeshes)
 {
 	this->input = input;
-	frameCounter = 0;
+	frameCounter = 1;
 	addNewPoints = true;
 	this->leftSeedMeshes = leftSeedMeshes;
 	this->rightSeedMeshes = rightSeedMeshes;
 	warpedVideo = true;
 	videoSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
+	leftSize = Size(videoSize.width / 2, videoSize.height);
+	rightSize = Size(videoSize.width / 2, videoSize.height);
+	maxFrames = (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT);
 }
 
 PathlineTracker::~PathlineTracker(void)
@@ -34,13 +39,97 @@ PathlineSets PathlineTracker::getPathlineSets() const
 
 void PathlineTracker::trackPathlines()
 {
+	cout << "\nTracking Pathlines..." << endl;
+
+	// decode the first frame
+	IplImage* img = cvQueryFrame(input);
+
+	// initialize necessary objects
+	current = StereoImage(videoSize, img->depth, img->nChannels);
+	prev = StereoImage(videoSize, img->depth, img->nChannels);
+	ie = ImageEditor(cvSize(videoSize.width/2, videoSize.height), img->depth, img->nChannels); 
+
+	StereoImage* ptr;
+
+	int x = 0;
+	while (true)
+	{
+		if (!img)
+			break;
+		
+		current.setBoth_eye(img);
+
+		if (x == 0)
+		{
+			// for the first frame of the video
+			prev.setBoth_eye(img);
+			x++;
+		}
+
+		//process the current frame, i.e. look for feature points
+		Mat currentFrame = current.getBoth_eye();
+		Mat prevFrame = prev.getBoth_eye();
+		process(currentFrame, prevFrame);
+
+		// set current frame to previous frame
+		prev = current;
+
+		// load next frame
+		img = cvQueryFrame(input);
+
+		frameCounter++;
+	}
 }
 
-void PathlineTracker::process(Mat &input)
+void PathlineTracker::process(Mat &currentFrame, Mat &prevFrame)
 {
+	cvtColor(currentFrame, currentGray, CV_BGR2GRAY);
+	cvtColor(prevFrame, prevGray, CV_BGR2GRAY);
+
+	// seed points for the first frame
+	if (frameCounter == 1)
+	{
+		seedNewPoints();
+		addSeedPointsToPathlines();
+	}
+
+	// track the points between two consecutive frames
+	calcOpticalFlowPyrLK(prevGray, currentGray, initial, detected, status, err, Size(250, 250), 3);
+
+	handleTrackedPoints();
 }
 
-bool PathlineTracker::acceptPoint(unsigned i, Point2f p)
+void PathlineTracker::handleTrackedPoints()
+{
+	bool ok = true;
+
+	for (unsigned int i = 0; i < detected.size(); i++)
+	{
+		if (!acceptPoint(i, detected.at(i)))
+		{
+			seedNewPoints();
+			ok = false;
+			break;
+		}
+	}
+
+	if (ok)
+	{
+		// append tracked points to the pathlines
+		if (frameCounter != 1)
+			appendTrackedPointsToPathlines();
+	}
+	else if (!ok || frameCounter == maxFrames)
+	{
+		// push tacked pathlines to the set of pathlines
+		sets.pathlines.push_back(pathlines);
+
+		// add seed points to new pathlines
+		addSeedPointsToPathlines();
+	}
+}
+
+bool PathlineTracker::acceptPoint(unsigned int i, Point2f p)
 {
 	if (status.at(i) == 0)
 	{
@@ -48,7 +137,7 @@ bool PathlineTracker::acceptPoint(unsigned i, Point2f p)
 		return false;
 	}
 
-	if (i / status.size() < 1)
+	if (i / (status.size() / 2.0) < 1)
 	{
 		// point is in the left view
 
@@ -82,10 +171,6 @@ bool PathlineTracker::acceptPoint(unsigned i, Point2f p)
 	}
 }
 
-void PathlineTracker::handleTrackedPoints()
-{
-}
-
 void PathlineTracker::seedNewPoints()
 {
 	initial.clear();
@@ -98,9 +183,7 @@ void PathlineTracker::seedNewPoints()
 		seedNewPoints(leftseed, rightseed);
 	}
 	else
-	{
 		seedNewPoints(leftSeedMesh, rightSeedMesh);
-	}
 }
 
 void PathlineTracker::seedNewPoints(Mesh &left, Mesh &right)
@@ -122,5 +205,63 @@ void PathlineTracker::seedNewPoints(Mesh &left, Mesh &right)
 	{
 		Point2f p(innerRight.at(i).x + leftSize.width, innerRight.at(i).y);
 		initial.push_back(p);
+	}
+}
+
+void PathlineTracker::addSeedPointsToPathlines()
+{
+	pathlines.clear();
+
+	// add pathline points for the left view
+	for (unsigned int i = 0; i < initial.size() / 2; i++)
+	{
+		Point2f p = initial.at(i);
+
+		Pathline pl;
+		pair<int, Point2f> pathseed;
+
+		pathseed.first = frameCounter;
+		pathseed.second = p;
+
+		pl.path.push_back(pathseed);
+		pl.seedIndex = i;
+
+		pathlines.push_back(pl);
+	}
+
+	int index = 0;
+	// add pathline points for the right view
+	for (unsigned int i = initial.size() / 2; i < initial.size(); i++)
+	{
+		Point2f p = initial.at(i);
+
+		Pathline pl;
+		pair<int, Point2f> pathseed;
+
+		pathseed.first = frameCounter;
+		pathseed.second = p;
+
+		pl.path.push_back(pathseed);
+		pl.seedIndex = index;
+
+		pathlines.push_back(pl);
+
+		index++;
+	}
+}
+
+void PathlineTracker::appendTrackedPointsToPathlines()
+{
+	for (unsigned int i = 0; i < detected.size(); i++)
+	{
+		Point2f point = detected.at(i);
+		Pathline pl = pathlines.at(i);
+
+		pair<int, Point2f> p;
+
+		p.first = frameCounter;
+		p.second = point;
+
+		pl.path.push_back(p);
 	}
 }
