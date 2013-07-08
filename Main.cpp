@@ -12,6 +12,7 @@
 #include "StereoImageWarper.h"
 #include "StereoSolver.h"
 #include "QuadSaliencyManager.h"
+#include "PathlineTracker.h"
 
 #include "ImageEditor.h"
 #include "DisparityMapBuilder.h"
@@ -189,16 +190,11 @@ int main(int argc, char* argv[])
 	int currentFrame = 1;
 
 	CvCapture* input;
-	VideoCapture captmp;
 	char* fileName = "D:/media/Flower.avi";
 	char* outputFilenameInterpolated = "D:/warping/result/interpolated output";
 	char* container = ".avi";
 	char output[50];
 	string _fileName = fileName;
-
-	captmp.open(_fileName);
-	double totalFrameNumber = captmp.get(CV_CAP_PROP_FRAME_COUNT);
-	captmp.release();
 
 	input = cvCaptureFromFile(fileName);
 	
@@ -216,6 +212,8 @@ int main(int argc, char* argv[])
 		cerr << "THERE IS NO FRAME TO DECODE!" << endl;
 		return -1;
 	}
+
+	int totalFrameNumber = (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT);
 
 	Size originalSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
 	Size newSize(360, 300);
@@ -381,7 +379,23 @@ int main(int argc, char* argv[])
 	//delete dmb;
 	//delete md;
 	delete frame;
+
+
+
+
+//-------------------------------------------------------------------
+//---------TRACK PATHLINES IN THE ORIGINAL VIDEO---------------------
+//-------------------------------------------------------------------
 	
+	input = cvCaptureFromFile(fileName);
+	
+	PathlineTracker originalTracker(input);
+
+	originalTracker.trackPathlines();
+	PathlineSets originalPathlines = originalTracker.getPathlineSets();
+
+	cvReleaseCapture(&input);
+
 //-------------------------------------------------------------------
 //---------INTERPOLATE MESHES AND WARP EVERY SINGLE IMAGE------------
 //-------------------------------------------------------------------

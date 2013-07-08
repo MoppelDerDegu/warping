@@ -3,7 +3,6 @@
 #include "stdafx.h"
 #include "IFrameProcessor.h"
 #include "StereoImage.h"
-#include "ImageEditor.h"
 
 class PathlineTracker : public IFrameProcessor
 {
@@ -36,8 +35,6 @@ private:
 
 	vector<Mesh> leftSeedMeshes, rightSeedMeshes;
 	Mesh leftSeedMesh, rightSeedMesh;
-
-	ImageEditor ie;
 
 	Mat currentGray, prevGray;
 	StereoImage current, prev;

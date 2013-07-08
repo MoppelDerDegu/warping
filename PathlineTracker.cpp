@@ -10,7 +10,11 @@ PathlineTracker::PathlineTracker(CvCapture* input)
 	videoSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
 	leftSize = Size(videoSize.width / 2, videoSize.height);
 	rightSize = Size(videoSize.width / 2, videoSize.height);
-	maxFrames = (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT);
+	maxFrames = ((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT)) - 2;
+
+	MeshManager* mm = MeshManager::getInstance();
+	mm->initializeMesh(leftSeedMesh, leftSize);
+	mm->initializeMesh(rightSeedMesh, rightSize);
 }
 
 PathlineTracker::PathlineTracker(CvCapture* input, vector<Mesh> &leftSeedMeshes, vector<Mesh> &rightSeedMeshes)
@@ -24,7 +28,11 @@ PathlineTracker::PathlineTracker(CvCapture* input, vector<Mesh> &leftSeedMeshes,
 	videoSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
 	leftSize = Size(videoSize.width / 2, videoSize.height);
 	rightSize = Size(videoSize.width / 2, videoSize.height);
-	maxFrames = (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT);
+	maxFrames = ((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT)) - 2;
+
+	MeshManager* mm = MeshManager::getInstance();
+	mm->initializeMesh(leftSeedMesh, leftSize);
+	mm->initializeMesh(rightSeedMesh, rightSize);
 }
 
 PathlineTracker::~PathlineTracker(void)
@@ -47,9 +55,6 @@ void PathlineTracker::trackPathlines()
 	// initialize necessary objects
 	current = StereoImage(videoSize, img->depth, img->nChannels);
 	prev = StereoImage(videoSize, img->depth, img->nChannels);
-	ie = ImageEditor(cvSize(videoSize.width/2, videoSize.height), img->depth, img->nChannels); 
-
-	StereoImage* ptr;
 
 	int x = 0;
 	while (true)
@@ -83,6 +88,8 @@ void PathlineTracker::trackPathlines()
 
 void PathlineTracker::process(Mat &currentFrame, Mat &prevFrame)
 {
+	cout << ">> Processing frame " << frameCounter << endl;
+
 	cvtColor(currentFrame, currentGray, CV_BGR2GRAY);
 	cvtColor(prevFrame, prevGray, CV_BGR2GRAY);
 
@@ -118,14 +125,26 @@ void PathlineTracker::handleTrackedPoints()
 		// append tracked points to the pathlines
 		if (frameCounter != 1)
 			appendTrackedPointsToPathlines();
+
+		if (frameCounter == maxFrames)
+		{
+			// every feature point was found in the last frame
+			sets.pathlines.push_back(pathlines);
+		}
 	}
-	else if (!ok || frameCounter == maxFrames)
+	else if (!ok)
 	{
 		// push tacked pathlines to the set of pathlines
 		sets.pathlines.push_back(pathlines);
 
 		// add seed points to new pathlines
 		addSeedPointsToPathlines();
+
+		if (frameCounter == maxFrames)
+		{
+			// feature points were not found in the last frame, so add new seed points to the sets of pathlines
+			sets.pathlines.push_back(pathlines);
+		}
 	}
 }
 
@@ -255,13 +274,12 @@ void PathlineTracker::appendTrackedPointsToPathlines()
 	for (unsigned int i = 0; i < detected.size(); i++)
 	{
 		Point2f point = detected.at(i);
-		Pathline pl = pathlines.at(i);
 
 		pair<int, Point2f> p;
 
 		p.first = frameCounter;
 		p.second = point;
 
-		pl.path.push_back(p);
+		pathlines.at(i).path.push_back(p);
 	}
 }
