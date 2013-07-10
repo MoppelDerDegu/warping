@@ -125,9 +125,22 @@ double Helper::stringToDouble(const string &s)
 {
 	istringstream i(s);
 	double x;
+
 	if (!(i >> x))
 		return 0;
-   return x;
+
+	return x;
+}
+
+int Helper::stringToInt(const string &s)
+{
+	istringstream i(s);
+	int x;
+
+	if (!(i >> x))
+		return 0;
+
+	return x;
 }
 
 Mat Helper::meshAsMat(const Mesh &mesh, const Size &s)
@@ -287,5 +300,24 @@ Quad Helper::getRelativeCoordinates(Quad &quad)
 	result.v3 = quad.v3 - topleft;
 	result.v4 = quad.v4 - topleft;
 
+	return result;
+}
+
+vector<string> &Helper::split(const string &s, char delimiter, vector<string> &result)
+{    
+	stringstream ss(s);
+    string item;
+
+    while (getline(ss, item, delimiter)) {
+        result.push_back(item);
+    }
+
+    return result;
+}
+
+vector<string> Helper::split(const string &s, char delimiter)
+{
+	vector<string> result;
+	split(s, delimiter, result);
 	return result;
 }

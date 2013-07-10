@@ -20,7 +20,7 @@ BOOL FileManager::mkDir(const char* &path)
 	return CreateDirectoryA(path, 0);
 }
 
-void FileManager::saveMeshAsImage(const string fileName, const string dir, const Mesh &m, const Size &s)
+void FileManager::saveMeshAsImage(const string &fileName, const string &dir, const Mesh &m, const Size &s)
 {
 	const char* _dir = (char*) dir.c_str();
 	mkDir(_dir);
@@ -30,14 +30,14 @@ void FileManager::saveMeshAsImage(const string fileName, const string dir, const
 	imwrite(dir + fileName, mat);
 }
 
-void FileManager::saveMat(const string fileName, const string dir, const Mat &mat)
+void FileManager::saveMat(const string &fileName, const string &dir, const Mat &mat)
 {
 	const char* _dir = (char*) dir.c_str();
 	mkDir(_dir);
 	imwrite(dir + fileName, mat);
 }
 
-void FileManager::saveMeshAsText(const string fileName, const string dir, Mesh &mesh)
+void FileManager::saveMeshAsText(const string &fileName, const string &dir, Mesh &mesh)
 {
 	MeshManager* mm = MeshManager::getInstance();
 
@@ -70,7 +70,7 @@ void FileManager::saveMeshAsText(const string fileName, const string dir, Mesh &
 		cerr << "Unable to open file: " << fileName << endl;
 }
 
-Mesh FileManager::loadMesh(const string fileName)
+Mesh FileManager::loadMesh(const string &fileName)
 {
 	MeshManager* mm = MeshManager::getInstance();
 
@@ -108,7 +108,7 @@ Mesh FileManager::loadMesh(const string fileName)
 	return resmesh;
 }
 
-void FileManager::saveMeshROIAsImage(const string fileName, const string dir, const Mesh &m, const Size &s)
+void FileManager::saveMeshROIAsImage(const string &fileName, const string &dir, const Mesh &m, const Size &s)
 {
 	const char* _dir = (char*) dir.c_str();
 	mkDir(_dir);
@@ -179,7 +179,7 @@ void FileManager::saveMeshROIAsImage(const string fileName, const string dir, co
 	imwrite(dir + fileName, mat);
 }
 
-void FileManager::saveMeshesAsText(const string fileName, const string dir, vector<Mesh> &meshes)
+void FileManager::saveMeshesAsText(const string &fileName, const string &dir, vector<Mesh> &meshes)
 {
 	MeshManager* mm = MeshManager::getInstance();
 	vector<vector<double>> vertices;
@@ -226,7 +226,7 @@ void FileManager::saveMeshesAsText(const string fileName, const string dir, vect
 		cerr << "Unable to open file: " << fileName << endl;
 }
 
-vector<Mesh> FileManager::loadMeshes(const string fileName)
+vector<Mesh> FileManager::loadMeshes(const string &fileName)
 {
 	MeshManager* mm = MeshManager::getInstance();
 
@@ -277,4 +277,83 @@ vector<Mesh> FileManager::loadMeshes(const string fileName)
 		cerr << "Unable to open file: " << fileName << endl;
 
 	return res;
+}
+
+void FileManager::savePathlines(const string &fileName, const string &dir, const vector<Pathline> &pathlines)
+{
+	const char* _dir = (char*) dir.c_str();
+	mkDir(_dir);
+
+	ofstream myfile;
+	myfile.open(dir + fileName);
+
+	if (myfile.is_open())
+	{
+		for (unsigned int i = 0; i < pathlines.size(); i++)
+		{
+			Pathline pl = pathlines.at(i);
+
+			myfile << pl.seedIndex << " ";
+
+			for (unsigned int j = 0; j < pl.path.size(); j++)
+			{
+				pair<int, Point2f> pair = pl.path.at(j);
+
+				myfile << pair.first << " " << pair.second.x << " " << pair.second.y << " ";
+			}
+
+			myfile << "\n";
+		}
+
+		myfile.close();
+	}
+	else
+		cerr << "Unable to open file: " << fileName << endl;
+
+}
+
+vector<Pathline> FileManager::loadPathlines(const string &fileName)
+{
+	vector<Pathline> result;
+
+	string line;
+	ifstream myfile;
+	myfile.open(fileName);
+
+	if (myfile.is_open())
+	{
+		while (myfile.good())
+		{
+			getline(myfile, line);
+
+			vector<string> tokens = Helper::split(line, ' ');
+
+			if (tokens.empty())
+				break;
+
+			Pathline pl;
+
+			// seed index of the pathline
+			pl.seedIndex = Helper::stringToInt(tokens.at(0));
+			
+			for (unsigned int i = 1; i < tokens.size(); i += 3)
+			{
+				pair<int, Point2f> pair;
+
+				// number of frame
+				pair.first = Helper::stringToInt(tokens.at(i));
+
+				// point of the pathline
+				pair.second = Point2f(Helper::stringToInt(tokens.at(i + 1)), Helper::stringToInt(tokens.at(i + 2)));
+
+				pl.path.push_back(pair);
+			}
+
+			result.push_back(pl);
+		}
+	}
+	else
+		cerr << "Unable to open file: " << fileName << endl;
+
+	return result;
 }

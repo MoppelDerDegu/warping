@@ -385,8 +385,6 @@ int main(int argc, char* argv[])
 	delete frame;
 
 
-
-
 //-------------------------------------------------------------------
 //---------TRACK PATHLINES IN THE ORIGINAL VIDEO---------------------
 //-------------------------------------------------------------------
@@ -395,14 +393,20 @@ int main(int argc, char* argv[])
 	
 	PathlineTracker originalTracker(input);
 
-	originalTracker.trackPathlines();
-	PathlineSets originalPathlines = originalTracker.getPathlineSets();
+	//originalTracker.trackPathlines();
+	//PathlineSets originalPathlines = originalTracker.getPathlineSets();
 
+	//FileManager::savePathlines("pathlines.txt", "D:\\warping\\pathlines\\", originalPathlines.pathlines.at(0));
+	
+	vector<Pathline> orginalPathlines = FileManager::loadPathlines("D:\\warping\\pathlines\\pathlines.txt");
+
+	/*
 	// determine the pathline adjacencies
 	Size seedSize = Size(originalSize.width / 2, originalSize.height);
 	Mesh originalSeedMesh;
 	mm->initializeMesh(originalSeedMesh, seedSize);
 	plm->getAdjacencies(originalPathlines, originalSeedMesh, seedSize, adjacencies);
+	*/
 
 	cvReleaseCapture(&input);
 
