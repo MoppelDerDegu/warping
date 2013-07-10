@@ -29,10 +29,6 @@ PathlineTracker::PathlineTracker(CvCapture* input, vector<Mesh> &leftSeedMeshes,
 	leftSize = Size(videoSize.width / 2, videoSize.height);
 	rightSize = Size(videoSize.width / 2, videoSize.height);
 	maxFrames = ((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT)) - 2;
-
-	MeshManager* mm = MeshManager::getInstance();
-	mm->initializeMesh(leftSeedMesh, leftSize);
-	mm->initializeMesh(rightSeedMesh, rightSize);
 }
 
 PathlineTracker::~PathlineTracker(void)

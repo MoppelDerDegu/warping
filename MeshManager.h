@@ -13,7 +13,6 @@ private:
 	static bool instanceFlag;
 	static MeshManager *single;
 	int determineQuadNumber(Size & size, int &quadNumberX, int &quadNumberY);
-	void buildQuadsAndEdges(Mesh &mesh); // builds quads and edges from given vertices
 
 public:
     ~MeshManager()
@@ -23,6 +22,8 @@ public:
 
 	static MeshManager* getInstance();
 	
+	void buildQuadsAndEdges(Mesh &mesh); // builds quads and edges from given vertices
+
 	Mesh deepCopyMesh(const Mesh &m);
 
 	vector<Vertex> getInnerVertices(const Mesh &m, Size size);
