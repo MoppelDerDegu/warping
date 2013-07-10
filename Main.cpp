@@ -13,6 +13,7 @@
 #include "StereoSolver.h"
 #include "QuadSaliencyManager.h"
 #include "PathlineTracker.h"
+#include "PathlineManager.h"
 
 #include "ImageEditor.h"
 #include "DisparityMapBuilder.h"
@@ -228,8 +229,11 @@ int main(int argc, char* argv[])
 
 	MeshManager* mm = MeshManager::getInstance();
 	QuadSaliencyManager* qsm = QuadSaliencyManager::getInstance();
+	PathlineManager* plm = PathlineManager::getInstance();
 
 	Size leftSize, rightSize;
+
+	PathlineAdjacencies adjacencies;
 
 	CvMat* combinedSaliency = cvCreateMat( originalSize.width/2, originalSize.height, CV_8UC1);
 	
@@ -393,6 +397,12 @@ int main(int argc, char* argv[])
 
 	originalTracker.trackPathlines();
 	PathlineSets originalPathlines = originalTracker.getPathlineSets();
+
+	// determine the pathline adjacencies
+	Size seedSize = Size(originalSize.width / 2, originalSize.height);
+	Mesh originalSeedMesh;
+	mm->initializeMesh(originalSeedMesh, seedSize);
+	plm->getAdjacencies(originalPathlines, originalSeedMesh, seedSize, adjacencies);
 
 	cvReleaseCapture(&input);
 
