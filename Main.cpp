@@ -397,16 +397,17 @@ int main(int argc, char* argv[])
 	//PathlineSets originalPathlines = originalTracker.getPathlineSets();
 
 	//FileManager::savePathlines("pathlines.txt", "D:\\warping\\pathlines\\", originalPathlines.pathlines.at(0));
-	
-	vector<Pathline> orginalPathlines = FileManager::loadPathlines("D:\\warping\\pathlines\\pathlines.txt");
 
-	/*
+	vector<Pathline> _originalPathlines = FileManager::loadPathlines("D:\\warping\\pathlines\\pathlines.txt");
+	PathlineSets originalPathlines;
+	originalPathlines.pathlines.push_back(_originalPathlines);
+
 	// determine the pathline adjacencies
 	Size seedSize = Size(originalSize.width / 2, originalSize.height);
 	Mesh originalSeedMesh;
 	mm->initializeMesh(originalSeedMesh, seedSize);
 	plm->getAdjacencies(originalPathlines, originalSeedMesh, seedSize, adjacencies);
-	*/
+
 
 	cvReleaseCapture(&input);
 

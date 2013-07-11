@@ -1,5 +1,6 @@
 #include "PathlineManager.h"
 #include "MeshManager.h"
+#include "Helper.h"
 
 bool PathlineManager::instanceFlag = false;
 PathlineManager* PathlineManager::single = NULL;
@@ -22,6 +23,7 @@ PathlineManager::~PathlineManager(void)
 
 void PathlineManager::getAdjacencies(PathlineSets &sets, Mesh &seedMesh, Size &seedMeshSize, PathlineAdjacencies &result)
 {
+	vector<pair<unsigned int, unsigned int>> tuples;
 	PathlineAdjacencies restmp;
 	result.neighbors.clear();
 
@@ -173,18 +175,23 @@ void PathlineManager::getAdjacencies(PathlineSets &sets, Mesh &seedMesh, Size &s
 	result = restmp;
 
 	//eliminate duplicates
-	for (unsigned int a = 0; i < restmp.neighbors.size(); a++)
+	for (unsigned int a = 0; a < restmp.neighbors.size(); a++)
 	{
 		pair<unsigned int, unsigned int> p1 = restmp.neighbors.at(a);
-		for (unsigned int b = 0; j < restmp.neighbors.size(); b++)
+
+		for (unsigned int b = 0; b < restmp.neighbors.size(); b++)
 		{
 			pair<unsigned int, unsigned int> p2 = restmp.neighbors.at(b);
+			pair<unsigned int, unsigned int> reci(p1.second, p1.first);
 
-			if (p1.first == p2.second && p1.second == p2.first)
+			if (reci == p2 && !Helper::contains(tuples, reci))
 			{
+				tuples.push_back(p1);
 				result.neighbors.erase(remove(result.neighbors.begin(), result.neighbors.end(), p2), result.neighbors.end());
 				break;
 			}
+			else if (Helper::contains(tuples, reci))
+				break;
 		}
 	}
 }
