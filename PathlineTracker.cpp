@@ -28,12 +28,11 @@ PathlineTracker::PathlineTracker(CvCapture* input, vector<Mesh> &leftSeedMeshes,
 	videoSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
 	leftSize = Size(videoSize.width / 2, videoSize.height);
 	rightSize = Size(videoSize.width / 2, videoSize.height);
-	maxFrames = ((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT)) - 2;
+	maxFrames = ((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT));
 }
 
 PathlineTracker::~PathlineTracker(void)
 {
-	cvReleaseCapture(&input);
 }
 
 PathlineSets PathlineTracker::getPathlineSets() const
@@ -79,6 +78,9 @@ void PathlineTracker::trackPathlines()
 		img = cvQueryFrame(input);
 
 		frameCounter++;
+
+		if (frameCounter > maxFrames)
+			break;
 	}
 }
 
