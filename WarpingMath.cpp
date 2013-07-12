@@ -20,6 +20,11 @@ double WarpingMath::euclideanNorm(const Vertex &v)
 	return sqrt((double) (sqr(v.x) + sqr(v.y)));
 }
 
+double WarpingMath::euclideanNorm(const Point2d &p)
+{
+	return sqrt(sqr(p.x) + sqr(p.y));
+}
+
 double WarpingMath::vTv(Vertex v1, Vertex v2)
 {
 	return (double) (v1.x * v2.x + v1.y * v2.y);

@@ -74,6 +74,22 @@ typedef struct Vertex
 	bool operator== (Vertex &v);
 };
 
+typedef struct ScalingMatrix2x2
+{
+	// since the matrix is a 2x2 matrix and a diagonal matrix we have only two entries
+
+	// top left entry
+	double vx;
+
+	// bottom right entry
+	double vy;
+};
+
+typedef struct TranslationVector2
+{
+	double x, y;
+};
+
 typedef struct Edge
 {
 	Vertex src;

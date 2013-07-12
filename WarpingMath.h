@@ -11,5 +11,6 @@ struct WarpingMath
 	static float round (float f);
 	static double round (double d);
 	static double vTv(Vertex v1, Vertex v2); // v^tr * v
+	static double euclideanNorm(const Point2d &p);
 };
 
