@@ -1,5 +1,6 @@
 #include "PathlineOptimizer.h"
 #include "WarpingMath.h"
+#include <vector>
 
 PathlineOptimizer::PathlineOptimizer(PathlineSets &originalSets, PathlineSets &deformedSets, PathlineAdjacencies &adjacencies)
 {
@@ -47,13 +48,13 @@ double PathlineOptimizer::pathlineScalingEnergy(PathlineMatrixMapping &singleMap
 				ScalingMatrix2x2 si, sj, sij;
 				TranslationVector2 ti, tj;
 
-				si = singleMap.mapping.at(l).at(neighbors.first);
-				sj = singleMap.mapping.at(l).at(neighbors.second);
+				si = getMatrix(singleMap.mapping.at(l), neighbors.first);
+				sj = getMatrix(singleMap.mapping.at(l), neighbors.second);
 
-				sij = doubleMap.mapping.at(l).at(adjacencies.neighbors.at(k));
+				sij = getMatrix(doubleMap.mapping.at(l), adjacencies.neighbors.at(k));
 
-				ti = tmap.mapping.at(l).at(neighbors.first);
-				tj = tmap.mapping.at(l).at(neighbors.second);
+				ti = getTranslationVector(tmap.mapping.at(l), neighbors.first);
+				tj = getTranslationVector(tmap.mapping.at(l), neighbors.second);
 
 				Point2d tmpi, tmpj, tmpij, pij;
 
@@ -101,16 +102,16 @@ double PathlineOptimizer::pathlineDeformationEnergy(PathlineMatrixMapping &mmap,
 			for (unsigned int m = firstFrame - 1; m < lastFrame; m++)
 			{
 				Point2d tmpi;
-				ScalingMatrix2x2 si = mmap.mapping.at(k).at(p);
-				TranslationVector2 ti = tmap.mapping.at(k).at(p);
+				ScalingMatrix2x2 si = getMatrix(mmap.mapping.at(k), p);
+				TranslationVector2 ti = getTranslationVector(tmap.mapping.at(k), p);
 
-				// sj * pi_m + ti
+				// si * pi_m + ti
 				tmpi.x = si.vx * p.path.at(m).second.x + ti.x;
 				tmpi.y = si.vy * p.path.at(m).second.y + ti.y;
 
 				Point2d tmp;
 
-				// (sj * pi_m + ti) - qi_m
+				// (si * pi_m + ti) - qi_m
 				tmp.x = tmpi.x - q.path.at(m).second.x;
 				tmp.y = tmpi.y - q.path.at(m).second.y;
 
@@ -145,4 +146,84 @@ pair<Pathline, Pathline> PathlineOptimizer::getNeighbors(pair<unsigned int, unsi
 	}
 
 	return pair;
+}
+
+PathlineSets PathlineOptimizer::optimizePathlines()
+{
+	cout << "Optimizing Pathlines..." << endl;
+
+	PathlineSets result;
+
+	// optimize Pathlines
+
+	return result;
+}
+
+double PathlineOptimizer::wrapperPathlineObjFunc(const vector<double> &x, vector<double> &grad, void *my_func_data)
+{
+	PathlineOptimizer* opt = reinterpret_cast<PathlineOptimizer*> (my_func_data);
+	return opt->totalPathlineEnergy(x, grad);
+}
+
+double PathlineOptimizer::totalPathlineEnergy(const vector<double> &x, vector<double> &grad)
+{
+	double energy = 0.0;
+
+	// compute total Energy
+
+	return energy;
+}
+
+ScalingMatrix2x2 PathlineOptimizer::getMatrix(vector<pair<Pathline, ScalingMatrix2x2>> &mapping, Pathline &pl)
+{
+	ScalingMatrix2x2 result;
+
+	for (unsigned int i = 0; i < mapping.size(); i++)
+	{
+		pair<Pathline, ScalingMatrix2x2> &pair = mapping.at(i);
+		
+		if (pair.first == pl)
+		{
+			result = pair.second;
+			break;
+		}
+	}
+
+	return result;
+}
+
+ScalingMatrix2x2 PathlineOptimizer::getMatrix(vector<pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2>> &mapping, pair<unsigned int, unsigned int> &neighbors)
+{
+	ScalingMatrix2x2 result;
+
+	for (unsigned int i = 0; i < mapping.size(); i++)
+	{
+		pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2> &pair = mapping.at(i);
+		
+		if (pair.first == neighbors)
+		{
+			result = pair.second;
+			break;
+		}
+	}
+
+	return result;
+}
+
+TranslationVector2 PathlineOptimizer::getTranslationVector(vector<pair<Pathline, TranslationVector2>> &mapping, Pathline &pl)
+{
+	TranslationVector2 result;
+
+	for (unsigned int i = 0; i < mapping.size(); i++)
+	{
+		pair<Pathline, TranslationVector2> &pair = mapping.at(i);
+		
+		if (pair.first == pl)
+		{
+			result = pair.second;
+			break;
+		}
+	}
+
+	return result;
 }

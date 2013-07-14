@@ -59,5 +59,26 @@ Vertex Vertex::operator* (int param)
 	return tmp;
 }
 
+bool Pathline::operator<(Pathline &p)
+{
+	return seedIndex < p.seedIndex;
+}
+
+bool Pathline::operator==(Pathline &p)
+{
+	if (seedIndex != p.seedIndex)
+		return false;
+
+	for (unsigned int i = 0; i < p.path.size(); i++)
+	{
+		pair<int, Point2f> &elem = p.path.at(i);
+		
+		if (elem.first != path.at(i).first || elem.second.x != path.at(i).second.x || elem.second.y != path.at(i).second.y)
+			return false;
+	}
+
+	return true;
+}
+
 // TODO: Auf zusätzliche Header verweisen, die in STDAFX.H
 // und nicht in dieser Datei erforderlich sind.

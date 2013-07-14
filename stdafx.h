@@ -48,6 +48,9 @@ typedef struct Pathline
 
 	// indicates on which vertex this path line was originally seeded
 	unsigned int seedIndex;
+
+	bool operator<(Pathline &p);
+	bool operator==(Pathline &p);
 };
 
 typedef struct PathlineAdjacencies
