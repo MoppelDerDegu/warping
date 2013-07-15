@@ -195,3 +195,102 @@ void PathlineManager::getAdjacencies(PathlineSets &sets, Mesh &seedMesh, Size &s
 		}
 	}
 }
+
+void PathlineManager::createPathlineMatrixMapping(PathlineSets &pathlineSets, PathlineMatrixMapping &result)
+{
+	result.mapping.clear();
+
+	for (unsigned int i = 0; i < pathlineSets.pathlines.size(); i++)
+	{
+		vector<pair<Pathline, ScalingMatrix2x2>> mapping;
+
+		for (unsigned int j = 0; j < pathlineSets.pathlines.at(i).size(); j++)
+		{
+			ScalingMatrix2x2 mat;
+			mat.vx = 1.0;
+			mat.vy = 1.0;
+
+			pair<Pathline, ScalingMatrix2x2> pair(pathlineSets.pathlines.at(i).at(j), mat);
+
+			mapping.push_back(pair);
+		}
+
+		result.mapping.push_back(mapping);
+	}
+}
+
+void PathlineManager::createPathlineTransVecMapping(PathlineSets &pathlineSets, PathlineTransVecMapping &result)
+{
+	result.mapping.clear();
+
+	for (unsigned int i = 0; i < pathlineSets.pathlines.size(); i++)
+	{
+		vector<pair<Pathline, TranslationVector2>> mapping;
+
+		for (unsigned int j = 0; j < pathlineSets.pathlines.at(i).size(); j++)
+		{
+			TranslationVector2 vec;
+			vec.x = 0.0;
+			vec.y = 0.0;
+
+			pair<Pathline, TranslationVector2> pair(pathlineSets.pathlines.at(i).at(j), vec);
+
+			mapping.push_back(pair);
+		}
+
+		result.mapping.push_back(mapping);
+	}
+}
+
+pair<Pathline, Pathline> PathlineManager::getNeighbors(pair<unsigned int, unsigned int> &neighbors, vector<Pathline> &pathlines)
+{
+	pair<Pathline, Pathline> pair;
+	
+	for (unsigned int k = 0; k < pathlines.size(); k++)
+	{
+		if (pathlines.at(k).seedIndex == neighbors.first)
+		{
+			pair.first = pathlines.at(k);
+			break;
+		}
+	}
+
+	for (unsigned int k = 0; k < pathlines.size(); k++)
+	{
+		if (pathlines.at(k).seedIndex == neighbors.second)
+		{
+			pair.second = pathlines.at(k);
+			break;
+		}
+	}
+
+	return pair;
+}
+
+void PathlineManager::mappingsToDoubleVec(vector<pair<Pathline, ScalingMatrix2x2>> &matMapping, vector<pair<Pathline, TranslationVector2>> &vecMapping, int numberOfDummyVariables, vector<double> result)
+{
+	result.clear();
+
+	for (unsigned int i = 0; i < matMapping.size(); i++)
+	{
+		result.push_back(matMapping.at(i).second.vx);
+		result.push_back(matMapping.at(i).second.vy);
+	}
+
+	for (unsigned int i = 0; i < vecMapping.size(); i++)
+	{
+		result.push_back(vecMapping.at(i).second.x);
+		result.push_back(vecMapping.at(i).second.y);
+	}
+
+	vector<double> tmp;
+	
+	// dummy variables for scaling matrices between pairing pathlines
+	for (unsigned int i = 0; i < numberOfDummyVariables; i++)
+	{
+		tmp.push_back(0.0);
+	}
+
+	// append dummy variables to the resulting vector
+	result.insert(result.end(), tmp.begin(), tmp.end());
+}

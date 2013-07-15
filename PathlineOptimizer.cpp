@@ -1,6 +1,6 @@
 #include "PathlineOptimizer.h"
 #include "WarpingMath.h"
-#include <vector>
+#include "PathlineManager.h"
 
 PathlineOptimizer::PathlineOptimizer(PathlineSets &originalSets, PathlineSets &deformedSets, PathlineAdjacencies &adjacencies)
 {
@@ -14,24 +14,10 @@ PathlineOptimizer::~PathlineOptimizer(void)
 {
 }
 
-bool PathlineOptimizer::comparePathlines(Pathline &p1, Pathline &p2)
-{
-	return p1.seedIndex < p2.seedIndex;
-}
-
-bool PathlineOptimizer::compareNeighbors(pair<unsigned int, unsigned int> &n1, pair<unsigned int, unsigned int> &n2)
-{
-	if (n1.first < n2.first)
-		return true;
-	else if (n1.first > n2.first)
-		return false;
-	else
-		return n1.second < n2.second;
-}
-
 double PathlineOptimizer::pathlineScalingEnergy(PathlineMatrixMapping &singleMap, NeighborMatrixMapping &doubleMap, PathlineTransVecMapping &tmap)
 {
 	double res = 0.0;
+	PathlineManager* pm = PathlineManager::getInstance();
 
 	for (unsigned int k = 0; k < adjacencies.neighbors.size(); k++)
 	{
@@ -41,7 +27,7 @@ double PathlineOptimizer::pathlineScalingEnergy(PathlineMatrixMapping &singleMap
 			int firstFrame = pathlineSet.at(0).path.at(0).first;
 			int lastFrame = pathlineSet.at(0).path.at(pathlineSet.at(0).path.size() - 1).first;
 
-			pair<Pathline, Pathline> neighbors = getNeighbors(adjacencies.neighbors.at(k), pathlineSet);
+			pair<Pathline, Pathline> neighbors = pm->getNeighbors(adjacencies.neighbors.at(k), pathlineSet);
 
 			for (unsigned int m = firstFrame - 1; m < lastFrame; m++)
 			{
@@ -123,38 +109,19 @@ double PathlineOptimizer::pathlineDeformationEnergy(PathlineMatrixMapping &mmap,
 	return res;
 }
 
-pair<Pathline, Pathline> PathlineOptimizer::getNeighbors(pair<unsigned int, unsigned int> &neighbors, vector<Pathline> &pathlines)
-{
-	pair<Pathline, Pathline> pair;
-	
-	for (unsigned int k = 0; k < pathlines.size(); k++)
-	{
-		if (pathlines.at(k).seedIndex == neighbors.first)
-		{
-			pair.first = pathlines.at(k);
-			break;
-		}
-	}
-
-	for (unsigned int k = 0; k < pathlines.size(); k++)
-	{
-		if (pathlines.at(k).seedIndex == neighbors.second)
-		{
-			pair.second = pathlines.at(k);
-			break;
-		}
-	}
-
-	return pair;
-}
-
 PathlineSets PathlineOptimizer::optimizePathlines()
 {
 	cout << "Optimizing Pathlines..." << endl;
 
 	PathlineSets result;
+	PathlineManager* pm = PathlineManager::getInstance();
 
-	// optimize Pathlines
+	PathlineMatrixMapping matMapping;
+	PathlineTransVecMapping vecMapping;
+
+	// initialize mappings
+	pm->createPathlineMatrixMapping(originalSets, matMapping);
+	pm->createPathlineTransVecMapping(originalSets, vecMapping);
 
 	return result;
 }
@@ -226,4 +193,10 @@ TranslationVector2 PathlineOptimizer::getTranslationVector(vector<pair<Pathline,
 	}
 
 	return result;
+}
+
+int PathlineOptimizer::getNumberOfDummyVariables(PathlineAdjacencies &adjacencies)
+{
+	// #neighbors * 2 because we have two variables for each pathline, i.e. the entries in the diagonal 2x2 scaling matrix
+	return adjacencies.neighbors.size() * 2;
 }

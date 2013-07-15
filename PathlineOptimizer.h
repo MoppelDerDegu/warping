@@ -2,27 +2,6 @@
 
 #include "solver.h"
 
-typedef struct PathlineMatrixMapping
-{
-	// outer vector specifies the different sets of pathlines
-	// inner vector specifies the pathline <-> scaling matrix mapping
-	vector<vector<pair<Pathline, ScalingMatrix2x2>>> mapping;
-};
-
-typedef struct PathlineTransVecMapping
-{
-	// vector specifies the different sets of pathlines
-	// inner vector specifies the pathline <-> translation vector mapping
-	vector<vector<pair<Pathline, TranslationVector2>>> mapping;
-};
-
-typedef struct NeighborMatrixMapping
-{
-	// vector specifies the different sets of pathlines
-	// inner vector specifies the neighbor indices <-> scaling matrix mapping
-	vector<vector<pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2>>> mapping;
-};
-
 class PathlineOptimizer : public Solver
 {
 public:
@@ -37,13 +16,15 @@ private:
 	PathlineSets originalSets, deformedSets;
 	PathlineAdjacencies adjacencies;
 
-	bool comparePathlines(Pathline &p1, Pathline &p2);
-	bool compareNeighbors(pair<unsigned int, unsigned int> &n1, pair<unsigned int, unsigned int> &n2);
+	// maps the index of the pathline set from all pathline sets to the number of variables used for this pathline set during the optimization
+	map<int, int> pathlineSetVariableMapping;
+
 	ScalingMatrix2x2 getMatrix(vector<pair<Pathline, ScalingMatrix2x2>> &mapping, Pathline &pl);
 	ScalingMatrix2x2 getMatrix(vector<pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2>> &mapping, pair<unsigned int, unsigned int> &neighbors);
 	TranslationVector2 getTranslationVector(vector<pair<Pathline, TranslationVector2>> &mapping, Pathline &pl);
 
-	pair<Pathline, Pathline> getNeighbors(pair<unsigned int, unsigned int> &neighbors, vector<Pathline> &pathlines);
+	// returns number of dummy variables for the scaling matrix s_ij between two neighboring pathlines p_i and p_j used during optimization
+	int getNumberOfDummyVariables(PathlineAdjacencies &adjacencies);
 
 	static double wrapperPathlineObjFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
 

@@ -127,6 +127,27 @@ typedef struct Mesh
 	vector<Quad> quads;
 };
 
+typedef struct PathlineMatrixMapping
+{
+	// outer vector specifies the different sets of pathlines
+	// inner vector specifies the pathline <-> scaling matrix mapping
+	vector<vector<pair<Pathline, ScalingMatrix2x2>>> mapping;
+};
+
+typedef struct PathlineTransVecMapping
+{
+	// vector specifies the different sets of pathlines
+	// inner vector specifies the pathline <-> translation vector mapping
+	vector<vector<pair<Pathline, TranslationVector2>>> mapping;
+};
+
+typedef struct NeighborMatrixMapping
+{
+	// vector specifies the different sets of pathlines
+	// inner vector specifies the neighbor indices <-> scaling matrix mapping
+	vector<vector<pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2>>> mapping;
+};
+
 template<typename T> inline T sqr(T x) { return x * x;}
 template<class T> inline T vecDist3(const Vec<T, 3> &v1, const Vec<T, 3> &v2) {return sqrt(sqr(v1[0] - v2[0])+sqr(v1[1] - v2[1])+sqr(v1[2] - v2[2]));}
 template<class T> inline T vecSqrDist3(const Vec<T, 3> &v1, const Vec<T, 3> &v2) {return sqr(v1[0] - v2[0])+sqr(v1[1] - v2[1])+sqr(v1[2] - v2[2]);}
