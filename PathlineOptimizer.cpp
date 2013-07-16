@@ -1,6 +1,7 @@
 #include "PathlineOptimizer.h"
 #include "WarpingMath.h"
 #include "PathlineManager.h"
+#include "lib/nlopt-2.3-dll/nlopt.hpp"
 
 PathlineOptimizer::PathlineOptimizer(PathlineSets &originalSets, PathlineSets &deformedSets, PathlineAdjacencies &adjacencies)
 {
@@ -116,12 +117,31 @@ PathlineSets PathlineOptimizer::optimizePathlines()
 	PathlineSets result;
 	PathlineManager* pm = PathlineManager::getInstance();
 
-	PathlineMatrixMapping matMapping;
-	PathlineTransVecMapping vecMapping;
-
 	// initialize mappings
-	pm->createPathlineMatrixMapping(originalSets, matMapping);
-	pm->createPathlineTransVecMapping(originalSets, vecMapping);
+	pm->createPathlineMatrixMapping(originalSets, optimizedMatMapping);
+	pm->createPathlineTransVecMapping(originalSets, optimizedVecMapping);
+
+	// create variables
+	vector<double> x;
+	createAllVariables(optimizedMatMapping, optimizedVecMapping, x);
+
+	// lower bounds
+	vector<double> lb = computeLowerBounds(x);
+
+	// create optimizer object
+	nlopt::opt opt(nlopt::LN_NELDERMEAD, x.size());
+
+	opt.set_lower_bounds(lb);
+	opt.set_min_objective(PathlineOptimizer::wrapperPathlineObjFunc, this);
+
+	// convergence criteria
+	opt.set_xtol_abs(1.0);
+
+	double minf;
+
+	nlopt::result res = opt.optimize(x, minf);
+
+	// TODO construct pathline set
 
 	return result;
 }
@@ -136,7 +156,12 @@ double PathlineOptimizer::totalPathlineEnergy(const vector<double> &x, vector<do
 {
 	double energy = 0.0;
 
-	// compute total Energy
+	doubleVecToMapping(x, optimizedMatMapping, optimizedVecMapping, optimizedNeighborMapping);
+
+	double first = pathlineScalingEnergy(optimizedMatMapping, optimizedNeighborMapping, optimizedVecMapping);
+	double second = pathlineDeformationEnergy(optimizedMatMapping, optimizedVecMapping);
+
+	energy = first + 0.5 * second;
 
 	return energy;
 }
@@ -199,4 +224,94 @@ int PathlineOptimizer::getNumberOfDummyVariables(PathlineAdjacencies &adjacencie
 {
 	// #neighbors * 2 because we have two variables for each pathline, i.e. the entries in the diagonal 2x2 scaling matrix
 	return adjacencies.neighbors.size() * 2;
+}
+
+void PathlineOptimizer::createAllVariables(PathlineMatrixMapping &matMapping, PathlineTransVecMapping &vecMapping, vector<double> &allVariables)
+{
+	allVariables.clear();
+	PathlineManager* pm = PathlineManager::getInstance();
+
+	for (unsigned int i = 0; i < originalSets.pathlines.size(); i++)
+	{
+		vector<pair<Pathline, ScalingMatrix2x2>> &matMap = matMapping.mapping.at(i);
+		vector<pair<Pathline, TranslationVector2>> &vecMap = vecMapping.mapping.at(i);
+		vector<double> vars;
+
+		int dummies = getNumberOfDummyVariables(adjacencies);
+
+		pm->mappingsToDoubleVec(matMap, vecMap, dummies, vars);
+
+		pathlineSetVariableMapping.insert(pair<int, int>(i, vars.size()));
+		allVariables.insert(allVariables.end(), vars.begin(), vars.end());
+	}
+}
+
+vector<double> PathlineOptimizer::computeLowerBounds(vector<double> &variables)
+{
+	vector<double> res;
+
+	for (unsigned int i = 0; i < variables.size(); i++)
+	{
+		res.push_back(0.0);
+	}
+
+	return res;
+}
+
+void PathlineOptimizer::doubleVecToMapping(const vector<double> &vars, PathlineMatrixMapping &outMatMapping, PathlineTransVecMapping &outVecMapping, NeighborMatrixMapping &outNeighborMapping)
+{
+	int preOffset = 0;
+	int postOffset = 0;
+
+	for (map<int, int>::iterator it = pathlineSetVariableMapping.begin(); it != pathlineSetVariableMapping.end(); ++it)
+	{
+		postOffset += it->second;
+
+		// extract subset of variables for each pathline set
+		vector<double>::const_iterator first = vars.begin() + preOffset;
+		vector<double>::const_iterator last = vars.begin() + postOffset;
+		vector<double> sub(first, last);
+
+		int matCounter = 0;
+		int vecCounter = 0;
+		int neighborCounter = 0;
+		for (unsigned int i = 0; i < sub.size(); i += 2)
+		{
+			vector<pair<Pathline, ScalingMatrix2x2>> &matMap = outMatMapping.mapping.at(it->first);
+			vector<pair<Pathline, TranslationVector2>> &vecMap = outVecMapping.mapping.at(it->first);
+			vector<pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2>> &neighborMap = outNeighborMapping.mapping.at(it->first);
+
+			if (i > (2 * matMap.size()) - 1)
+			{
+				if (i > ((2 * vecMap.size()) - 1) + 2 * matMap.size())
+				{
+					// variables are dummy entries
+					neighborMap.at(neighborCounter).second.vx = sub.at(i);
+					neighborMap.at(neighborCounter).second.vy = sub.at(i + 1);
+
+					neighborMap.at(neighborCounter).first = adjacencies.neighbors.at(neighborCounter);
+
+					neighborCounter++;
+				}
+				else
+				{
+					// variables are translation vector entries
+					vecMap.at(vecCounter).second.x = sub.at(i);
+					vecMap.at(vecCounter).second.y = sub.at(i + 1);
+
+					vecCounter++;
+				}
+			}
+			else
+			{
+				// variables are scaling matrix entries
+				matMap.at(matCounter).second.vx = sub.at(i);
+				matMap.at(matCounter).second.vy = sub.at(i + 1);
+
+				matCounter++;
+			}
+		}
+
+		preOffset = postOffset;
+	}
 }
