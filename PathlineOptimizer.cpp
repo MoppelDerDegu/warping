@@ -112,7 +112,7 @@ double PathlineOptimizer::pathlineDeformationEnergy(PathlineMatrixMapping &mmap,
 
 PathlineSets PathlineOptimizer::optimizePathlines()
 {
-	cout << "Optimizing Pathlines..." << endl;
+	cout << "\nOptimizing Pathlines..." << endl;
 
 	PathlineSets result;
 	PathlineManager* pm = PathlineManager::getInstance();
@@ -141,7 +141,7 @@ PathlineSets PathlineOptimizer::optimizePathlines()
 
 	nlopt::result res = opt.optimize(x, minf);
 
-	// TODO construct pathline set
+	constructOptimizedPathlineSets(result);
 
 	return result;
 }
@@ -313,5 +313,44 @@ void PathlineOptimizer::doubleVecToMapping(const vector<double> &vars, PathlineM
 		}
 
 		preOffset = postOffset;
+	}
+}
+
+void PathlineOptimizer::constructOptimizedPathlineSets(PathlineSets &result)
+{
+	for (unsigned int i = 0; i < optimizedMatMapping.mapping.size(); i++)
+	{
+		vector<Pathline> newPathlines;
+		
+		vector<pair<Pathline, ScalingMatrix2x2>> &matMapping = optimizedMatMapping.mapping.at(i);
+		vector<pair<Pathline, TranslationVector2>> &vecMapping = optimizedVecMapping.mapping.at(i);
+
+		for (unsigned int j = 0; j < matMapping.size(); j++)
+		{
+			ScalingMatrix2x2 &sj = matMapping.at(j).second;
+			TranslationVector2 &tj = vecMapping.at(j).second;
+
+			Pathline &oldPathline = matMapping.at(j).first;
+			Pathline newPathline;
+
+			newPathline.seedIndex = oldPathline.seedIndex;
+
+			for (unsigned int k = 0; k < oldPathline.path.size(); k++)
+			{
+				Point2f location;
+
+				// newPathline = sj * oldPathline + tj
+				location.x = sj.vx * oldPathline.path.at(k).second.x + tj.x;
+				location.y = sj.vy * oldPathline.path.at(k).second.y + tj.y;
+
+				pair<int, Point2f> pair(oldPathline.path.at(k).first, location);
+
+				newPathline.path.push_back(pair);
+			}
+
+			newPathlines.push_back(newPathline);
+		}
+
+		result.pathlines.push_back(newPathlines);
 	}
 }

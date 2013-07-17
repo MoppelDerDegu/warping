@@ -27,6 +27,8 @@ private:
 	ScalingMatrix2x2 getMatrix(vector<pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2>> &mapping, pair<unsigned int, unsigned int> &neighbors);
 	TranslationVector2 getTranslationVector(vector<pair<Pathline, TranslationVector2>> &mapping, Pathline &pl);
 
+	void constructOptimizedPathlineSets(PathlineSets &result);
+
 	// returns number of dummy variables for the scaling matrix s_ij between two neighboring pathlines p_i and p_j used during optimization
 	int getNumberOfDummyVariables(PathlineAdjacencies &adjacencies);
 
