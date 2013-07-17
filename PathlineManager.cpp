@@ -294,3 +294,29 @@ void PathlineManager::mappingsToDoubleVec(vector<pair<Pathline, ScalingMatrix2x2
 	// append dummy variables to the resulting vector
 	result.insert(result.end(), tmp.begin(), tmp.end());
 }
+
+void PathlineManager::splitPathlineSets(PathlineSets &original, PathlineSets &left, PathlineSets &right)
+{
+	left.pathlines.clear();
+	right.pathlines.clear();
+
+	left.pathlines = original.pathlines;
+	right.pathlines = original.pathlines;
+
+	for (unsigned int i = 0; i < original.pathlines.size(); i++)
+	{
+		// left
+		vector<Pathline>::iterator leftFirst = original.pathlines.at(i).begin();
+		vector<Pathline>::iterator leftLast = original.pathlines.at(i).begin() + original.pathlines.at(i).size() / 2;
+
+		vector<Pathline> leftSub(leftFirst, leftLast);
+		left.pathlines.at(i) = leftSub;
+
+		// right
+		vector<Pathline>::iterator rightFirst = original.pathlines.at(i).begin() + original.pathlines.at(i).size() / 2;
+		vector<Pathline>::iterator rightLast = original.pathlines.at(i).begin() + original.pathlines.at(i).size();
+
+		vector<Pathline> rightSub(rightFirst, rightLast);
+		right.pathlines.at(i) = rightSub;
+	}
+}

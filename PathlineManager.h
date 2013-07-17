@@ -19,6 +19,8 @@ public:
 	void getAdjacencies(PathlineSets &sets, Mesh &seedMesh, Size &seedMeshSize, PathlineAdjacencies &result);
 	pair<Pathline, Pathline> getNeighbors(pair<unsigned int, unsigned int> &neighbors, vector<Pathline> &pathlines);
 
+	void splitPathlineSets(PathlineSets &original, PathlineSets &left, PathlineSets &right);
+
 	/*
 		Initializes a scaling matrix mapping with identity matrices, i.e.
 		(1 0)
