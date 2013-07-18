@@ -20,9 +20,9 @@ double PathlineOptimizer::pathlineScalingEnergy(PathlineMatrixMapping &singleMap
 	double res = 0.0;
 	PathlineManager* pm = PathlineManager::getInstance();
 
-	for (unsigned int k = 0; k < adjacencies.neighbors.size(); k++)
+	for (unsigned int l = 0; l < originalSets.pathlines.size(); l++)
 	{
-		for (unsigned int l = 0; l < originalSets.pathlines.size(); l++)
+		for (unsigned int k = 0; k < adjacencies.neighbors.size(); k++)
 		{
 			vector<Pathline> pathlineSet = originalSets.pathlines.at(l);
 			int firstFrame = pathlineSet.at(0).path.at(0).first;
@@ -45,11 +45,11 @@ double PathlineOptimizer::pathlineScalingEnergy(PathlineMatrixMapping &singleMap
 
 				Point2d tmpi, tmpj, tmpij, pij;
 
-				// si * pi_t + ti
+				// si * pi_m + ti
 				tmpi.x = si.vx * neighbors.first.path.at(m).second.x + ti.x;
 				tmpi.y = si.vy * neighbors.first.path.at(m).second.y + ti.y;
 
-				// sj * pj_t + tj
+				// sj * pj_m + tj
 				tmpj.x = sj.vx * neighbors.second.path.at(m).second.x + tj.x;
 				tmpj.y = sj.vy * neighbors.second.path.at(m).second.y + tj.y;
 
@@ -59,9 +59,11 @@ double PathlineOptimizer::pathlineScalingEnergy(PathlineMatrixMapping &singleMap
 
 				// sij * pij
 				tmpij.x = sij.vx * pij.x;
-				tmpij.x = sij.vy * pij.y;
+				tmpij.y = sij.vy * pij.y;
 
-				res += sqr(WarpingMath::euclideanNorm(tmpi - tmpj - tmpij));
+				double norm = WarpingMath::euclideanNorm(tmpi - tmpj - tmpij);
+
+				res += sqr(norm);
 			}
 		}
 	}
@@ -110,16 +112,16 @@ double PathlineOptimizer::pathlineDeformationEnergy(PathlineMatrixMapping &mmap,
 	return res;
 }
 
-PathlineSets PathlineOptimizer::optimizePathlines()
+void PathlineOptimizer::optimizePathlines(PathlineSets &result)
 {
-	cout << "\nOptimizing Pathlines..." << endl;
+	std::cout << "\nOptimizing Pathlines..." << endl;
 
-	PathlineSets result;
 	PathlineManager* pm = PathlineManager::getInstance();
 
 	// initialize mappings
 	pm->createPathlineMatrixMapping(originalSets, optimizedMatMapping);
 	pm->createPathlineTransVecMapping(originalSets, optimizedVecMapping);
+	pm->createNeighborMatrixMapping(originalSets, adjacencies, optimizedNeighborMapping);
 
 	// create variables
 	vector<double> x;
@@ -135,15 +137,15 @@ PathlineSets PathlineOptimizer::optimizePathlines()
 	opt.set_min_objective(PathlineOptimizer::wrapperPathlineObjFunc, this);
 
 	// convergence criteria
-	opt.set_xtol_abs(1.0);
+	opt.set_xtol_abs(10.0);
 
 	double minf;
 
 	nlopt::result res = opt.optimize(x, minf);
 
-	constructOptimizedPathlineSets(result);
+	std::cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
 
-	return result;
+	constructOptimizedPathlineSets(result);
 }
 
 double PathlineOptimizer::wrapperPathlineObjFunc(const vector<double> &x, vector<double> &grad, void *my_func_data)
@@ -154,14 +156,23 @@ double PathlineOptimizer::wrapperPathlineObjFunc(const vector<double> &x, vector
 
 double PathlineOptimizer::totalPathlineEnergy(const vector<double> &x, vector<double> &grad)
 {
-	double energy = 0.0;
+	++iterationCount;
 
+	if (!grad.empty())
+	{
+		// compute gradient here
+	}
+
+	double energy = 0.0;
+	
 	doubleVecToMapping(x, optimizedMatMapping, optimizedVecMapping, optimizedNeighborMapping);
 
 	double first = pathlineScalingEnergy(optimizedMatMapping, optimizedNeighborMapping, optimizedVecMapping);
 	double second = pathlineDeformationEnergy(optimizedMatMapping, optimizedVecMapping);
 
 	energy = first + 0.5 * second;
+
+	std::cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << energy << ends;
 
 	return energy;
 }

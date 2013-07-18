@@ -8,7 +8,7 @@ public:
 	PathlineOptimizer(PathlineSets &originalSets, PathlineSets &deformedSets, PathlineAdjacencies &adjacencies);
 	~PathlineOptimizer(void);
 
-	PathlineSets optimizePathlines();
+	void optimizePathlines(PathlineSets &result);
 
 private:
 
