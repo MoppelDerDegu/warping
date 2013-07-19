@@ -368,6 +368,8 @@ int main(int argc, char* argv[])
 	plm->splitPathlineSets(originalPathlines, leftOrigPathlines, rightOrigPathlines);
 	plm->splitPathlineSets(deformedPathlines, leftDeformedPathlines, rightDeformedPathlines);
 
+	std::sort(adjacencies.neighbors.begin(), adjacencies.neighbors.end());
+
 	PathlineOptimizer leftPathlineOptimizer(leftOrigPathlines, leftDeformedPathlines, adjacencies);
 	PathlineOptimizer rightPathlineOptimizer(rightOrigPathlines, rightDeformedPathlines, adjacencies);
 	

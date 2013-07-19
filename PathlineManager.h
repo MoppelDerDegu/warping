@@ -44,6 +44,6 @@ public:
 
 	// transforms a PathlineMatrixMapping and PathlineTransVecMapping into a vector<double>. That vector is appended with dummyvariables
 	// which are used during the optimization but we are not interested in.
-	void mappingsToDoubleVec(vector<pair<Pathline, ScalingMatrix2x2>> &matMapping, vector<pair<Pathline, TranslationVector2>> &vecMapping, int numberOfDummyVariables, vector<double> &result);
+	void mappingsToDoubleVec(map<Pathline, ScalingMatrix2x2> &matMapping, map<Pathline, TranslationVector2> &vecMapping, int numberOfDummyVariables, vector<double> &result);
 };
 

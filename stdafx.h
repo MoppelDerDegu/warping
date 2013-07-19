@@ -49,8 +49,8 @@ typedef struct Pathline
 	// indicates on which vertex this path line was originally seeded
 	unsigned int seedIndex;
 
-	bool operator<(Pathline &p);
-	bool operator==(Pathline &p);
+	bool operator<(const Pathline &p) const;
+	bool operator==(const Pathline &p) const;
 };
 
 typedef struct PathlineAdjacencies
@@ -86,6 +86,18 @@ typedef struct ScalingMatrix2x2
 
 	// bottom right entry
 	double vy;
+
+	ScalingMatrix2x2(double x, double y)
+	{
+		vx = x;
+		vy = y;
+	}
+
+	ScalingMatrix2x2()
+	{
+		vx = 0.0;
+		vy = 0.0;
+	}
 };
 
 typedef struct TranslationVector2
@@ -130,22 +142,19 @@ typedef struct Mesh
 typedef struct PathlineMatrixMapping
 {
 	// outer vector specifies the different sets of pathlines
-	// inner vector specifies the pathline <-> scaling matrix mapping
-	vector<vector<pair<Pathline, ScalingMatrix2x2>>> mapping;
+	vector<map<Pathline, ScalingMatrix2x2>> mapping;
 };
 
 typedef struct PathlineTransVecMapping
 {
 	// vector specifies the different sets of pathlines
-	// inner vector specifies the pathline <-> translation vector mapping
-	vector<vector<pair<Pathline, TranslationVector2>>> mapping;
+	vector<map<Pathline, TranslationVector2>> mapping;
 };
 
 typedef struct NeighborMatrixMapping
 {
 	// vector specifies the different sets of pathlines
-	// inner vector specifies the neighbor indices <-> scaling matrix mapping
-	vector<vector<pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2>>> mapping;
+	vector<map<pair<unsigned int, unsigned int>, ScalingMatrix2x2>> mapping;
 };
 
 template<typename T> inline T sqr(T x) { return x * x;}

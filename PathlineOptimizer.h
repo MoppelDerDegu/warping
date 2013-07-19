@@ -22,11 +22,7 @@ private:
 
 	// maps the index of the pathline set from all pathline sets to the number of variables used for this pathline set during the optimization
 	map<int, int> pathlineSetVariableMapping;
-
-	ScalingMatrix2x2 getMatrix(vector<pair<Pathline, ScalingMatrix2x2>> &mapping, Pathline &pl);
-	ScalingMatrix2x2 getMatrix(vector<pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2>> &mapping, pair<unsigned int, unsigned int> &neighbors);
-	TranslationVector2 getTranslationVector(vector<pair<Pathline, TranslationVector2>> &mapping, Pathline &pl);
-
+	
 	void constructOptimizedPathlineSets(PathlineSets &result);
 
 	// returns number of dummy variables for the scaling matrix s_ij between two neighboring pathlines p_i and p_j used during optimization

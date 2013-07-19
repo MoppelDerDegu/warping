@@ -202,7 +202,7 @@ void PathlineManager::createPathlineMatrixMapping(PathlineSets &pathlineSets, Pa
 
 	for (unsigned int i = 0; i < pathlineSets.pathlines.size(); i++)
 	{
-		vector<pair<Pathline, ScalingMatrix2x2>> mapping;
+		map<Pathline, ScalingMatrix2x2> mapping;
 
 		for (unsigned int j = 0; j < pathlineSets.pathlines.at(i).size(); j++)
 		{
@@ -211,8 +211,8 @@ void PathlineManager::createPathlineMatrixMapping(PathlineSets &pathlineSets, Pa
 			mat.vy = 1.0;
 
 			pair<Pathline, ScalingMatrix2x2> pair(pathlineSets.pathlines.at(i).at(j), mat);
-
-			mapping.push_back(pair);
+			
+			mapping.insert(pair);
 		}
 
 		result.mapping.push_back(mapping);
@@ -225,7 +225,7 @@ void PathlineManager::createPathlineTransVecMapping(PathlineSets &pathlineSets, 
 
 	for (unsigned int i = 0; i < pathlineSets.pathlines.size(); i++)
 	{
-		vector<pair<Pathline, TranslationVector2>> mapping;
+		map<Pathline, TranslationVector2> mapping;
 
 		for (unsigned int j = 0; j < pathlineSets.pathlines.at(i).size(); j++)
 		{
@@ -235,7 +235,7 @@ void PathlineManager::createPathlineTransVecMapping(PathlineSets &pathlineSets, 
 
 			pair<Pathline, TranslationVector2> pair(pathlineSets.pathlines.at(i).at(j), vec);
 
-			mapping.push_back(pair);
+			mapping.insert(pair);
 		}
 
 		result.mapping.push_back(mapping);
@@ -267,20 +267,20 @@ pair<Pathline, Pathline> PathlineManager::getNeighbors(pair<unsigned int, unsign
 	return pair;
 }
 
-void PathlineManager::mappingsToDoubleVec(vector<pair<Pathline, ScalingMatrix2x2>> &matMapping, vector<pair<Pathline, TranslationVector2>> &vecMapping, int numberOfDummyVariables, vector<double> &result)
+void PathlineManager::mappingsToDoubleVec(map<Pathline, ScalingMatrix2x2> &matMapping, map<Pathline, TranslationVector2> &vecMapping, int numberOfDummyVariables, vector<double> &result)
 {
 	result.clear();
 
-	for (unsigned int i = 0; i < matMapping.size(); i++)
+	for (map<Pathline, ScalingMatrix2x2>::iterator it = matMapping.begin(); it != matMapping.end(); ++it)
 	{
-		result.push_back(matMapping.at(i).second.vx);
-		result.push_back(matMapping.at(i).second.vy);
+		result.push_back(it->second.vx);
+		result.push_back(it->second.vy);
 	}
 
-	for (unsigned int i = 0; i < vecMapping.size(); i++)
+	for (map<Pathline, TranslationVector2>::iterator it = vecMapping.begin(); it != vecMapping.end(); ++it)
 	{
-		result.push_back(vecMapping.at(i).second.x);
-		result.push_back(vecMapping.at(i).second.y);
+		result.push_back(it->second.x);
+		result.push_back(it->second.y);
 	}
 
 	vector<double> tmp;
@@ -327,7 +327,7 @@ void PathlineManager::createNeighborMatrixMapping(PathlineSets &pathlineSets, Pa
 
 	for (unsigned int i = 0; i < pathlineSets.pathlines.size(); i++)
 	{
-		vector<pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2>> mapping;
+		map<pair<unsigned int, unsigned int>, ScalingMatrix2x2> mapping;
 
 		for (unsigned int j = 0; j < adjacencies.neighbors.size(); j++)
 		{
@@ -341,7 +341,7 @@ void PathlineManager::createNeighborMatrixMapping(PathlineSets &pathlineSets, Pa
 
 			pair.second = si;
 
-			mapping.push_back(pair);
+			mapping.insert(pair);
 		}
 
 		result.mapping.push_back(mapping);

@@ -59,19 +59,19 @@ Vertex Vertex::operator* (int param)
 	return tmp;
 }
 
-bool Pathline::operator<(Pathline &p)
+bool Pathline::operator<(const Pathline &p) const
 {
 	return seedIndex < p.seedIndex;
 }
 
-bool Pathline::operator==(Pathline &p)
+bool Pathline::operator==(const Pathline &p) const
 {
 	if (seedIndex != p.seedIndex)
 		return false;
 
 	for (unsigned int i = 0; i < p.path.size(); i++)
 	{
-		pair<int, Point2f> &elem = p.path.at(i);
+		const pair<int, Point2f> &elem = p.path.at(i);
 		
 		if (elem.first != path.at(i).first || elem.second.x != path.at(i).second.x || elem.second.y != path.at(i).second.y)
 			return false;

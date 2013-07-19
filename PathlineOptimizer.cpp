@@ -24,24 +24,24 @@ double PathlineOptimizer::pathlineScalingEnergy(PathlineMatrixMapping &singleMap
 	{
 		for (unsigned int k = 0; k < adjacencies.neighbors.size(); k++)
 		{
-			vector<Pathline> pathlineSet = originalSets.pathlines.at(l);
+			vector<Pathline> &pathlineSet = originalSets.pathlines.at(l);
 			int firstFrame = pathlineSet.at(0).path.at(0).first;
 			int lastFrame = pathlineSet.at(0).path.at(pathlineSet.at(0).path.size() - 1).first;
 
-			pair<Pathline, Pathline> neighbors = pm->getNeighbors(adjacencies.neighbors.at(k), pathlineSet);
+			pair<Pathline, Pathline> &neighbors = pm->getNeighbors(adjacencies.neighbors.at(k), pathlineSet);
 
 			for (unsigned int m = firstFrame - 1; m < lastFrame; m++)
 			{
 				ScalingMatrix2x2 si, sj, sij;
 				TranslationVector2 ti, tj;
 
-				si = getMatrix(singleMap.mapping.at(l), neighbors.first);
-				sj = getMatrix(singleMap.mapping.at(l), neighbors.second);
+				si = singleMap.mapping.at(l).at(neighbors.first);
+				sj = singleMap.mapping.at(l).at(neighbors.second);
 
-				sij = getMatrix(doubleMap.mapping.at(l), adjacencies.neighbors.at(k));
+				sij = doubleMap.mapping.at(l).at(adjacencies.neighbors.at(k));
 
-				ti = getTranslationVector(tmap.mapping.at(l), neighbors.first);
-				tj = getTranslationVector(tmap.mapping.at(l), neighbors.second);
+				ti = tmap.mapping.at(l).at(neighbors.first);
+				tj = tmap.mapping.at(l).at(neighbors.second);
 
 				Point2d tmpi, tmpj, tmpij, pij;
 
@@ -61,9 +61,7 @@ double PathlineOptimizer::pathlineScalingEnergy(PathlineMatrixMapping &singleMap
 				tmpij.x = sij.vx * pij.x;
 				tmpij.y = sij.vy * pij.y;
 
-				double norm = WarpingMath::euclideanNorm(tmpi - tmpj - tmpij);
-
-				res += sqr(norm);
+				res += sqr(WarpingMath::euclideanNorm(tmpi - tmpj - tmpij));
 			}
 		}
 	}
@@ -77,22 +75,25 @@ double PathlineOptimizer::pathlineDeformationEnergy(PathlineMatrixMapping &mmap,
 
 	for (unsigned int k = 0; k < originalSets.pathlines.size(); k++)
 	{
-		vector<Pathline> pathlines = originalSets.pathlines.at(k);
-		vector<Pathline> deformedPathlines = deformedSets.pathlines.at(k);
+		vector<Pathline> &pathlines = originalSets.pathlines.at(k);
+		vector<Pathline> &deformedPathlines = deformedSets.pathlines.at(k);
 
 		int firstFrame = pathlines.at(0).path.at(0).first;
 		int lastFrame = pathlines.at(0).path.at(pathlines.at(0).path.size() - 1).first;
 
 		for (unsigned int l = 0; l < pathlines.size(); l++)
 		{
-			Pathline p = pathlines.at(l);
-			Pathline q = deformedPathlines.at(l);
+			Pathline &p = pathlines.at(l);
+			Pathline &q = deformedPathlines.at(l);
 
 			for (unsigned int m = firstFrame - 1; m < lastFrame; m++)
 			{
 				Point2d tmpi;
-				ScalingMatrix2x2 si = getMatrix(mmap.mapping.at(k), p);
-				TranslationVector2 ti = getTranslationVector(tmap.mapping.at(k), p);
+				ScalingMatrix2x2 si;
+				TranslationVector2 ti;
+
+				si = mmap.mapping.at(k).at(p);
+				ti = tmap.mapping.at(k).at(p);
 
 				// si * pi_m + ti
 				tmpi.x = si.vx * p.path.at(m).second.x + ti.x;
@@ -137,7 +138,7 @@ void PathlineOptimizer::optimizePathlines(PathlineSets &result)
 	opt.set_min_objective(PathlineOptimizer::wrapperPathlineObjFunc, this);
 
 	// convergence criteria
-	opt.set_xtol_abs(10.0);
+	opt.set_maxeval(1);
 
 	double minf;
 
@@ -177,60 +178,6 @@ double PathlineOptimizer::totalPathlineEnergy(const vector<double> &x, vector<do
 	return energy;
 }
 
-ScalingMatrix2x2 PathlineOptimizer::getMatrix(vector<pair<Pathline, ScalingMatrix2x2>> &mapping, Pathline &pl)
-{
-	ScalingMatrix2x2 result;
-
-	for (unsigned int i = 0; i < mapping.size(); i++)
-	{
-		pair<Pathline, ScalingMatrix2x2> &pair = mapping.at(i);
-		
-		if (pair.first == pl)
-		{
-			result = pair.second;
-			break;
-		}
-	}
-
-	return result;
-}
-
-ScalingMatrix2x2 PathlineOptimizer::getMatrix(vector<pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2>> &mapping, pair<unsigned int, unsigned int> &neighbors)
-{
-	ScalingMatrix2x2 result;
-
-	for (unsigned int i = 0; i < mapping.size(); i++)
-	{
-		pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2> &pair = mapping.at(i);
-		
-		if (pair.first == neighbors)
-		{
-			result = pair.second;
-			break;
-		}
-	}
-
-	return result;
-}
-
-TranslationVector2 PathlineOptimizer::getTranslationVector(vector<pair<Pathline, TranslationVector2>> &mapping, Pathline &pl)
-{
-	TranslationVector2 result;
-
-	for (unsigned int i = 0; i < mapping.size(); i++)
-	{
-		pair<Pathline, TranslationVector2> &pair = mapping.at(i);
-		
-		if (pair.first == pl)
-		{
-			result = pair.second;
-			break;
-		}
-	}
-
-	return result;
-}
-
 int PathlineOptimizer::getNumberOfDummyVariables(PathlineAdjacencies &adjacencies)
 {
 	// #neighbors * 2 because we have two variables for each pathline, i.e. the entries in the diagonal 2x2 scaling matrix
@@ -244,8 +191,8 @@ void PathlineOptimizer::createAllVariables(PathlineMatrixMapping &matMapping, Pa
 
 	for (unsigned int i = 0; i < originalSets.pathlines.size(); i++)
 	{
-		vector<pair<Pathline, ScalingMatrix2x2>> &matMap = matMapping.mapping.at(i);
-		vector<pair<Pathline, TranslationVector2>> &vecMap = vecMapping.mapping.at(i);
+		map<Pathline, ScalingMatrix2x2> &matMap = matMapping.mapping.at(i);
+		map<Pathline, TranslationVector2> &vecMap = vecMapping.mapping.at(i);
 		vector<double> vars;
 
 		int dummies = getNumberOfDummyVariables(adjacencies);
@@ -283,43 +230,53 @@ void PathlineOptimizer::doubleVecToMapping(const vector<double> &vars, PathlineM
 		vector<double>::const_iterator last = vars.begin() + postOffset;
 		vector<double> sub(first, last);
 
-		int matCounter = 0;
-		int vecCounter = 0;
 		int neighborCounter = 0;
+
+		map<Pathline, ScalingMatrix2x2> &matMap = outMatMapping.mapping.at(it->first);
+		map<Pathline, TranslationVector2> &vecMap = outVecMapping.mapping.at(it->first);
+		map<pair<unsigned int, unsigned int>, ScalingMatrix2x2> &neighborMap = outNeighborMapping.mapping.at(it->first);
+
+		map<Pathline, ScalingMatrix2x2>::iterator matIt = matMap.begin();
+		map<Pathline, TranslationVector2>::iterator vecIt = vecMap.begin();
+		map<pair<unsigned int, unsigned int>, ScalingMatrix2x2>::iterator neighborIt = neighborMap.begin();
+
 		for (unsigned int i = 0; i < sub.size(); i += 2)
 		{
-			vector<pair<Pathline, ScalingMatrix2x2>> &matMap = outMatMapping.mapping.at(it->first);
-			vector<pair<Pathline, TranslationVector2>> &vecMap = outVecMapping.mapping.at(it->first);
-			vector<pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2>> &neighborMap = outNeighborMapping.mapping.at(it->first);
-
 			if (i > (2 * matMap.size()) - 1)
 			{
 				if (i > ((2 * vecMap.size()) - 1) + 2 * matMap.size())
 				{
 					// variables are dummy entries
-					neighborMap.at(neighborCounter).second.vx = sub.at(i);
-					neighborMap.at(neighborCounter).second.vy = sub.at(i + 1);
 
-					neighborMap.at(neighborCounter).first = adjacencies.neighbors.at(neighborCounter);
+					auto neighborItToReplace = neighborIt;
+					
+					pair<pair<unsigned int, unsigned int>, ScalingMatrix2x2> tmp = make_pair(
+						adjacencies.neighbors.at(neighborCounter),
+						ScalingMatrix2x2(sub.at(i), sub.at(i + 1)));
 
-					neighborCounter++;
+					++neighborIt;
+
+					neighborMap.erase(neighborItToReplace);
+					neighborMap.insert(tmp);
+					
+					++neighborCounter;
 				}
 				else
 				{
 					// variables are translation vector entries
-					vecMap.at(vecCounter).second.x = sub.at(i);
-					vecMap.at(vecCounter).second.y = sub.at(i + 1);
+					vecIt->second.x = sub.at(i);
+					vecIt->second.y = sub.at(i + 1);
 
-					vecCounter++;
+					++vecIt;
 				}
 			}
 			else
 			{
 				// variables are scaling matrix entries
-				matMap.at(matCounter).second.vx = sub.at(i);
-				matMap.at(matCounter).second.vy = sub.at(i + 1);
+				matIt->second.vx = sub.at(i);
+				matIt->second.vy = sub.at(i + 1);
 
-				matCounter++;
+				++matIt;
 			}
 		}
 
@@ -333,15 +290,17 @@ void PathlineOptimizer::constructOptimizedPathlineSets(PathlineSets &result)
 	{
 		vector<Pathline> newPathlines;
 		
-		vector<pair<Pathline, ScalingMatrix2x2>> &matMapping = optimizedMatMapping.mapping.at(i);
-		vector<pair<Pathline, TranslationVector2>> &vecMapping = optimizedVecMapping.mapping.at(i);
+		map<Pathline, ScalingMatrix2x2> &matMapping = optimizedMatMapping.mapping.at(i);
+		map<Pathline, TranslationVector2> &vecMapping = optimizedVecMapping.mapping.at(i);
 
-		for (unsigned int j = 0; j < matMapping.size(); j++)
+		map<Pathline, TranslationVector2>::iterator vecIt = vecMapping.begin();
+
+		for (map<Pathline, ScalingMatrix2x2>::iterator matIt = matMapping.begin(); matIt != matMapping.end(); ++matIt)
 		{
-			ScalingMatrix2x2 &sj = matMapping.at(j).second;
-			TranslationVector2 &tj = vecMapping.at(j).second;
+			ScalingMatrix2x2 &sj = matIt->second;
+			TranslationVector2 &tj = vecIt->second;
 
-			Pathline &oldPathline = matMapping.at(j).first;
+			const Pathline &oldPathline = matIt->first;
 			Pathline newPathline;
 
 			newPathline.seedIndex = oldPathline.seedIndex;
@@ -358,6 +317,8 @@ void PathlineOptimizer::constructOptimizedPathlineSets(PathlineSets &result)
 
 				newPathline.path.push_back(pair);
 			}
+
+			++vecIt;
 
 			newPathlines.push_back(newPathline);
 		}
