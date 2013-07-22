@@ -20,6 +20,7 @@ public:
 	pair<Pathline, Pathline> getNeighbors(pair<unsigned int, unsigned int> &neighbors, vector<Pathline> &pathlines);
 
 	void splitPathlineSets(PathlineSets &original, PathlineSets &left, PathlineSets &right);
+	void mergePathlineSets(PathlineSets &left, PathlineSets &right, PathlineSets &result);
 
 	/*
 		Initializes a scaling matrix mapping with identity matrices, i.e.

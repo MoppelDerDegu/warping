@@ -377,5 +377,9 @@ int main(int argc, char* argv[])
 	PathlineSets leftOptimized, rightOptimized;
 	leftPathlineOptimizer.optimizePathlines(leftOptimized);
 	rightPathlineOptimizer.optimizePathlines(rightOptimized);
+
+	// merge left and right optimized pathlines
+	PathlineSets optimizedPathlines;
+	plm->mergePathlineSets(leftOptimized, rightOptimized, optimizedPathlines);
 }
 #endif
