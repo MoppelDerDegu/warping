@@ -138,7 +138,7 @@ void PathlineOptimizer::optimizePathlines(PathlineSets &result)
 	opt.set_min_objective(PathlineOptimizer::wrapperPathlineObjFunc, this);
 
 	// convergence criteria
-	opt.set_maxeval(10000);
+	opt.set_xtol_abs(1);
 
 	double minf;
 
