@@ -378,7 +378,8 @@ int main(int argc, char* argv[])
 	leftPathlineOptimizer.optimizePathlines(leftOptimized);
 	rightPathlineOptimizer.optimizePathlines(rightOptimized);
 
-	FileManager::savePathlines("optimized left pathlines.txt", "D:\\warping\\pathlines", leftOptimized.pathlines.at(0));
-	FileManager::savePathlines("optimized right pathlines.txt", "D:\\warping\\pathlines", rightOptimized.pathlines.at(0));
+	// merge left and right optimized pathlines
+	PathlineSets optimizedPathlines;
+	plm->mergePathlineSets(leftOptimized, rightOptimized, optimizedPathlines);
 }
 #endif

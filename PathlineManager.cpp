@@ -347,3 +347,20 @@ void PathlineManager::createNeighborMatrixMapping(PathlineSets &pathlineSets, Pa
 		result.mapping.push_back(mapping);
 	}
 }
+
+void PathlineManager::mergePathlineSets(PathlineSets &left, PathlineSets &right, PathlineSets &result)
+{
+	if (left.pathlines.size() != right.pathlines.size())
+		throw invalid_argument("Left and right Pathlines are not equivalent.");
+
+	result.pathlines.clear();
+
+	for (unsigned int i = 0; i < left.pathlines.size(); i++)
+	{
+		vector<Pathline> lines;
+		lines.insert(lines.end(), left.pathlines.at(i).begin(), left.pathlines.at(i).end());
+		lines.insert(lines.end(), right.pathlines.at(i).begin(), right.pathlines.at(i).end());
+
+		result.pathlines.push_back(lines);
+	}
+}
