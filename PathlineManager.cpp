@@ -1,6 +1,7 @@
 #include "PathlineManager.h"
 #include "MeshManager.h"
 #include "Helper.h"
+#include "WarpingMath.h"
 
 bool PathlineManager::instanceFlag = false;
 PathlineManager* PathlineManager::single = NULL;
@@ -196,9 +197,12 @@ void PathlineManager::getAdjacencies(PathlineSets &sets, Mesh &seedMesh, Size &s
 	}
 }
 
-void PathlineManager::createPathlineMatrixMapping(PathlineSets &pathlineSets, PathlineMatrixMapping &result)
+void PathlineManager::createPathlineMatrixMapping(PathlineSets &pathlineSets, PathlineMatrixMapping &result, Size &oldSize, Size &newSize)
 {
 	result.mapping.clear();
+
+	double x = newSize.width / (float) oldSize.width;
+	double y = newSize.height / (float) oldSize.height;
 
 	for (unsigned int i = 0; i < pathlineSets.pathlines.size(); i++)
 	{
@@ -207,8 +211,8 @@ void PathlineManager::createPathlineMatrixMapping(PathlineSets &pathlineSets, Pa
 		for (unsigned int j = 0; j < pathlineSets.pathlines.at(i).size(); j++)
 		{
 			ScalingMatrix2x2 mat;
-			mat.vx = 1.0;
-			mat.vy = 1.0;
+			mat.vx = x;
+			mat.vy = y;
 
 			pair<Pathline, ScalingMatrix2x2> pair(pathlineSets.pathlines.at(i).at(j), mat);
 			
@@ -321,9 +325,12 @@ void PathlineManager::splitPathlineSets(PathlineSets &original, PathlineSets &le
 	}
 }
 
-void PathlineManager::createNeighborMatrixMapping(PathlineSets &pathlineSets, PathlineAdjacencies &adjacencies, NeighborMatrixMapping &result)
+void PathlineManager::createNeighborMatrixMapping(PathlineSets &pathlineSets, PathlineAdjacencies &adjacencies, NeighborMatrixMapping &result, Size &oldSize, Size &newSize)
 {
 	result.mapping.clear();
+
+	double x = newSize.width / (float) oldSize.width;
+	double y = newSize.height / (float) oldSize.height;
 
 	for (unsigned int i = 0; i < pathlineSets.pathlines.size(); i++)
 	{
@@ -336,8 +343,8 @@ void PathlineManager::createNeighborMatrixMapping(PathlineSets &pathlineSets, Pa
 			pair.first = adjacencies.neighbors.at(j);
 			
 			ScalingMatrix2x2 si;
-			si.vx = 1.0;
-			si.vy = 1.0;
+			si.vx = x;
+			si.vy = y;
 
 			pair.second = si;
 
@@ -362,5 +369,74 @@ void PathlineManager::mergePathlineSets(PathlineSets &left, PathlineSets &right,
 		lines.insert(lines.end(), right.pathlines.at(i).begin(), right.pathlines.at(i).end());
 
 		result.pathlines.push_back(lines);
+	}
+}
+
+void PathlineManager::mapPathlinesToQuads(int frame, PathlineSets &pathlines, Mesh &mesh, map<int, int> &result)
+{
+	result.clear();
+
+	vector<Point2f> points;
+	vector<Pathline> lines;
+	getLinesContainingFrame(pathlines, frame, lines);
+	getPointsInFrame(lines, frame, points);
+	
+	for (unsigned int i = 0; i < points.size(); i++)
+	{
+		for (unsigned int j = 0; j < mesh.quads.size(); j++)
+		{
+			if (liesInQuad(mesh.quads.at(j), points.at(i))
+			{
+				result.insert(pair<int, Quad>(i, j));
+				break;
+			}
+		}
+	}
+}
+
+void PathlineManager::getPointsInFrame(vector<Pathline> &lines, int frame, vector<Point2f> &result)
+{
+	for (auto it = lines.begin(); it != lines.end(); ++it)
+	{
+		vector<pair<int, Point2f>> &path = it->path;
+
+		for (auto iter = path.begin(); iter != path.end(); ++iter)
+		{
+			if (iter->first == frame)
+			{
+				result.push_back(iter->second);
+				break;
+			}
+		}
+	}
+
+	return result;
+}
+
+bool PathlineManager::liesInQuad(Quad &quad, Point2f &point)
+{
+	bool in = true;
+
+	if (WarpingMath::area(quad, point) > WarpingMath::area(quad))
+		in = false;
+
+	return in;
+}
+
+void PathlineManager::getLinesContainingFrame(PathlineSets &pathlines, int frame, vector<Pathline> &result)
+{
+	for (unsigned int i = 0; i < pathlines.pathlines.size(); i++)
+	{
+		for (unsigned int j = 0; j < pathlines.pathlines.at(i).size(); j++)
+		{
+			for (unsigned int k = 0; k < pathlines.pathlines.at(i).at(j).path.size(); k++)
+			{
+				if (pathlines.pathlines.at(i).at(j).path.at(k).first == frame)
+				{
+					result = pathlines.pathlines.at(i);
+					break;
+				}
+			}
+		}
 	}
 }

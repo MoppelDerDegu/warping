@@ -12,6 +12,8 @@ private:
 	static PathlineManager* single;
 	static bool instanceFlag;
 
+	bool liesInQuad(Quad &quad, Point2f &point);
+
 public:
 	~PathlineManager(void);
 	static PathlineManager* getInstance();
@@ -22,12 +24,8 @@ public:
 	void splitPathlineSets(PathlineSets &original, PathlineSets &left, PathlineSets &right);
 	void mergePathlineSets(PathlineSets &left, PathlineSets &right, PathlineSets &result);
 
-	/*
-		Initializes a scaling matrix mapping with identity matrices, i.e.
-		(1 0)
-		(0 1)
-	*/
-	void createPathlineMatrixMapping(PathlineSets &pathlineSets, PathlineMatrixMapping &result);
+	// Initializes a scaling matrix mapping
+	void createPathlineMatrixMapping(PathlineSets &pathlineSets, PathlineMatrixMapping &result, Size &oldSize, Size &newSize);
 
 	/*
 		Initializes a  translation vector mapping with zero entries, i.e.
@@ -36,15 +34,15 @@ public:
 	*/
 	void createPathlineTransVecMapping(PathlineSets &pathlineSets, PathlineTransVecMapping &result);
 
-	/*
-		Initializes a scaling matrix mapping for neighboring pathlines with identity matrices, i.e.
-		(1 0)
-		(0 1)
-	*/
-	void createNeighborMatrixMapping(PathlineSets &pathlineSets, PathlineAdjacencies &adjacencies, NeighborMatrixMapping &result);
+	// Initializes a scaling matrix mapping for neighboring pathlines
+	void createNeighborMatrixMapping(PathlineSets &pathlineSets, PathlineAdjacencies &adjacencies, NeighborMatrixMapping &result, Size &oldSize, Size &newSize);
 
 	// transforms a PathlineMatrixMapping and PathlineTransVecMapping into a vector<double>. That vector is appended with dummyvariables
 	// which are used during the optimization but we are not interested in.
 	void mappingsToDoubleVec(map<Pathline, ScalingMatrix2x2> &matMapping, map<Pathline, TranslationVector2> &vecMapping, int numberOfDummyVariables, vector<double> &result);
+	
+	void mapPathlinesToQuads(int frame, PathlineSets &pathlines, Mesh &mesh, map<int, int> &result);
+	void getPointsInFrame(vector<Pathline> &lines, int frame, vector<Point2f> &result);
+	void getLinesContainingFrame(PathlineSets &pathlines, int frame, vector<Pathline> &result);
 };
 

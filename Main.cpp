@@ -370,8 +370,8 @@ int main(int argc, char* argv[])
 
 	std::sort(adjacencies.neighbors.begin(), adjacencies.neighbors.end());
 
-	PathlineOptimizer leftPathlineOptimizer(leftOrigPathlines, leftDeformedPathlines, adjacencies);
-	PathlineOptimizer rightPathlineOptimizer(rightOrigPathlines, rightDeformedPathlines, adjacencies);
+	PathlineOptimizer leftPathlineOptimizer(leftOrigPathlines, leftDeformedPathlines, adjacencies, originalSize, newSize);
+	PathlineOptimizer rightPathlineOptimizer(rightOrigPathlines, rightDeformedPathlines, adjacencies, originalSize, newSize);
 	
 	// optimize pathline
 	PathlineSets leftOptimized, rightOptimized;

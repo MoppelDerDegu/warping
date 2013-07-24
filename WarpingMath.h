@@ -12,5 +12,7 @@ struct WarpingMath
 	static double round (double d);
 	static double vTv(Vertex v1, Vertex v2); // v^tr * v
 	static double euclideanNorm(const Point2d &p);
+	static double area(const Quad &q);
+	static double area(const Quad &q, const Point2f &p);
 };
 

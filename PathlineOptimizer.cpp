@@ -3,12 +3,14 @@
 #include "PathlineManager.h"
 #include "lib/nlopt-2.3-dll/nlopt.hpp"
 
-PathlineOptimizer::PathlineOptimizer(PathlineSets &originalSets, PathlineSets &deformedSets, PathlineAdjacencies &adjacencies)
+PathlineOptimizer::PathlineOptimizer(PathlineSets &originalSets, PathlineSets &deformedSets, PathlineAdjacencies &adjacencies, Size &oldSize, Size &newSize)
 {
 	this->iterationCount = 0;
 	this->originalSets = originalSets;
 	this->deformedSets = deformedSets;
 	this->adjacencies = adjacencies;
+	this->newSize = newSize;
+	this->oldSize = oldSize;
 }
 
 PathlineOptimizer::~PathlineOptimizer(void)
@@ -61,7 +63,7 @@ double PathlineOptimizer::pathlineScalingEnergy(PathlineMatrixMapping &singleMap
 				tmpij.x = sij.vx * pij.x;
 				tmpij.y = sij.vy * pij.y;
 
-				res += sqr(WarpingMath::euclideanNorm(tmpi - tmpj - tmpij));
+				res += sqr(WarpingMath::euclideanNorm((tmpi - tmpj) - tmpij));
 			}
 		}
 	}
@@ -120,9 +122,9 @@ void PathlineOptimizer::optimizePathlines(PathlineSets &result)
 	PathlineManager* pm = PathlineManager::getInstance();
 
 	// initialize mappings
-	pm->createPathlineMatrixMapping(originalSets, optimizedMatMapping);
+	pm->createPathlineMatrixMapping(originalSets, optimizedMatMapping, oldSize, newSize);
 	pm->createPathlineTransVecMapping(originalSets, optimizedVecMapping);
-	pm->createNeighborMatrixMapping(originalSets, adjacencies, optimizedNeighborMapping);
+	pm->createNeighborMatrixMapping(originalSets, adjacencies, optimizedNeighborMapping, oldSize, newSize);
 
 	// create variables
 	vector<double> x;
@@ -138,7 +140,7 @@ void PathlineOptimizer::optimizePathlines(PathlineSets &result)
 	opt.set_min_objective(PathlineOptimizer::wrapperPathlineObjFunc, this);
 
 	// convergence criteria
-	opt.set_xtol_abs(1);
+	opt.set_xtol_abs(0.5);
 
 	double minf;
 

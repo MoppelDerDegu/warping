@@ -5,12 +5,13 @@
 class PathlineOptimizer : public Solver
 {
 public:
-	PathlineOptimizer(PathlineSets &originalSets, PathlineSets &deformedSets, PathlineAdjacencies &adjacencies);
+	PathlineOptimizer(PathlineSets &originalSets, PathlineSets &deformedSets, PathlineAdjacencies &adjacencies, Size &oldSize, Size &newSize);
 	~PathlineOptimizer(void);
 
 	void optimizePathlines(PathlineSets &result);
 
 private:
+	Size newSize, oldSize;
 
 	//pathlines sets for original and deformed videos respectively containing the pathlines for either the left or right view
 	PathlineSets originalSets, deformedSets;
