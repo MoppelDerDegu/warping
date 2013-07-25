@@ -21,7 +21,12 @@ private:
 
 	// maps a pathline to the quad it belongs to, the key is the index of the adress where the pathline is stored in the respective collection. Same goes for the value.
 	map<int, int> leftQuadMapping, rightQuadMapping;
-
 	int frame;
+
+	double static wrapperObjFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
+
+	double objFunc(const vector<double> &x, vector<double> &grad);
+
+	double pathlineEnergy(Mesh &mesh, vector<Point2f> &guidePoints, bool left);
 };
 

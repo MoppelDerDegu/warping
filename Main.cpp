@@ -15,6 +15,7 @@
 #include "PathlineTracker.h"
 #include "PathlineManager.h"
 #include "PathlineOptimizer.h"
+#include "StereoPathlineSolver.h"
 
 #include "ImageEditor.h"
 #include "DisparityMapBuilder.h"
@@ -31,6 +32,7 @@ int main(int argc, char* argv[])
 	CvCapture* input;
 	char* fileName = "D:/media/Flower.avi";
 	char* outputFilenameInterpolated = "D:/warping/result/interpolated output";
+	char* outputFilenameFinal = "D:/warping/result/final";
 	char* container = ".avi";
 	char output[50];
 	string _fileName = fileName;
@@ -217,7 +219,7 @@ int main(int argc, char* argv[])
 
 	// clean up
 	cvReleaseCapture(&input);
-	cvReleaseMat(&combinedSaliency);
+	//cvReleaseMat(&combinedSaliency);
 	//delete dmb;
 	//delete md;
 	delete frame;
@@ -375,13 +377,244 @@ int main(int argc, char* argv[])
 	
 	// optimize pathline
 	PathlineSets leftOptimized, rightOptimized;
-	leftPathlineOptimizer.optimizePathlines(leftOptimized);
-	rightPathlineOptimizer.optimizePathlines(rightOptimized);
+	//leftPathlineOptimizer.optimizePathlines(leftOptimized);
+	//rightPathlineOptimizer.optimizePathlines(rightOptimized);
 
 	// merge left and right optimized pathlines
 	PathlineSets optimizedPathlines;
-	plm->mergePathlineSets(leftOptimized, rightOptimized, optimizedPathlines);
+	//plm->mergePathlineSets(leftOptimized, rightOptimized, optimizedPathlines);
 
-	FileManager::savePathlines("optimized pathlines.txt", "D:\\warping\\pathlines\\", optimizedPathlines.pathlines.at(0));
+	//FileManager::savePathlines("optimized pathlines.txt", "D:\\warping\\pathlines\\", optimizedPathlines.pathlines.at(0));
+	optimizedPathlines.pathlines.push_back(FileManager::loadPathlines("D:\\warping\\pathlines\\optimized pathlines.txt"));
+
+	cout << "pups";
+
+//-------------------------------------------------------------------------------------------------
+//---------DEFORM AND OPTIMIZE MESHES FOR EVERY N-TH FRAME USING THE OPTIMIZED PATHLINES-----------
+//-------------------------------------------------------------------------------------------------
+	/*
+	input = cvCaptureFromFile(fileName);
+
+	img = cvQueryFrame(input);
+
+	x = 0;
+	currentFrame = 1;
+	lastFrameDecoded = false;
+
+	leftDeformedMeshes.clear();
+	rightDeformedMeshes.clear();
+
+	leftLinearMeshes.clear();
+	rightLinearMeshes.clear();
+
+	// deform meshes for every n-th frame and the first and last frame
+	while (true)
+	{
+		if (!img)
+			break;
+
+		cout << "\nCurrent Frame: " << currentFrame << endl;
+
+		frame->setBoth_eye(img);
+		frame = ie->split_vertical(frame);
+		
+		leftSize = Size(frame->getLeft_eye()->width, frame->getLeft_eye()->height);
+		rightSize = Size(frame->getRight_eye()->width, frame->getRight_eye()->height);
+
+		// compute image saliency
+		CvMat hcon = isd->hContrast(frame->getLeft_eye());
+		sm->setImageSaliencyMap(&hcon);
+
+		// compute motion saliency
+		CvMat* motion = md->detectMotion(frame->getLeft_eye());
+		sm->setMotionSaliencyMap(motion);
+
+		// compute disparity map
+		CvMat* disp = dmb->buildDisparityMapBM(frame);
+		sm->setStereoSaliencyMap(disp);
+
+		// compute gradient map
+		Mat gradient;
+		gd.generateGradient(frame->getLeft_eye(), gradient);
+		gradient = gradient * 2;
+
+		// saliency weights
+		sm->computeWeights(isd->getMaxColorDistance(), dmb->getPercentageOfDepth());
+
+		// initialize mesh for left and right view
+		mm->initializeMesh(initialLeft, Size(originalSize.width / 2, originalSize.height));
+		initialRight = mm->generateRightEyeMesh(initialLeft, frame, Size(originalSize.width / 2, originalSize.height));
+
+		if (x > 0)
+		{
+			// every other frame
+
+			combinedSaliency = sm->computeSaliency();
+			finalSaliency = combinedSaliency + gradient;
+
+			// assign saliency values to quads of left and right view
+			wfMapLeft = qsm->assignSaliencyValuesToQuads(initialLeft, finalSaliency);
+			wfMapRight = qsm->assignSaliencyValuesToQuads(initialRight, finalSaliency);
+			
+			// warp left and right mesh
+			StereoPathlineSolver spSolver(20, currentFrame, leftOptimized, rightOptimized, leftOrigPathlines, rightOrigPathlines);
+			deformedMeshes = spSolver.solveStereoImageProblem(initialLeft, initialRight, originalSize, newSize, wfMapLeft, wfMapRight);
+
+			leftDeformedMeshes.push_back(deformedMeshes.first);
+			rightDeformedMeshes.push_back(deformedMeshes.second);
+
+			leftLinearMeshes.push_back(spSolver.getInitialLeft());
+			rightLinearMeshes.push_back(spSolver.getInitialRight());
+		}
+		else
+		{
+			// first frame
+			
+			Mat dispmat = disp;
+			Mat hconmat = &hcon;
+			dispmat.convertTo(dispmat, CV_8U);
+			hconmat.convertTo(hconmat, CV_8U);
+			finalSaliency = dispmat + hconmat + gradient;
+
+			// assign saliency values to quads of left and right view
+			wfMapLeft = qsm->assignSaliencyValuesToQuads(initialLeft, finalSaliency);
+			wfMapRight = qsm->assignSaliencyValuesToQuads(initialRight, finalSaliency);
+			
+			// warp left and right mesh
+			StereoPathlineSolver spSolver(20, currentFrame, leftOptimized, rightOptimized, leftOrigPathlines, rightOrigPathlines);
+			deformedMeshes = spSolver.solveStereoImageProblem(initialLeft, initialRight, originalSize, newSize, wfMapLeft, wfMapRight);
+
+			leftLinearMeshes.push_back(spSolver.getInitialLeft());
+			rightLinearMeshes.push_back(spSolver.getInitialRight());
+
+			leftDeformedMeshes.push_back(deformedMeshes.first);
+			rightDeformedMeshes.push_back(deformedMeshes.second);
+			
+			x++;
+			currentFrame = n + 1;
+		}
+
+		if (currentFrame < totalFrameNumber)
+		{
+			cvReleaseCapture(&input);
+			input = cvCaptureFromFile(fileName);
+			img = Helper::getNthFrame(input, currentFrame);
+		}
+		else
+		{
+			if (lastFrameDecoded)
+				break;
+
+			cvReleaseCapture(&input);
+			input = cvCaptureFromFile(fileName);
+			img = Helper::getNthFrame(input, totalFrameNumber - 2);
+
+			lastFrameDecoded = true;
+		}
+		
+		currentFrame = currentFrame + n;
+	}
+
+	// write left and right meshes to file
+	FileManager::saveMeshesAsText("left meshes.txt", "D:\\warping\\mesh\\", leftDeformedMeshes);
+	FileManager::saveMeshesAsText("right meshes.txt", "D:\\warping\\mesh\\", rightDeformedMeshes);
+	
+	FileManager::saveMeshesAsText("left linear meshes.txt", "D:\\warping\\mesh\\", leftLinearMeshes);
+	FileManager::saveMeshesAsText("right linear meshes.txt", "D:\\warping\\mesh\\", rightLinearMeshes);
+
+	// clean up
+	cvReleaseCapture(&input);
+	cvReleaseMat(&combinedSaliency);
+	*/
+
+//-------------------------------------------------------------------
+//---------INTERPOLATE MESHES AND WARP EVERY SINGLE IMAGE------------
+//-------------------------------------------------------------------
+	/*
+	input = cvCaptureFromFile(fileName);
+
+	fps = cvGetCaptureProperty(input, CV_CAP_PROP_FPS);
+
+	//Add containter format to the output filename
+	sprintf(output, outputFilenameFinal);
+	strcat(output,container);
+
+	outputVideoInterpolated.open(output, CV_FOURCC('X','2','6','4'), fps , newSize, true);
+
+	leftDeformedMeshes.clear();
+	rightDeformedMeshes.clear();
+
+	leftLinearMeshes.clear();
+	rightLinearMeshes.clear();
+
+	// TODO hier pathline meshes einlesen
+	leftDeformedMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\left meshes.txt");
+	rightDeformedMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\right meshes.txt");
+
+	leftLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\left linear meshes.txt");
+	rightLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\right linear meshes.txt");
+
+	// decode the first frame
+	img = cvQueryFrame(input);
+
+	// index of the current frame
+	currentFrame = 1;
+
+	frame = new StereoImage(originalSize, img->depth, img->nChannels);
+	
+	// used to fetch the different meshes from the vector
+	int meshIndex = 0;
+
+	// alpha factor for interpolation with meshes
+	float alphaFactor = 1.0 / n;
+
+	while (true)
+	{
+		if (!img)
+			break;
+
+		frame->setBoth_eye(img);
+		frame = ie->split_vertical(frame);
+
+		if ((currentFrame - 1) % n == 0)
+		{
+			// take optimized mesh
+
+			cout << "\nWarping Frame " << currentFrame << "/" << totalFrameNumber - 2 << endl;
+
+			Mat tmp = siw.warpImage(frame, newSize, leftDeformedMeshes.at(meshIndex), rightDeformedMeshes.at(meshIndex), leftLinearMeshes.at(meshIndex), rightLinearMeshes.at(meshIndex));
+			outputVideoInterpolated.write(tmp);
+
+			currentFrame++;
+			meshIndex++;
+		}
+		else
+		{
+			// interpolate meshes
+
+			cout << "\nInterpolate meshes" << endl;
+			cout << "Frame " << currentFrame << "/" << totalFrameNumber - 2 << endl;
+
+			float alpha = alphaFactor * ((currentFrame - 1) % n);
+			Mesh leftDeformed = mm->interpolateMesh(leftDeformedMeshes.at(meshIndex - 1), leftDeformedMeshes.at(meshIndex), alpha);
+			Mesh rightDeformed = mm->interpolateMesh(rightDeformedMeshes.at(meshIndex - 1), rightDeformedMeshes.at(meshIndex), alpha);
+			Mesh leftLinear = mm->interpolateMesh(leftLinearMeshes.at(meshIndex - 1), leftLinearMeshes.at(meshIndex), alpha);
+			Mesh rightLinear = mm->interpolateMesh(rightLinearMeshes.at(meshIndex - 1), rightLinearMeshes.at(meshIndex), alpha);
+
+			Mat tmp = siw.warpImage(frame, newSize, leftDeformed, rightDeformed, leftLinear, rightLinear);
+
+			outputVideoInterpolated.write(tmp);
+
+			currentFrame++;
+		}
+
+		// load next frame
+		img = cvQueryFrame(input);
+	}
+
+	// clean up
+	cvReleaseCapture(&input);
+	outputVideoInterpolated.~VideoWriter();
+	*/
 }
 #endif

@@ -40,7 +40,7 @@ double WarpingMath::round (double d)
 	return floor(d + 0.5);
 }
 
-double WarpingMath::area(const Quad &q)
+double WarpingMath::area(Quad &q)
 {
 	double area1, area2;
 	double a1, b1, c1, a2, b2, c2;
@@ -63,7 +63,7 @@ double WarpingMath::area(const Quad &q)
 	return area1 + area2;
 }
 
-double WarpingMath::area(const Quad &q, const Point2f &p)
+double WarpingMath::area(Quad &q, Point2f &p)
 {
 	double area1, area2, area3, area4;
 	double a1, b1, c1, a2, b2, c2, a3, b3, c3, a4, b4, c4;

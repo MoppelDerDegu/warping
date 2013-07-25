@@ -385,9 +385,9 @@ void PathlineManager::mapPathlinesToQuads(int frame, PathlineSets &pathlines, Me
 	{
 		for (unsigned int j = 0; j < mesh.quads.size(); j++)
 		{
-			if (liesInQuad(mesh.quads.at(j), points.at(i))
+			if (liesInQuad(mesh.quads.at(j), points.at(i)))
 			{
-				result.insert(pair<int, Quad>(i, j));
+				result.insert(pair<int, int>(i, j));
 				break;
 			}
 		}
@@ -409,8 +409,6 @@ void PathlineManager::getPointsInFrame(vector<Pathline> &lines, int frame, vecto
 			}
 		}
 	}
-
-	return result;
 }
 
 bool PathlineManager::liesInQuad(Quad &quad, Point2f &point)

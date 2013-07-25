@@ -5,6 +5,9 @@
 class StereoSolver : public Solver
 {
 public:
+	StereoSolver()
+	{
+	}
 	StereoSolver(unsigned int);
 	~StereoSolver(void);
 
@@ -13,7 +16,7 @@ public:
 	Mesh getInitialLeft();
 	Mesh getInitialRight();
 
-private:
+protected:
 	Mesh initialLeft;
 	Mesh initialRight;
 	Mesh deformedLeft;
