@@ -321,3 +321,17 @@ vector<string> Helper::split(const string &s, char delimiter)
 	split(s, delimiter, result);
 	return result;
 }
+
+void Helper::adjustRightPathlineCoordinates(PathlineSets &rightPathlines, Size &newImageSize)
+{
+	for (unsigned int i = 0; i < rightPathlines.pathlines.size(); i++)
+	{
+		for (unsigned int j = 0; j < rightPathlines.pathlines.at(i).size(); j++)
+		{
+			for (unsigned int k = 0; k < rightPathlines.pathlines.at(i).at(j).path.size(); k++)
+			{
+				rightPathlines.pathlines.at(i).at(j).path.at(k).second.x = rightPathlines.pathlines.at(i).at(j).path.at(k).second.x - (newImageSize.width / 2.0);
+			}
+		}
+	}
+}

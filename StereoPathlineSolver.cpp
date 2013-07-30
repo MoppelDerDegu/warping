@@ -80,7 +80,7 @@ pair<Mesh, Mesh> StereoPathlineSolver::solveStereoImageProblem(Mesh &originalLef
 	nlopt::opt opt(nlopt::LN_NELDERMEAD, x.size());
 
 	// minimize objective function
-	//opt.set_min_objective(StereoSolver::wrapperStereoImageObjectiveFunc, this);
+	opt.set_min_objective(StereoPathlineSolver::wrapperObjFunc, this);
 
 	// convergence criteria
 	opt.set_xtol_abs(5);

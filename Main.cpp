@@ -387,19 +387,24 @@ int main(int argc, char* argv[])
 	//FileManager::savePathlines("optimized pathlines.txt", "D:\\warping\\pathlines\\", optimizedPathlines.pathlines.at(0));
 	optimizedPathlines.pathlines.push_back(FileManager::loadPathlines("D:\\warping\\pathlines\\optimized pathlines.txt"));
 
-	cout << "pups";
+	plm->splitPathlineSets(optimizedPathlines, leftOptimized, rightOptimized);
 
 //-------------------------------------------------------------------------------------------------
 //---------DEFORM AND OPTIMIZE MESHES FOR EVERY N-TH FRAME USING THE OPTIMIZED PATHLINES-----------
 //-------------------------------------------------------------------------------------------------
-	/*
+	
 	input = cvCaptureFromFile(fileName);
 
+	// decode first frame
 	img = cvQueryFrame(input);
 
 	x = 0;
 	currentFrame = 1;
 	lastFrameDecoded = false;
+
+	// adjust coordinates of right hand pathlines to be fit for the optimization
+	Helper::adjustRightPathlineCoordinates(rightOptimized, newSize);
+	Helper::adjustRightPathlineCoordinates(rightOrigPathlines, originalSize);
 
 	leftDeformedMeshes.clear();
 	rightDeformedMeshes.clear();
@@ -465,6 +470,8 @@ int main(int argc, char* argv[])
 
 			leftLinearMeshes.push_back(spSolver.getInitialLeft());
 			rightLinearMeshes.push_back(spSolver.getInitialRight());
+		
+			currentFrame = currentFrame + n;
 		}
 		else
 		{
@@ -509,23 +516,22 @@ int main(int argc, char* argv[])
 			input = cvCaptureFromFile(fileName);
 			img = Helper::getNthFrame(input, totalFrameNumber - 2);
 
+			currentFrame = totalFrameNumber - 2;
+
 			lastFrameDecoded = true;
 		}
-		
-		currentFrame = currentFrame + n;
 	}
 
 	// write left and right meshes to file
-	FileManager::saveMeshesAsText("left meshes.txt", "D:\\warping\\mesh\\", leftDeformedMeshes);
-	FileManager::saveMeshesAsText("right meshes.txt", "D:\\warping\\mesh\\", rightDeformedMeshes);
+	FileManager::saveMeshesAsText("left meshes including pathlines.txt", "D:\\warping\\mesh\\", leftDeformedMeshes);
+	FileManager::saveMeshesAsText("right meshes including pathlines.txt", "D:\\warping\\mesh\\", rightDeformedMeshes);
 	
-	FileManager::saveMeshesAsText("left linear meshes.txt", "D:\\warping\\mesh\\", leftLinearMeshes);
-	FileManager::saveMeshesAsText("right linear meshes.txt", "D:\\warping\\mesh\\", rightLinearMeshes);
+	FileManager::saveMeshesAsText("left linear meshes including pathlines.txt", "D:\\warping\\mesh\\", leftLinearMeshes);
+	FileManager::saveMeshesAsText("right linear meshes including pathlines.txt", "D:\\warping\\mesh\\", rightLinearMeshes);
 
 	// clean up
 	cvReleaseCapture(&input);
 	cvReleaseMat(&combinedSaliency);
-	*/
 
 //-------------------------------------------------------------------
 //---------INTERPOLATE MESHES AND WARP EVERY SINGLE IMAGE------------

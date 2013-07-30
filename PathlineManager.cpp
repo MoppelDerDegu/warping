@@ -415,7 +415,12 @@ bool PathlineManager::liesInQuad(Quad &quad, Point2f &point)
 {
 	bool in = true;
 
-	if (WarpingMath::area(quad, point) > WarpingMath::area(quad))
+	const double epsilon = 0.01;
+
+	double area1 = WarpingMath::area(quad, point);
+	double area2 = WarpingMath::area(quad);
+
+	if (abs(area1 - area2) > epsilon)
 		in = false;
 
 	return in;

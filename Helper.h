@@ -18,6 +18,7 @@ struct Helper
 	static vector<string> split(const string &s, char delimiter);
 	// normalizes a to 0..1 and then multiplies (i,j) in a with (i, j) in b and writes the product in (i,j) in dest
 	static void matXmat(const Mat &a, const Mat &b, Mat &dest);
+	static void adjustRightPathlineCoordinates(PathlineSets &rightPathlines, Size &newImageSize);
 
 	template <class T> static bool contains(vector<T> &vec, T &elem);
 };
