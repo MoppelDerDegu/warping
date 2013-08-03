@@ -165,7 +165,7 @@ float ImageWarper::interpolateLinear(Vertex &x, int channel, Mat &image)
 		else 
 			w = image.at<Vec3f> (x.y, x.x - 1) [channel];
 
-		if (x.x + 1 == image.size().width)
+		if (x.x == image.cols - 1)
 			e = image.at<Vec3f> (x.y, x.x) [channel];
 		else
 			e = image.at<Vec3f> (x.y, x.x + 1) [channel];
@@ -175,7 +175,7 @@ float ImageWarper::interpolateLinear(Vertex &x, int channel, Mat &image)
 		else
 			n = image.at<Vec3f> (x.y - 1, x.x) [channel];
 
-		if (x.y + 1 == image.size().height)
+		if (x.y == image.rows - 1)
 			s = image.at<Vec3f> (x.y, x.x) [channel];
 		else
 			s = image.at<Vec3f> (x.y + 1, x.x) [channel];
