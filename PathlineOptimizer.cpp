@@ -117,6 +117,16 @@ double PathlineOptimizer::pathlineDeformationEnergy(PathlineMatrixMapping &mmap,
 
 void PathlineOptimizer::optimizePathlines(PathlineSets &result)
 {
+	myThread = boost::thread(&PathlineOptimizer::_optimizePathlines, this, result);
+}
+
+void PathlineOptimizer::join()
+{
+	myThread.join();
+}
+
+void PathlineOptimizer::_optimizePathlines(PathlineSets &result)
+{
 	std::cout << "\nOptimizing Pathlines..." << endl;
 
 	PathlineManager* pm = PathlineManager::getInstance();

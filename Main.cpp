@@ -379,6 +379,8 @@ int main(int argc, char* argv[])
 	PathlineSets leftOptimized, rightOptimized;
 	//leftPathlineOptimizer.optimizePathlines(leftOptimized);
 	//rightPathlineOptimizer.optimizePathlines(rightOptimized);
+	//leftPathlineOptimizer.join();
+	//rightPathlineOptimizer.join();
 
 	// merge left and right optimized pathlines
 	PathlineSets optimizedPathlines;
