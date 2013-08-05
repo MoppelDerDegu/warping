@@ -534,20 +534,21 @@ int main(int argc, char* argv[])
 	// clean up
 	cvReleaseCapture(&input);
 	cvReleaseMat(&combinedSaliency);
-
+	
 //-------------------------------------------------------------------
 //---------INTERPOLATE MESHES AND WARP EVERY SINGLE IMAGE------------
 //-------------------------------------------------------------------
 	/*
 	input = cvCaptureFromFile(fileName);
+	VideoWriter outputVideoFinal;
 
-	fps = cvGetCaptureProperty(input, CV_CAP_PROP_FPS);
+	double fps = cvGetCaptureProperty(input, CV_CAP_PROP_FPS);
 
 	//Add containter format to the output filename
 	sprintf(output, outputFilenameFinal);
 	strcat(output,container);
 
-	outputVideoInterpolated.open(output, CV_FOURCC('X','2','6','4'), fps , newSize, true);
+	outputVideoFinal.open(output, CV_FOURCC('X','2','6','4'), fps , newSize, true);
 
 	leftDeformedMeshes.clear();
 	rightDeformedMeshes.clear();
@@ -555,12 +556,11 @@ int main(int argc, char* argv[])
 	leftLinearMeshes.clear();
 	rightLinearMeshes.clear();
 
-	// TODO hier pathline meshes einlesen
-	leftDeformedMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\left meshes.txt");
-	rightDeformedMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\right meshes.txt");
+	leftDeformedMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\left meshes including pathlines.txt");
+	rightDeformedMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\right meshes including pathlines.txt");
 
-	leftLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\left linear meshes.txt");
-	rightLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\right linear meshes.txt");
+	leftLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\left linear meshes including pathlines.txt");
+	rightLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\right linear meshes including pathlines.txt");
 
 	// decode the first frame
 	img = cvQueryFrame(input);
@@ -591,7 +591,7 @@ int main(int argc, char* argv[])
 			cout << "\nWarping Frame " << currentFrame << "/" << totalFrameNumber - 2 << endl;
 
 			Mat tmp = siw.warpImage(frame, newSize, leftDeformedMeshes.at(meshIndex), rightDeformedMeshes.at(meshIndex), leftLinearMeshes.at(meshIndex), rightLinearMeshes.at(meshIndex));
-			outputVideoInterpolated.write(tmp);
+			outputVideoFinal.write(tmp);
 
 			currentFrame++;
 			meshIndex++;
@@ -611,7 +611,7 @@ int main(int argc, char* argv[])
 
 			Mat tmp = siw.warpImage(frame, newSize, leftDeformed, rightDeformed, leftLinear, rightLinear);
 
-			outputVideoInterpolated.write(tmp);
+			outputVideoFinal.write(tmp);
 
 			currentFrame++;
 		}
@@ -622,7 +622,7 @@ int main(int argc, char* argv[])
 
 	// clean up
 	cvReleaseCapture(&input);
-	outputVideoInterpolated.~VideoWriter();
+	outputVideoFinal.~VideoWriter();
 	*/
 }
 #endif

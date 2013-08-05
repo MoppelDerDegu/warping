@@ -32,10 +32,6 @@ pair<Mesh, Mesh> StereoPathlineSolver::solveStereoImageProblem(Mesh &originalLef
 	this->originalLeft = originalLeft;
 	this->originalRight = originalRight;
 
-	// map pathlines to quads
-	pm->mapPathlinesToQuads(frame, leftOriginalPathlines, originalLeft, leftQuadMapping);
-	pm->mapPathlinesToQuads(frame, rightOriginalPathlines, originalRight, rightQuadMapping);
-
 	// get set of pathlines passing this' frame
 	pm->getLinesContainingFrame(leftOriginalPathlines, frame, leftOriginalLines);
 	pm->getLinesContainingFrame(rightOriginalPathlines, frame, rightOriginalLines);
@@ -83,18 +79,22 @@ pair<Mesh, Mesh> StereoPathlineSolver::solveStereoImageProblem(Mesh &originalLef
 	opt.set_min_objective(StereoPathlineSolver::wrapperObjFunc, this);
 
 	// convergence criteria
-	opt.set_xtol_abs(5);
+	opt.set_xtol_abs(4);
 
 	// set boundary constraints
 	opt.set_lower_bounds(lb);
 	opt.set_upper_bounds(ub);
 	
+	// map pathlines to quads
+	pm->mapPathlinesToQuads(frame, leftOptimizedPathlines, deformedLeft, leftQuadMapping);
+	pm->mapPathlinesToQuads(frame, rightOptimizedPathlines, deformedRight, rightQuadMapping);
+
 	double minf;
 
 	for (int i = 0; i < maxEval; i++)
 	{
-		cout << ">>Solving problem for step " << i + 1 << endl;
-		
+		cout << ">> Solving problem for step " << i + 1 << endl;
+
 		calculateEdgeLengthRatios(originalLeft, deformedLeft, edgeLengthRatiosLeft);
 		calculateEdgeLengthRatios(originalRight, deformedRight, edgeLengthRatiosRight);
 
@@ -143,7 +143,7 @@ double StereoPathlineSolver::objFunc(const vector<double> &x, vector<double> &gr
 	/*
 	double edgeEnergyLeft = totalEdgeEnergy(originalLeft, deformedLeft, edgeLengthRatiosLeft);
 	double edgeEnergyRight = totalEdgeEnergy(originalRight, deformedRight, edgeLengthRatiosRight);
-
+	
 	double totalEdgeEnergy = edgeEnergyLeft + edgeEnergyRight;
 	*/
 	double disparityEnergy = stereoEnergy(originalLeft, originalRight, deformedLeft, deformedRight);
@@ -153,7 +153,7 @@ double StereoPathlineSolver::objFunc(const vector<double> &x, vector<double> &gr
 
 	double totalPathlineEnergy = pathlineEnergyLeft + pathlineEnergyRight;
 
-	double totalEnergy = totalQuadEnergy + /*totalEdgeEnergy +*/ disparityEnergy + totalPathlineEnergy;
+	double totalEnergy = totalQuadEnergy + /*totalEdgeEnergy*/ + disparityEnergy + 0.25 * totalPathlineEnergy;
 
 	cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << totalEnergy << ends;
 
