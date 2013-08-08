@@ -1,6 +1,7 @@
 #include "PathlineTracker.h"
 #include "MeshManager.h"
 
+#if 0
 PathlineTracker::PathlineTracker(CvCapture* input)
 {
 	this->input = input;
@@ -22,13 +23,46 @@ PathlineTracker::PathlineTracker(CvCapture* input, vector<Mesh> &leftSeedMeshes,
 	this->input = input;
 	frameCounter = 1;
 	addNewPoints = true;
-	this->leftSeedMeshes = leftSeedMeshes;
-	this->rightSeedMeshes = rightSeedMeshes;
 	warpedVideo = true;
 	videoSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
 	leftSize = Size(videoSize.width / 2, videoSize.height);
 	rightSize = Size(videoSize.width / 2, videoSize.height);
 	maxFrames = ((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT));
+
+	this->leftSeedMeshes = leftSeedMeshes;
+	this->rightSeedMeshes = rightSeedMeshes;
+}
+#endif
+
+PathlineTracker::PathlineTracker(VideoCapture &capture)
+{
+	this->capture = capture;
+	frameCounter = 1;
+	addNewPoints = true;
+	warpedVideo = false;
+	videoSize = Size((int) capture.get(CV_CAP_PROP_FRAME_WIDTH), (int) capture.get(CV_CAP_PROP_FRAME_HEIGHT));
+	leftSize = Size(videoSize.width / 2, videoSize.height);
+	rightSize = Size(videoSize.width / 2, videoSize.height);
+	maxFrames = ((int) capture.get(CV_CAP_PROP_FRAME_COUNT)) - 2;
+
+	MeshManager* mm = MeshManager::getInstance();
+	mm->initializeMesh(leftSeedMesh, leftSize);
+	mm->initializeMesh(rightSeedMesh, rightSize);
+}
+
+PathlineTracker::PathlineTracker(VideoCapture &capture, vector<Mesh> &leftSeedMeshes, vector<Mesh> &rightSeedMeshes)
+{
+	this->capture = capture;
+	frameCounter = 1;
+	addNewPoints = true;
+	warpedVideo = false;
+	videoSize = Size((int) capture.get(CV_CAP_PROP_FRAME_WIDTH), (int) capture.get(CV_CAP_PROP_FRAME_HEIGHT));
+	leftSize = Size(videoSize.width / 2, videoSize.height);
+	rightSize = Size(videoSize.width / 2, videoSize.height);
+	maxFrames = ((int) capture.get(CV_CAP_PROP_FRAME_COUNT)) - 2;
+
+	this->leftSeedMeshes = leftSeedMeshes;
+	this->rightSeedMeshes = rightSeedMeshes;
 }
 
 PathlineTracker::~PathlineTracker(void)
@@ -42,40 +76,44 @@ PathlineSets PathlineTracker::getPathlineSets() const
 
 void PathlineTracker::trackPathlines()
 {
+
 	cout << "\nTracking Pathlines..." << endl;
 
 	// decode the first frame
-	IplImage* img = cvQueryFrame(input);
+	//IplImage* img = cvQueryFrame(input);
 
 	// initialize necessary objects
-	current = StereoImage(videoSize, img->depth, img->nChannels);
-	prev = StereoImage(videoSize, img->depth, img->nChannels);
+	//current = StereoImage(videoSize, img->depth, img->nChannels);
+	//prev = StereoImage(videoSize, img->depth, img->nChannels);
+	Mat current, prev;
 
 	int x = 0;
 	while (true)
 	{
-		if (!img)
+		if (!capture.read(current))
 			break;
 		
-		current.setBoth_eye(img);
+		//current.setBoth_eye(img);
 
 		if (x == 0)
 		{
 			// for the first frame of the video
-			prev.setBoth_eye(img);
+			//prev.setBoth_eye(img);
+			prev = current;
 			x++;
 		}
 
 		//process the current frame, i.e. look for feature points
-		Mat currentFrame = current.getBoth_eye();
-		Mat prevFrame = prev.getBoth_eye();
-		process(currentFrame, prevFrame);
+		//Mat currentFrame = current.getBoth_eye();
+		//Mat prevFrame = prev.getBoth_eye();
+		//process(currentFrame, prevFrame);
+		process(current, prev);
 
 		// set current frame to previous frame
 		prev = current;
 
 		// load next frame
-		img = cvQueryFrame(input);
+		//img = cvQueryFrame(input);
 
 		frameCounter++;
 
