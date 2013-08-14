@@ -55,11 +55,11 @@ PathlineTracker::PathlineTracker(VideoCapture &capture, vector<Mesh> &leftSeedMe
 	this->capture = capture;
 	frameCounter = 1;
 	addNewPoints = true;
-	warpedVideo = false;
+	warpedVideo = true;
 	videoSize = Size((int) capture.get(CV_CAP_PROP_FRAME_WIDTH), (int) capture.get(CV_CAP_PROP_FRAME_HEIGHT));
 	leftSize = Size(videoSize.width / 2, videoSize.height);
 	rightSize = Size(videoSize.width / 2, videoSize.height);
-	maxFrames = ((int) capture.get(CV_CAP_PROP_FRAME_COUNT)) - 2;
+	maxFrames = ((int) capture.get(CV_CAP_PROP_FRAME_COUNT));
 
 	this->leftSeedMeshes = leftSeedMeshes;
 	this->rightSeedMeshes = rightSeedMeshes;
@@ -137,7 +137,7 @@ void PathlineTracker::process(Mat &currentFrame, Mat &prevFrame)
 	}
 
 	// track the points between two consecutive frames
-	calcOpticalFlowPyrLK(prevGray, currentGray, initial, detected, status, err, Size(250, 250), 3);
+	calcOpticalFlowPyrLK(prevGray, currentGray, initial, detected, status, err, Size(500, 500), 3);
 
 	handleTrackedPoints();
 }

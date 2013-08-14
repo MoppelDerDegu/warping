@@ -10,9 +10,11 @@ public:
 	~PathlineOptimizer(void);
 
 	// wrapper method to start the thread
-	void optimizePathlines(PathlineSets &result);
+	void optimizePathlines();
 	// join the thread
 	void join();
+
+	PathlineSets getResult();
 
 private:
 	boost::thread myThread;
@@ -22,13 +24,16 @@ private:
 	//pathlines sets for original and deformed videos respectively containing the pathlines for either the left or right view
 	PathlineSets originalSets, deformedSets;
 	PathlineAdjacencies adjacencies;
+	
+	// the final optimized pathlines
+	PathlineSets result;
 
 	PathlineMatrixMapping optimizedMatMapping;
 	PathlineTransVecMapping optimizedVecMapping;
 	NeighborMatrixMapping optimizedNeighborMapping;
 
 	// actual optimization
-	void _optimizePathlines(PathlineSets &result);
+	void _optimizePathlines();
 
 	// maps the index of the pathline set from all pathline sets to the number of variables used for this pathline set during the optimization
 	map<int, int> pathlineSetVariableMapping;
