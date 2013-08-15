@@ -115,9 +115,9 @@ double PathlineOptimizer::pathlineDeformationEnergy(PathlineMatrixMapping &mmap,
 	return res;
 }
 
-void PathlineOptimizer::optimizePathlines(PathlineSets &result)
+void PathlineOptimizer::optimizePathlines()
 {
-	myThread = boost::thread(&PathlineOptimizer::_optimizePathlines, this, result);
+	myThread = boost::thread(&PathlineOptimizer::_optimizePathlines, this);
 }
 
 void PathlineOptimizer::join()
@@ -125,7 +125,7 @@ void PathlineOptimizer::join()
 	myThread.join();
 }
 
-void PathlineOptimizer::_optimizePathlines(PathlineSets &result)
+void PathlineOptimizer::_optimizePathlines()
 {
 	std::cout << "\nOptimizing Pathlines..." << endl;
 
@@ -337,4 +337,9 @@ void PathlineOptimizer::constructOptimizedPathlineSets(PathlineSets &result)
 
 		result.pathlines.push_back(newPathlines);
 	}
+}
+
+PathlineSets PathlineOptimizer::getResult()
+{
+	return result;
 }

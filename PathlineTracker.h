@@ -1,18 +1,18 @@
 #pragma once
 
 #include "stdafx.h"
-#include "IFrameProcessor.h"
 #include "StereoImage.h"
 
-class PathlineTracker : public IFrameProcessor
+class PathlineTracker
 {
 
 public:
 	// constructor for the case to track pathlines in the original video
-	PathlineTracker(CvCapture* input);
+	PathlineTracker(VideoCapture &capture);
 
 	// constructor for the case to track pathlines in the deformed video
-	PathlineTracker(CvCapture* input, vector<Mesh> &leftSeedMeshes, vector<Mesh> &rightSeedMeshes);
+	PathlineTracker(VideoCapture &capture, vector<Mesh> &leftSeedMeshes, vector<Mesh> &rightSeedMeshes);
+
 	~PathlineTracker(void);
 
 	PathlineSets getPathlineSets() const;
@@ -23,7 +23,7 @@ public:
 private:
 	bool warpedVideo;
 
-	CvCapture* input;
+	VideoCapture capture;
 	PathlineSets sets; // set of all pathlines of the video
 	vector<Pathline> pathlines; // pathlines between frame i, i+1, ... , j
 	Mesh seedLeft, seedRight;
@@ -37,7 +37,6 @@ private:
 	Mesh leftSeedMesh, rightSeedMesh;
 
 	Mat currentGray, prevGray;
-	StereoImage current, prev;
 	vector<uchar> status;
 	vector<float> err;
 	vector<Point2f> initial;
@@ -49,8 +48,6 @@ private:
 	void seedNewPoints(Mesh &left, Mesh &right);
 	void addSeedPointsToPathlines();
 	void appendTrackedPointsToPathlines();
-
-protected:
 	void process(Mat &currentFrame, Mat &prevFrame);
 };
 
