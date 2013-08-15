@@ -83,7 +83,7 @@ pair<Mesh, Mesh> StereoPathlineSolver::solveStereoImageProblem(Mesh &originalLef
 	opt.set_min_objective(StereoPathlineSolver::wrapperObjFunc, this);
 
 	// convergence criteria
-	opt.set_xtol_abs(5);
+	opt.set_xtol_abs(4);
 
 	// set boundary constraints
 	opt.set_lower_bounds(lb);
