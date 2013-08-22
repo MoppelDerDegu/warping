@@ -284,7 +284,7 @@ int main(int argc, char* argv[])
 	strcat(output,container);
 
 	outputVideoInterpolated.open(output, CV_FOURCC('X','2','6','4'), fps , newSize, true);
-	
+	/*
 	leftDeformedMeshes.clear();
 	rightDeformedMeshes.clear();
 
@@ -296,7 +296,7 @@ int main(int argc, char* argv[])
 
 	leftLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\left linear meshes.txt");
 	rightLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\right linear meshes.txt");
-	
+	*/
 	// decode the first frame
 	img = cvQueryFrame(input);
 
