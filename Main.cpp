@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 	int currentFrame = 1;
 
 	CvCapture* input;
-	char* fileName = "D:/media/hhi1-1-3_resized.avi";
+	char* fileName = "D:/media/hhi4-1-3__resized_cut.avi";
 	char* outputFilenameInterpolated = "D:/warping/result/interpolated output";
 	char* outputFilenameFinal = "D:/warping/result/final";
 	char* container = ".avi";
@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
 	double fps = cvGetCaptureProperty(input, CV_CAP_PROP_FPS);
 
 	Size originalSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
-	Size newSize(320, 360);
+	Size newSize(1280, 360);
 
 //------------------------------------------------------------------------
 //--------------------Start Initialization--------------------------------
