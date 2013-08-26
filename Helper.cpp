@@ -121,6 +121,83 @@ void Helper::drawMeshOverMat(const Mesh &mesh, Mat &mat)
 	}
 }
 
+void Helper::drawMeshesOverMatStereo(Mesh &leftMesh, Mesh &rightMesh, Mat &mat)
+{
+	Scalar lineColor(0, 0, 255); // red
+	int thickness = 2;
+	int linetype = 8;
+
+	Point start, end;
+	Quad q;
+	Mat roi;
+	
+	//left
+	roi = mat(Rect(0, 0, mat.size().width / 2, mat.size().height));
+
+	for (unsigned int i = 0; i < leftMesh.quads.size(); i++)
+	{
+		q = leftMesh.quads.at(i);
+
+		start.x = q.v1.x;
+		start.y = q.v1.y;
+		end.x = q.v2.x;
+		end.y = q.v2.y;
+		line(roi, start, end, lineColor, thickness, linetype);
+
+		start.x = q.v2.x;
+		start.y = q.v2.y;
+		end.x = q.v4.x;
+		end.y = q.v4.y;
+		line(roi, start, end, lineColor, thickness, linetype);
+
+		start.x = q.v4.x;
+		start.y = q.v4.y;
+		end.x = q.v3.x;
+		end.y = q.v3.y;
+		line(roi, start, end, lineColor, thickness, linetype);
+
+		start.x = q.v3.x;
+		start.y = q.v3.y;
+		end.x = q.v1.x;
+		end.y = q.v1.y;
+		line(roi, start, end, lineColor, thickness, linetype);
+	}
+	
+	int lel = mat.size().width / 2;
+
+	//right
+	roi = mat(Rect(mat.size().width / 2, 0, mat.size().width / 2, mat.size().height));
+
+	for (unsigned int i = 0; i < rightMesh.quads.size(); i++)
+	{
+		q = rightMesh.quads.at(i);
+
+		start.x = q.v1.x;
+		start.y = q.v1.y;
+		end.x = q.v2.x;
+		end.y = q.v2.y;
+		line(roi, start, end, lineColor, thickness, linetype);
+
+		start.x = q.v2.x;
+		start.y = q.v2.y;
+		end.x = q.v4.x;
+		end.y = q.v4.y;
+		line(roi, start, end, lineColor, thickness, linetype);
+
+		start.x = q.v4.x;
+		start.y = q.v4.y;
+		end.x = q.v3.x;
+		end.y = q.v3.y;
+		line(roi, start, end, lineColor, thickness, linetype);
+
+		start.x = q.v3.x;
+		start.y = q.v3.y;
+		end.x = q.v1.x;
+		end.y = q.v1.y;
+		line(roi, start, end, lineColor, thickness, linetype);
+	}
+}
+
 double Helper::stringToDouble(const string &s)
 {
 	istringstream i(s);

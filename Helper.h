@@ -9,6 +9,7 @@ struct Helper
 	static Mat IplImageToMat(IplImage* im);
 	static string getImageType(int number);
 	static void drawMeshOverMat(const Mesh &mesh, Mat &mat);
+	static void drawMeshesOverMatStereo(Mesh &leftMesh, Mesh &rightMesh, Mat &mat);
 	static double stringToDouble(const string &s);
 	static int stringToInt(const string &s);
 	static Mat meshAsMat(const Mesh &mesh, const Size &s);
