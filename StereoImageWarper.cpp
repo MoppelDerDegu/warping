@@ -37,29 +37,18 @@ Mat StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mat &saliency
 	mm->initializeMesh(initialLeft, oldLeftSize);
 	initialRight = mm->generateRightEyeMesh(initialLeft, img, oldLeftSize);
 
-	FileManager::saveMeshAsImage("initial left.png", "D:\\warping\\mesh\\", initialLeft, oldLeftSize);
-	FileManager::saveMeshAsImage("initial right.png", "D:\\warping\\mesh\\", initialRight, oldLeftSize);
-
 	// assign saliency values to quads of left and right view
 	vector<pair<float, Quad>> wfMapLeft = qsm->assignSaliencyValuesToQuads(initialLeft, saliencyMap);
 	vector<pair<float, Quad>> wfMapRight = qsm->assignSaliencyValuesToQuads(initialRight, saliencyMap);
 
-	// warp left and right mesh
+	// deform left and right mesh
 	pair<Mesh, Mesh> deformedMeshes = ss.solveStereoImageProblem(initialLeft, initialRight, oldSize, destSize, wfMapLeft, wfMapRight);
 	
 	deformedLeft = deformedMeshes.first;
 	deformedRight = deformedMeshes.second;
 
-	FileManager::saveMeshAsText("deformed left.txt", "D:\\warping\\mesh\\", deformedLeft);
-	FileManager::saveMeshAsText("deformed right.txt", "D:\\warping\\mesh\\", deformedRight);
-	FileManager::saveMeshAsImage("deformed left.png", "D:\\warping\\mesh\\", deformedLeft, destLeftSize);
-	FileManager::saveMeshAsImage("deformed right.png", "D:\\warping\\mesh\\", deformedRight, destLeftSize);
-
 	linearScaledLeft = ss.getInitialLeft();
 	linearScaledRight = ss.getInitialRight();
-
-	FileManager::saveMeshAsImage("linear scaled left.png", "D:\\warping\\mesh\\", linearScaledLeft, destLeftSize);
-	FileManager::saveMeshAsImage("linear scaled right.png", "D:\\warping\\mesh\\", linearScaledRight, destLeftSize);
 
 	// linear scaled images of left and right view
 	Mat linearLeft, linearRight;
@@ -101,10 +90,6 @@ Mat StereoImageWarper::warpImage(StereoImage* img, Size &destSize, Mat &saliency
 	linearLeft.copyTo(roi);
 	roi = linearBoth(Rect(destLeft.size().width, 0, destLeft.size().width, destLeft.size().height));
 	linearRight.copyTo(roi);
-
-	FileManager::saveMat("result.png", "D:\\warping\\result\\", dest);
-	FileManager::saveMat("linear scaled.png", "D:\\warping\\result\\", linearBoth);
-	FileManager::saveMat("result with mesh.png", "D:\\warping\\result\\", destwithmesh);
 
 	return dest;
 }

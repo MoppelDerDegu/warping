@@ -328,7 +328,7 @@ Mesh MeshManager::generateRightEyeMesh(Mesh &leftEyeMesh, StereoImage* img, Size
 	}
 
 	// find vertices in the right image
-	calcOpticalFlowPyrLK(leftgray, rightgray, initial, detected, status, err, Size(250, 250), 3);
+	calcOpticalFlowPyrLK(leftgray, rightgray, initial, detected, status, err, Size(350, 350), 3);
 
 	// create righteye mesh:
 
@@ -463,90 +463,6 @@ void MeshManager::buildQuadsAndEdges(Mesh &mesh)
 			}
 		}
 	}
-}
-
-vector<double> MeshManager::xCoordsToDoubleVec(Mesh &m)
-{
-	vector<double> x;
-
-	for (unsigned int i = 0; i < m.vertices.size(); i++)
-	{
-		x.push_back(m.vertices.at(i).x);
-	}
-
-	return x;
-}
-
-void MeshManager::xCoordsToMesh(const vector<double> &x, Mesh &result)
-{
-	// clear mesh
-	result.vertices.clear();
-	result.edges.clear();
-	result.quads.clear();
-
-	// vertices
-	for (unsigned int i = 0; i < x.size(); i++)
-	{
-		Vertex v;
-		v.x = WarpingMath::round(x.at(i));
-		v.y = 0;
-
-		result.vertices.push_back(v);
-	}
-
-	buildQuadsAndEdges(result);
-}
-
-vector<double> MeshManager::yCoordsToDoubleVec(Mesh &m)
-{
-	vector<double> y;
-
-	for (unsigned int i = 0; i < m.vertices.size(); i++)
-	{
-		y.push_back(m.vertices.at(i).y);
-	}
-
-	return y;
-
-}
-
-void MeshManager::yCoordsToMesh(const vector<double> &y, Mesh &result)
-{
-	// clear mesh
-	result.vertices.clear();
-	result.edges.clear();
-	result.quads.clear();
-
-	// vertices
-	for (unsigned int i = 0; i < y.size(); i++)
-	{
-		Vertex v;
-		v.x = 0;
-		v.y = WarpingMath::round(y.at(i));
-
-		result.vertices.push_back(v);
-	}
-
-	buildQuadsAndEdges(result);
-}
-
-void MeshManager::mergeXandYMeshes(Mesh &xMesh, Mesh &yMesh, Mesh &result)
-{
-	result.vertices.clear();
-	result.quads.clear();
-	result.edges.clear();
-
-	for (unsigned int i = 0; i < xMesh.vertices.size(); i++)
-	{
-
-		Vertex v;
-		v.x = xMesh.vertices.at(i).x;
-		v.y = yMesh.vertices.at(i).y;
-
-		result.vertices.push_back(v);
-	}
-
-	buildQuadsAndEdges(result);
 }
 
 Mesh MeshManager::interpolateMesh(Mesh &first, Mesh &second, float alpha)

@@ -26,28 +26,27 @@ private:
 	VideoCapture capture;
 	PathlineSets sets; // set of all pathlines of the video
 	vector<Pathline> pathlines; // pathlines between frame i, i+1, ... , j
-	Mesh seedLeft, seedRight;
 	int frameCounter;
 	int maxFrames;
 	bool addNewPoints;
 	Size videoSize;
 	Size leftSize, rightSize;
 
-	vector<Mesh> leftSeedMeshes, rightSeedMeshes;
-	Mesh leftSeedMesh, rightSeedMesh;
+	vector<Mesh> leftSeedMeshes, rightSeedMeshes; // seed meshes for the left and right view, used during tracking points in the deformed video
+	Mesh leftSeedMesh, rightSeedMesh; // seed mesh for the left and right view of the video
 
-	Mat currentGray, prevGray;
-	vector<uchar> status;
-	vector<float> err;
-	vector<Point2f> initial;
-	vector<Point2f> detected;
+	Mat currentGray, prevGray; // current and previous frame as gray scale images
+	vector<uchar> status; // specifies if a point was found in the next frame
+	vector<float> err; // error values of the different points
+	vector<Point2f> initial; // initial points to look for
+	vector<Point2f> detected; // points found in the next frame
 
-	bool acceptPoint(unsigned int i, Point2f p);
-	void handleTrackedPoints();
+	bool acceptPoint(unsigned int i, Point2f p); // checks if point i is accepted
+	void handleTrackedPoints(); // handles tracked points
 	void seedNewPoints();
 	void seedNewPoints(Mesh &left, Mesh &right);
 	void addSeedPointsToPathlines();
 	void appendTrackedPointsToPathlines();
-	void process(Mat &currentFrame, Mat &prevFrame);
+	void process(Mat &currentFrame, Mat &prevFrame); // looks for points from the previous frame in the current frame
 };
 

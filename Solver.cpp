@@ -30,19 +30,6 @@ void Solver::calculateOptimalScaleFactors(Mesh &originalMesh, Mesh &deformedMesh
 	}
 }
 
-double Solver::totalRedistributionEnergy(Mesh &newMesh, vector<pair<Edge, float>> edgeSaliency)
-{
-	double sum = 0;
-	
-	for (unsigned int i = 0; i < newMesh.edges.size(); i++)
-	{
-		Edge e = newMesh.edges.at(i);
-		sum += ((1 + edgeSaliency.at(i).second) * sqr(WarpingMath::euclideanNorm(newMesh.edges.at(i).src - newMesh.edges.at(i).dest)));
-	}
-	
-	return sum;
-}
-
 vector<double> Solver::computeLowerImageBoundConstraints(const vector<double> &x, const Size size)
 {
 	vector<double> lb(x.size());
@@ -261,6 +248,7 @@ void Solver::initialGuess(Mesh &src, Mesh& dest, Size &newSize, Size &originalSi
 		dest.vertices.at(i).y = WarpingMath::round(dest.vertices.at(i).y * scaleY);
 	}
 
+	// construct quads
 	for (unsigned int i = 0; i < dest.quads.size(); i++)
 	{
 		dest.quads.at(i).v1.x = WarpingMath::round(dest.quads.at(i).v1.x * scaleX);
@@ -276,6 +264,7 @@ void Solver::initialGuess(Mesh &src, Mesh& dest, Size &newSize, Size &originalSi
 		dest.quads.at(i).v4.y = WarpingMath::round(dest.quads.at(i).v4.y * scaleY);
 	}
 
+	// construct edges
 	for (unsigned int i = 0; i < dest.edges.size(); i++)
 	{
 		dest.edges.at(i).src.x = WarpingMath::round(dest.edges.at(i).src.x * scaleX);

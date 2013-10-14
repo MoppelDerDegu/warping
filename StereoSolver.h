@@ -11,10 +11,11 @@ public:
 	StereoSolver(unsigned int);
 	~StereoSolver(void);
 
+	// deforms the left and right mesh according to the saliency map
 	pair<Mesh, Mesh> solveStereoImageProblem(Mesh &originalLeft, Mesh &originalRight, Size &oldSize, Size &newSize, vector<pair<float, Quad>> &wfMapLeft, vector<pair<float, Quad>> &wfMapRight);
-	pair<Mesh, Mesh> solveStereoImageProblemSeperately(Mesh &originalLeft, Mesh &originalRight, Size &oldSize, Size &newSize, vector<pair<float, Quad>> &wfMapLeft, vector<pair<float, Quad>> &wfMapRight);
-	Mesh getInitialLeft();
-	Mesh getInitialRight();
+
+	Mesh getInitialLeft(); // returns the initial guess for the left mesh
+	Mesh getInitialRight(); // returns the initial guess for the right mesh
 
 protected:
 	Mesh initialLeft;
@@ -23,45 +24,22 @@ protected:
 	Mesh deformedRight;
 	Mesh originalLeft;
 	Mesh originalRight;
-	
-	Mesh deformedLeftXOnly;
-	Mesh deformedLeftYOnly;
-	Mesh deformedRightXOnly;
-	Mesh deformedRightYOnly;
 
 	unsigned int maxEval; // maximum number of alternating optimization steps
 
 	int splitIndex;
-	int splitIndexSeperate;
 
 	vector<pair<float, Quad>> saliencyWeightMappingLeft;
 	vector<pair<float, Quad>> saliencyWeightMappingRight;
-	vector<pair<Edge, float>> edgeLengthRatiosLeft; // lij left view
-	vector<pair<Edge, float>> edgeLengthRatiosRight; // lij right view
-	vector<pair<Quad, float>> scalingFactorsLeft; // sf left view
-	vector<pair<Quad, float>> scalingFactorsRight; // sf right view
+	vector<pair<Edge, float>> edgeLengthRatiosLeft; // edge length ratios left view
+	vector<pair<Edge, float>> edgeLengthRatiosRight; // edge length ratios right view
+	vector<pair<Quad, float>> scalingFactorsLeft; // quad scaling factors left view
+	vector<pair<Quad, float>> scalingFactorsRight; // quad scaling factors right view
 
-	static double wrapperStereoImageObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
-	static double wrapperStereoImageObjectiveX(const vector<double> &x, vector<double> &grad, void *my_func_data);
-	static double wrapperStereoImageObjectiveY(const vector<double> &x, vector<double> &grad, void *my_func_data);
+	static double wrapperStereoImageObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data); // wrapper function that is passed to NLopt library
 
 	double stereoImageObjFunc(const vector<double> &x, vector<double> &grad);
-	double stereoImageObjFuncX(const vector<double> &x, vector<double> &grad);
-	double stereoImageObjFuncY(const vector<double> &x, vector<double> &grad);
 
 	double stereoEnergy(Mesh &originalLeft, Mesh &originalRight, Mesh &newLeft, Mesh &newRight); // Yoo et al. 2013 equation (6)
-	double stereoEnergyX(Mesh &originalLeft, Mesh &originalRight, Mesh &newLeft, Mesh &newRight);
-	double stereoEnergyY(Mesh &originalLeft, Mesh &originalRight, Mesh &newLeft, Mesh &newRight);
-
-	double quadEnergyX(Quad &oldQuad, Quad &newQuad, const double sf);
-	double quadEnergyY(Quad &oldQuad, Quad &newQuad, const double sf);
-	double totalQuadEnergyX(Mesh &originalMesh, Mesh &newMesh, const vector<pair<Quad, float>> &scalingFactors, const vector<pair<float, Quad>> &saliencyWeightMapping);
-	double totalQuadEnergyY(Mesh &originalMesh, Mesh &newMesh, const vector<pair<Quad, float>> &scalingFactors, const vector<pair<float, Quad>> &saliencyWeightMapping);
-
-	vector<double> computeLowerXBoundConstraints(const vector<double> &x, const Size size);
-	vector<double> computeUpperXBoundConstraints(const vector<double> &x, const Size size);
-
-	vector<double> computeLowerYBoundConstraints(const vector<double> &x, const Size size);
-	vector<double> computeUpperYBoundConstraints(const vector<double> &x, const Size size);
 };
 

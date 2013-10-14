@@ -412,3 +412,8 @@ void Helper::adjustRightPathlineCoordinates(PathlineSets &rightPathlines, Size &
 		}
 	}
 }
+
+void Helper::printUsageInstructions()
+{
+	cout << "USAGE: WarpingStereoVideo.exe inputFileName interpolatedOutputFileName finalOutputFileName numberOfWarpingEveryNthFrame newWidth newHeight" << endl;
+}

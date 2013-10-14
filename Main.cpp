@@ -26,15 +26,24 @@
 
 int main(int argc, char* argv[])
 {
-	int n = 10; // every n-th frame
+
+	if (argc != 7)
+	{
+		Helper::printUsageInstructions();
+		return -1;
+	}
+
+	int n = Helper::stringToInt(argv[4]); // every n-th frame
 	int currentFrame = 1;
 
 	CvCapture* input;
-	char* fileName = "D:/media/hhi4-1-3__resized_cut.avi";
-	char* outputFilenameInterpolated = "D:/warping/result/interpolated output";
-	char* outputFilenameFinal = "D:/warping/result/final";
+	char* fileName = argv[1];
+	char* outputFilenameInterpolated = argv[2];
+	char* outputFilenameFinal = argv[3];
 	char* container = ".avi";
 	char output[50];
+
+	Size newSize(Helper::stringToInt(argv[5]), Helper::stringToInt(argv[6]));
 
 	input = cvCaptureFromFile(fileName);
 	
@@ -57,15 +66,18 @@ int main(int argc, char* argv[])
 	double fps = cvGetCaptureProperty(input, CV_CAP_PROP_FPS);
 
 	Size originalSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
-	Size newSize(1280, 360);
+
+
 
 //------------------------------------------------------------------------
 //--------------------Start Initialization--------------------------------
 //------------------------------------------------------------------------
 
+
+
 	GradientGenerator gd;
 	StereoImageWarper siw;
-	StereoSolver ss(20);
+	StereoSolver ss(20); // 20 alternating steps for each mesh optimization
 
 	MeshManager* mm = MeshManager::getInstance();
 	QuadSaliencyManager* qsm = QuadSaliencyManager::getInstance();
@@ -98,10 +110,13 @@ int main(int argc, char* argv[])
 
 	cvReleaseCapture(&input);
 
+
 //-------------------------------------------------------------------
 //---------TRACK PATHLINES IN THE ORIGINAL VIDEO---------------------
 //-------------------------------------------------------------------
-#if 0
+
+
+
 	cout << "\nBEGIN TRACKING PATHLINES IN THE ORIGINAL VIDEO" << endl;
 
 	VideoCapture origCapture;
@@ -109,14 +124,9 @@ int main(int argc, char* argv[])
 	
 	PathlineTracker originalTracker(origCapture);
 	
-	//originalTracker.trackPathlines();
-	//PathlineSets originalPathlines = originalTracker.getPathlineSets();
-
-	//FileManager::savePathlines("original pathlines.txt", "D:\\warping\\pathlines\\", originalPathlines.pathlines.at(0));
-
-	vector<Pathline> _originalPathlines = FileManager::loadPathlines("D:\\warping\\pathlines\\original pathlines.txt");
-	PathlineSets originalPathlines;
-	originalPathlines.pathlines.push_back(_originalPathlines);
+	// track pathlines
+	originalTracker.trackPathlines();
+	PathlineSets originalPathlines = originalTracker.getPathlineSets();
 
 	// determine the pathline adjacencies
 	Size seedSize = Size(originalSize.width / 2, originalSize.height);
@@ -125,10 +135,14 @@ int main(int argc, char* argv[])
 	plm->getAdjacencies(originalPathlines, originalSeedMesh, seedSize, adjacencies);
 
 	origCapture.release();
-#endif
+
+
+
 //-------------------------------------------------------------------
 //---------DEFORM AND OPTIMIZE MESHES FOR EVERY N-TH FRAME-----------
 //-------------------------------------------------------------------
+
+
 
 	cout << "\nBEGIN DEFORMING MESHES" << endl;
 
@@ -137,7 +151,7 @@ int main(int argc, char* argv[])
 
 	int x = 0;
 	bool lastFrameDecoded = false;
-#if 0
+
 	// deform meshes for every n-th frame and the first and last frame
 	while (true)
 	{
@@ -179,7 +193,6 @@ int main(int argc, char* argv[])
 		if (x > 0)
 		{
 			// every other frame
-
 			combinedSaliency = sm->computeSaliency();
 			finalSaliency = combinedSaliency + gradient;
 
@@ -190,12 +203,14 @@ int main(int argc, char* argv[])
 			// warp left and right mesh
 			deformedMeshes = ss.solveStereoImageProblem(initialLeft, initialRight, originalSize, newSize, wfMapLeft, wfMapRight);
 
+			// push meshes to the mesh container
+
 			leftDeformedMeshes.push_back(deformedMeshes.first);
 			rightDeformedMeshes.push_back(deformedMeshes.second);
 
 			leftLinearMeshes.push_back(ss.getInitialLeft());
 			rightLinearMeshes.push_back(ss.getInitialRight());
-			
+
 			currentFrame = currentFrame + n;
 		}
 		else
@@ -215,6 +230,8 @@ int main(int argc, char* argv[])
 			// warp left and right mesh
 			deformedMeshes = ss.solveStereoImageProblem(initialLeft, initialRight, originalSize, newSize, wfMapLeft, wfMapRight);
 
+			// push meshes to the mesh container
+
 			leftLinearMeshes.push_back(ss.getInitialLeft());
 			rightLinearMeshes.push_back(ss.getInitialRight());
 
@@ -227,6 +244,8 @@ int main(int argc, char* argv[])
 
 		if (currentFrame < totalFrameNumber)
 		{
+			// grab the next n-th frame
+
 			cvReleaseCapture(&input);
 			input = cvCaptureFromFile(fileName);
 			img = Helper::getNthFrame(input, currentFrame);
@@ -235,6 +254,8 @@ int main(int argc, char* argv[])
 		{
 			if (lastFrameDecoded)
 				break;
+
+			// grab the last frame
 
 			cvReleaseCapture(&input);
 			input = cvCaptureFromFile(fileName);
@@ -245,14 +266,7 @@ int main(int argc, char* argv[])
 			lastFrameDecoded = true;
 		}
 	}
-
-	// write left and right meshes to file
-	FileManager::saveMeshesAsText("left meshes.txt", "D:\\warping\\mesh\\", leftDeformedMeshes);
-	FileManager::saveMeshesAsText("right meshes.txt", "D:\\warping\\mesh\\", rightDeformedMeshes);
 	
-	FileManager::saveMeshesAsText("left linear meshes.txt", "D:\\warping\\mesh\\", leftLinearMeshes);
-	FileManager::saveMeshesAsText("right linear meshes.txt", "D:\\warping\\mesh\\", rightLinearMeshes);
-#endif
 
 	// clean up
 	cvReleaseCapture(&input);
@@ -261,9 +275,13 @@ int main(int argc, char* argv[])
 	//delete md;
 	//delete frame;
 
+
+
 //-------------------------------------------------------------------
 //---------INTERPOLATE MESHES AND WARP EVERY SINGLE IMAGE------------
 //-------------------------------------------------------------------
+
+
 
 	cout << "\nBEGIN INTERPOLATING MESHES AND WARPING EVERY FRAME" << endl;
 
@@ -275,7 +293,7 @@ int main(int argc, char* argv[])
 
 	// alpha factor for interpolation with meshes
 	float alphaFactor = 1.0 / n;
-#if 1
+
 	input = cvCaptureFromFile(fileName);
 	VideoWriter outputVideoInterpolated;
 
@@ -284,19 +302,7 @@ int main(int argc, char* argv[])
 	strcat(output,container);
 
 	outputVideoInterpolated.open(output, CV_FOURCC('X','2','6','4'), fps , newSize, true);
-	/*
-	leftDeformedMeshes.clear();
-	rightDeformedMeshes.clear();
 
-	leftLinearMeshes.clear();
-	rightLinearMeshes.clear();
-
-	leftDeformedMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\left meshes.txt");
-	rightDeformedMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\right meshes.txt");
-
-	leftLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\left linear meshes.txt");
-	rightLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\right linear meshes.txt");
-	*/
 	// decode the first frame
 	img = cvQueryFrame(input);
 
@@ -319,8 +325,6 @@ int main(int argc, char* argv[])
 
 			cout << "\nWarping Frame " << currentFrame << "/" << totalFrameNumber - 2 << endl;
 			Mat tmp = siw.warpImage(frame, newSize, leftDeformedMeshes.at(meshIndex), rightDeformedMeshes.at(meshIndex), leftLinearMeshes.at(meshIndex), rightLinearMeshes.at(meshIndex));
-
-			Helper::drawMeshesOverMatStereo(leftDeformedMeshes.at(meshIndex), rightDeformedMeshes.at(meshIndex), tmp);
 
 			outputVideoInterpolated.write(tmp);
 
@@ -346,8 +350,6 @@ int main(int argc, char* argv[])
 
 			Mat tmp = siw.warpImage(frame, newSize, leftDeformed, rightDeformed, leftLinear, rightLinear);
 
-			Helper::drawMeshesOverMatStereo(leftDeformed, rightDeformed, tmp);
-
 			outputVideoInterpolated.write(tmp);
 
 			// save meshes as seed meshes for pathline tracking
@@ -365,11 +367,15 @@ int main(int argc, char* argv[])
 	cvReleaseCapture(&input);
 	outputVideoInterpolated.release();
 	//delete frame;
-#endif
+
+
+
 //-------------------------------------------------------------------
 //---------TRACK PATHLINES IN THE DEFORMED VIDEO---------------------
 //-------------------------------------------------------------------
-#if 0
+
+
+
 	cout << "\nBEGIN TRACKING PATHLINES IN THE DEFORMED VIDEO" << endl;
 
 	VideoCapture deformedCapture;
@@ -377,57 +383,51 @@ int main(int argc, char* argv[])
 	
 	PathlineTracker deformedTracker(deformedCapture, leftSeedMeshes, rightSeedMeshes);
 
-	//deformedTracker.trackPathlines();
-	//PathlineSets deformedPathlines = deformedTracker.getPathlineSets();
-
-	//FileManager::savePathlines("deformed pathlines.txt", "D:\\warping\\pathlines\\", deformedPathlines.pathlines.at(0));
-	
-	vector<Pathline> _deformedPathlines = FileManager::loadPathlines("D:\\warping\\pathlines\\deformed pathlines.txt");
-	PathlineSets deformedPathlines;
-	deformedPathlines.pathlines.push_back(_deformedPathlines);
+	// track pathlines in the interpolated warped video
+	deformedTracker.trackPathlines();
+	PathlineSets deformedPathlines = deformedTracker.getPathlineSets();
 
 	deformedCapture.release();
-#endif
+
+
+
 //-------------------------------------------------------------------
 //---------------------OPTIMIZE PATHLINES----------------------------
 //-------------------------------------------------------------------
-#if 0
+
+
+
 	cout << "\nBEGIN OPTIMIZING PATHLINES" << endl;
 
 	PathlineSets leftOrigPathlines, rightOrigPathlines, leftDeformedPathlines, rightDeformedPathlines;
 
 	// split the sets of pathlines into left and right view
-	//plm->splitPathlineSets(originalPathlines, leftOrigPathlines, rightOrigPathlines);
-	//plm->splitPathlineSets(deformedPathlines, leftDeformedPathlines, rightDeformedPathlines);
+	plm->splitPathlineSets(originalPathlines, leftOrigPathlines, rightOrigPathlines);
+	plm->splitPathlineSets(deformedPathlines, leftDeformedPathlines, rightDeformedPathlines);
 
-	//std::sort(adjacencies.neighbors.begin(), adjacencies.neighbors.end());
+	// sort adjacencies
+	std::sort(adjacencies.neighbors.begin(), adjacencies.neighbors.end());
 
-	//PathlineOptimizer leftPathlineOptimizer(leftOrigPathlines, leftDeformedPathlines, adjacencies, originalSize, newSize);
-	//PathlineOptimizer rightPathlineOptimizer(rightOrigPathlines, rightDeformedPathlines, adjacencies, originalSize, newSize);
+	PathlineOptimizer leftPathlineOptimizer(leftOrigPathlines, leftDeformedPathlines, adjacencies, originalSize, newSize);
+	PathlineOptimizer rightPathlineOptimizer(rightOrigPathlines, rightDeformedPathlines, adjacencies, originalSize, newSize);
 	
 	// optimize pathline for left and right view
-	//leftPathlineOptimizer.optimizePathlines();
-	//rightPathlineOptimizer.optimizePathlines();
-	//leftPathlineOptimizer.join();
-	//rightPathlineOptimizer.join();
+	leftPathlineOptimizer.optimizePathlines();
+	rightPathlineOptimizer.optimizePathlines();
+	leftPathlineOptimizer.join();
+	rightPathlineOptimizer.join();
 
-	//PathlineSets &leftOptimized = leftPathlineOptimizer.getResult();
-	//PathlineSets &rightOptimized = rightPathlineOptimizer.getResult();
-	PathlineSets leftOptimized, rightOptimized;
+	PathlineSets &leftOptimized = leftPathlineOptimizer.getResult();
+	PathlineSets &rightOptimized = rightPathlineOptimizer.getResult();
 
-	// merge left and right optimized pathlines
-	PathlineSets optimizedPathlines;
-	//plm->mergePathlineSets(leftOptimized, rightOptimized, optimizedPathlines);
 
-	//FileManager::savePathlines("optimized pathlines.txt", "D:\\warping\\pathlines\\", optimizedPathlines.pathlines.at(0));
-	optimizedPathlines.pathlines.push_back(FileManager::loadPathlines("D:\\warping\\pathlines\\optimized pathlines.txt"));
 
-	plm->splitPathlineSets(optimizedPathlines, leftOptimized, rightOptimized);
-#endif
 //-------------------------------------------------------------------------------------------------
 //---------DEFORM AND OPTIMIZE MESHES FOR EVERY N-TH FRAME USING THE OPTIMIZED PATHLINES-----------
 //-------------------------------------------------------------------------------------------------
-#if 0
+
+
+
 	cout << "\nBEGIN DEFORMING MESHES WITH OPTIMIZED PATHLINES" << endl;
 
 	input = cvCaptureFromFile(fileName);
@@ -449,7 +449,7 @@ int main(int argc, char* argv[])
 	leftLinearMeshes.clear();
 	rightLinearMeshes.clear();
 
-	// deform meshes for every n-th frame and the first and last frame
+	// deform meshes for every n-th frame and the first and last frame using pathlines as guides
 	while (true)
 	{
 		if (!img)
@@ -502,6 +502,8 @@ int main(int argc, char* argv[])
 			StereoPathlineSolver spSolver(20, currentFrame, leftOptimized, rightOptimized, leftOrigPathlines, rightOrigPathlines);
 			deformedMeshes = spSolver.solveStereoImageProblem(initialLeft, initialRight, originalSize, newSize, wfMapLeft, wfMapRight);
 
+			// push meshes to the mesh container
+
 			leftDeformedMeshes.push_back(deformedMeshes.first);
 			rightDeformedMeshes.push_back(deformedMeshes.second);
 
@@ -528,6 +530,8 @@ int main(int argc, char* argv[])
 			StereoPathlineSolver spSolver(20, currentFrame, leftOptimized, rightOptimized, leftOrigPathlines, rightOrigPathlines);
 			deformedMeshes = spSolver.solveStereoImageProblem(initialLeft, initialRight, originalSize, newSize, wfMapLeft, wfMapRight);
 
+			// push meshes to the mesh container
+
 			leftLinearMeshes.push_back(spSolver.getInitialLeft());
 			rightLinearMeshes.push_back(spSolver.getInitialRight());
 
@@ -540,6 +544,8 @@ int main(int argc, char* argv[])
 
 		if (currentFrame < totalFrameNumber)
 		{
+			// grab the next n-th frame
+
 			cvReleaseCapture(&input);
 			input = cvCaptureFromFile(fileName);
 			img = Helper::getNthFrame(input, currentFrame);
@@ -548,6 +554,8 @@ int main(int argc, char* argv[])
 		{
 			if (lastFrameDecoded)
 				break;
+
+			// grab the last frame
 
 			cvReleaseCapture(&input);
 			input = cvCaptureFromFile(fileName);
@@ -558,23 +566,20 @@ int main(int argc, char* argv[])
 			lastFrameDecoded = true;
 		}
 	}
-	
-	// write left and right meshes to file
-	FileManager::saveMeshesAsText("left meshes including pathlines.txt", "D:\\warping\\mesh\\", leftDeformedMeshes);
-	FileManager::saveMeshesAsText("right meshes including pathlines.txt", "D:\\warping\\mesh\\", rightDeformedMeshes);
-	
-	FileManager::saveMeshesAsText("left linear meshes including pathlines.txt", "D:\\warping\\mesh\\", leftLinearMeshes);
-	FileManager::saveMeshesAsText("right linear meshes including pathlines.txt", "D:\\warping\\mesh\\", rightLinearMeshes);
-	
+
 
 	// clean up
 	cvReleaseCapture(&input);
 	cvReleaseMat(&combinedSaliency);
-#endif
+
+
+
 //-------------------------------------------------------------------
 //---------INTERPOLATE MESHES AND WARP EVERY SINGLE IMAGE------------
 //-------------------------------------------------------------------
-	
+
+
+
 	cout << "\nBEGIN INTERPOLATING MESHES AND WARPING EVERY FRAME" << endl;
 
 	input = cvCaptureFromFile(fileName);
@@ -585,19 +590,7 @@ int main(int argc, char* argv[])
 	strcat(output,container);
 
 	outputVideoFinal.open(output, CV_FOURCC('X','2','6','4'), fps , newSize, true);
-	
-	leftDeformedMeshes.clear();
-	rightDeformedMeshes.clear();
 
-	leftLinearMeshes.clear();
-	rightLinearMeshes.clear();
-
-	leftDeformedMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\left meshes including pathlines.txt");
-	rightDeformedMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\right meshes including pathlines.txt");
-
-	leftLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\left linear meshes including pathlines.txt");
-	rightLinearMeshes = FileManager::loadMeshes("D:\\warping\\mesh\\right linear meshes including pathlines.txt");
-	
 	// decode the first frame
 	img = cvQueryFrame(input);
 
@@ -627,8 +620,6 @@ int main(int argc, char* argv[])
 			cout << "\nWarping Frame " << currentFrame << "/" << totalFrameNumber - 2 << endl;
 
 			Mat tmp = siw.warpImage(frame, newSize, leftDeformedMeshes.at(meshIndex), rightDeformedMeshes.at(meshIndex), leftLinearMeshes.at(meshIndex), rightLinearMeshes.at(meshIndex));
-			
-			Helper::drawMeshesOverMatStereo(leftDeformedMeshes.at(meshIndex), rightDeformedMeshes.at(meshIndex), tmp);
 
 			outputVideoFinal.write(tmp);
 
@@ -649,8 +640,6 @@ int main(int argc, char* argv[])
 			Mesh rightLinear = mm->interpolateMesh(rightLinearMeshes.at(meshIndex - 1), rightLinearMeshes.at(meshIndex), alpha);
 
 			Mat tmp = siw.warpImage(frame, newSize, leftDeformed, rightDeformed, leftLinear, rightLinear);
-
-			Helper::drawMeshesOverMatStereo(leftDeformed, rightDeformed, tmp);
 
 			outputVideoFinal.write(tmp);
 

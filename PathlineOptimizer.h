@@ -17,7 +17,7 @@ public:
 	PathlineSets getResult();
 
 private:
-	boost::thread myThread;
+	boost::thread myThread; // thread objective that contains the execution of the optimization
 
 	Size newSize, oldSize;
 
@@ -28,6 +28,7 @@ private:
 	// the final optimized pathlines
 	PathlineSets result;
 
+	// mappings for data structures
 	PathlineMatrixMapping optimizedMatMapping;
 	PathlineTransVecMapping optimizedVecMapping;
 	NeighborMatrixMapping optimizedNeighborMapping;
@@ -43,14 +44,14 @@ private:
 	// returns number of dummy variables for the scaling matrix s_ij between two neighboring pathlines p_i and p_j used during optimization
 	int getNumberOfDummyVariables(PathlineAdjacencies &adjacencies);
 
-	void createAllVariables(PathlineMatrixMapping &matMapping, PathlineTransVecMapping &vecMapping, vector<double> &allVariables);
+	void createAllVariables(PathlineMatrixMapping &matMapping, PathlineTransVecMapping &vecMapping, vector<double> &allVariables); // creates double variables from the different data structures
 
-	static double wrapperPathlineObjFunc(const vector<double> &x, vector<double> &grad, void *my_func_data);
+	static double wrapperPathlineObjFunc(const vector<double> &x, vector<double> &grad, void *my_func_data); // wrapper for the objective function that is passed to the NLopt library
 
-	double pathlineScalingEnergy(PathlineMatrixMapping &singleMap, NeighborMatrixMapping &doubleMap, PathlineTransVecMapping &tmap);
-	double pathlineDeformationEnergy(PathlineMatrixMapping &mmap, PathlineTransVecMapping &tmap);
+	double pathlineScalingEnergy(PathlineMatrixMapping &singleMap, NeighborMatrixMapping &doubleMap, PathlineTransVecMapping &tmap); // equation 3.13
+	double pathlineDeformationEnergy(PathlineMatrixMapping &mmap, PathlineTransVecMapping &tmap); // equation 3.14
 
-	double totalPathlineEnergy(const vector<double> &x, vector<double> &grad);
+	double totalPathlineEnergy(const vector<double> &x, vector<double> &grad); // equation 3.15
 
 	vector<double> computeLowerBounds(vector<double> &variables);
 

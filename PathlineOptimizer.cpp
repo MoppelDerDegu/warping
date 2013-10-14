@@ -103,7 +103,7 @@ double PathlineOptimizer::pathlineDeformationEnergy(PathlineMatrixMapping &mmap,
 
 				Point2d tmp;
 
-				// (si * pi_m + ti) - qi_m
+				// (si * pi_m + ti) - di_m
 				tmp.x = tmpi.x - q.path.at(m).second.x;
 				tmp.y = tmpi.y - q.path.at(m).second.y;
 

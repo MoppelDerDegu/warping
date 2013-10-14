@@ -12,17 +12,17 @@ private:
 	static PathlineManager* single;
 	static bool instanceFlag;
 
-	bool liesInQuad(Quad &quad, Point2f &point);
+	bool liesInQuad(Quad &quad, Point2f &point); // checks if a point lies within a squad
 
 public:
 	~PathlineManager(void);
 	static PathlineManager* getInstance();
 
 	void getAdjacencies(PathlineSets &sets, Mesh &seedMesh, Size &seedMeshSize, PathlineAdjacencies &result);
-	pair<Pathline, Pathline> getNeighbors(pair<unsigned int, unsigned int> &neighbors, vector<Pathline> &pathlines);
+	pair<Pathline, Pathline> getNeighbors(pair<unsigned int, unsigned int> &neighbors, vector<Pathline> &pathlines); // returns neighboring pathlines
 
-	void splitPathlineSets(PathlineSets &original, PathlineSets &left, PathlineSets &right);
-	void mergePathlineSets(PathlineSets &left, PathlineSets &right, PathlineSets &result);
+	void splitPathlineSets(PathlineSets &original, PathlineSets &left, PathlineSets &right); // split pathlines into two different sets containing the left and the right pathlines
+	void mergePathlineSets(PathlineSets &left, PathlineSets &right, PathlineSets &result); // merge left and right pathlines together into one set
 
 	// Initializes a scaling matrix mapping
 	void createPathlineMatrixMapping(PathlineSets &pathlineSets, PathlineMatrixMapping &result, Size &oldSize, Size &newSize);
@@ -41,8 +41,8 @@ public:
 	// which are used during the optimization but we are not interested in.
 	void mappingsToDoubleVec(map<Pathline, ScalingMatrix2x2> &matMapping, map<Pathline, TranslationVector2> &vecMapping, int numberOfDummyVariables, vector<double> &result);
 	
-	void mapPathlinesToQuads(int frame, PathlineSets &pathlines, Mesh &mesh, map<int, int> &result);
-	void getPointsInFrame(vector<Pathline> &lines, int frame, vector<Point2f> &result);
-	void getLinesContainingFrame(PathlineSets &pathlines, int frame, vector<Pathline> &result);
+	void mapPathlinesToQuads(int frame, PathlineSets &pathlines, Mesh &mesh, map<int, int> &result); // which pathline belongs to which quad
+	void getPointsInFrame(vector<Pathline> &lines, int frame, vector<Point2f> &result); // returns pathline points in the specified frame
+	void getLinesContainingFrame(PathlineSets &pathlines, int frame, vector<Pathline> &result); // returns all pathlines that travers the specified frame
 };
 

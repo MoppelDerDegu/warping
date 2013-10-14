@@ -2,6 +2,7 @@
 
 #include "stdafx.h"
 
+// manager class that handles the saliency of quads
 class QuadSaliencyManager
 {
 public:
@@ -13,7 +14,6 @@ public:
 	static QuadSaliencyManager* getInstance();
 
 	vector<pair<float, Quad>> assignSaliencyValuesToQuads(Mesh &m, Mat &saliencyMap);
-	vector<pair<Edge, float>> assignSaliencyValuesToEdges(Mesh &m, vector<pair<float, Quad>> saliencyValues, Size &size);
 
 private:
 	static bool instanceFlag;

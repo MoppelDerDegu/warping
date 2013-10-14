@@ -210,6 +210,8 @@ void PathlineManager::createPathlineMatrixMapping(PathlineSets &pathlineSets, Pa
 
 		for (unsigned int j = 0; j < pathlineSets.pathlines.at(i).size(); j++)
 		{
+
+			// initialize scaling matrix according to the new size
 			ScalingMatrix2x2 mat;
 			mat.vx = x;
 			mat.vy = y;
@@ -250,6 +252,7 @@ pair<Pathline, Pathline> PathlineManager::getNeighbors(pair<unsigned int, unsign
 {
 	pair<Pathline, Pathline> pair;
 	
+	// find pathline with the first seed index
 	for (unsigned int k = 0; k < pathlines.size(); k++)
 	{
 		if (pathlines.at(k).seedIndex == neighbors.first)
@@ -259,6 +262,7 @@ pair<Pathline, Pathline> PathlineManager::getNeighbors(pair<unsigned int, unsign
 		}
 	}
 
+	// find pathline with the second seed index
 	for (unsigned int k = 0; k < pathlines.size(); k++)
 	{
 		if (pathlines.at(k).seedIndex == neighbors.second)
@@ -342,6 +346,7 @@ void PathlineManager::createNeighborMatrixMapping(PathlineSets &pathlineSets, Pa
 
 			pair.first = adjacencies.neighbors.at(j);
 			
+			// initialize scaling matrix of neighboring pathlines according to the new size
 			ScalingMatrix2x2 si;
 			si.vx = x;
 			si.vy = y;

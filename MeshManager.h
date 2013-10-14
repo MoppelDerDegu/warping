@@ -3,6 +3,7 @@
 #include "stdafx.h"
 #include "StereoImage.h"
 
+// Manager class that contains convenience methods for handling meshes
 class MeshManager
 {
 private:
@@ -12,7 +13,7 @@ private:
 
 	static bool instanceFlag;
 	static MeshManager *single;
-	int determineQuadNumber(Size & size, int &quadNumberX, int &quadNumberY);
+	int determineQuadNumber(Size & size, int &quadNumberX, int &quadNumberY); // returns the number of quads that fill the specified size
 
 public:
     ~MeshManager()
@@ -24,23 +25,15 @@ public:
 	
 	void buildQuadsAndEdges(Mesh &mesh); // builds quads and edges from given vertices
 
-	Mesh deepCopyMesh(const Mesh &m);
+	Mesh deepCopyMesh(const Mesh &m); // performs a deep copy of a mesh
 
-	vector<Vertex> getInnerVertices(const Mesh &m, Size size);
+	vector<Vertex> getInnerVertices(const Mesh &m, Size size); // returns a vector containing all non edge vertices of a mesh
 
 	vector<double> meshToDoubleVec(Mesh &m);
 	void doubleVecToMesh(const vector<double> &x, Mesh &result);
 
-	void initializeMesh(Mesh &result, Size &size);
-	Mesh generateRightEyeMesh(Mesh &leftEyeMesh, StereoImage* img, Size &rightEyeSize);
-	Mesh interpolateMesh(Mesh &first, Mesh &second, float alpha);
-
-	vector<double> xCoordsToDoubleVec(Mesh &m);
-	void xCoordsToMesh(const vector<double> &x, Mesh &result);
-
-	vector<double> yCoordsToDoubleVec(Mesh &m);
-	void yCoordsToMesh(const vector<double> &y, Mesh &result);
-
-	void mergeXandYMeshes(Mesh &xMesh, Mesh &yMesh, Mesh &result);
+	void initializeMesh(Mesh &result, Size &size); // initializes a mesh for a specified size with a fixes quad size
+	Mesh generateRightEyeMesh(Mesh &leftEyeMesh, StereoImage* img, Size &rightEyeSize); // looks for the inner vertices of the left view in the right view and constructs the mesh accordingly
+	Mesh interpolateMesh(Mesh &first, Mesh &second, float alpha); // interpolates to meshes linearly and returns the interpolated mesh
 };
 

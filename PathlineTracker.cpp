@@ -1,39 +1,6 @@
 #include "PathlineTracker.h"
 #include "MeshManager.h"
 
-#if 0
-PathlineTracker::PathlineTracker(CvCapture* input)
-{
-	this->input = input;
-	frameCounter = 1;
-	addNewPoints = true;
-	warpedVideo = false;
-	videoSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
-	leftSize = Size(videoSize.width / 2, videoSize.height);
-	rightSize = Size(videoSize.width / 2, videoSize.height);
-	maxFrames = ((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT)) - 2;
-
-	MeshManager* mm = MeshManager::getInstance();
-	mm->initializeMesh(leftSeedMesh, leftSize);
-	mm->initializeMesh(rightSeedMesh, rightSize);
-}
-
-PathlineTracker::PathlineTracker(CvCapture* input, vector<Mesh> &leftSeedMeshes, vector<Mesh> &rightSeedMeshes)
-{
-	this->input = input;
-	frameCounter = 1;
-	addNewPoints = true;
-	warpedVideo = true;
-	videoSize = Size((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_WIDTH), (int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_HEIGHT));
-	leftSize = Size(videoSize.width / 2, videoSize.height);
-	rightSize = Size(videoSize.width / 2, videoSize.height);
-	maxFrames = ((int) cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT));
-
-	this->leftSeedMeshes = leftSeedMeshes;
-	this->rightSeedMeshes = rightSeedMeshes;
-}
-#endif
-
 PathlineTracker::PathlineTracker(VideoCapture &capture)
 {
 	this->capture = capture;
@@ -79,41 +46,28 @@ void PathlineTracker::trackPathlines()
 
 	cout << "\nTracking Pathlines..." << endl;
 
-	// decode the first frame
-	//IplImage* img = cvQueryFrame(input);
-
 	// initialize necessary objects
-	//current = StereoImage(videoSize, img->depth, img->nChannels);
-	//prev = StereoImage(videoSize, img->depth, img->nChannels);
 	Mat current, prev;
 
 	int x = 0;
 	while (true)
 	{
+		// decode the next frame
 		if (!capture.read(current))
 			break;
-		
-		//current.setBoth_eye(img);
 
 		if (x == 0)
 		{
 			// for the first frame of the video
-			//prev.setBoth_eye(img);
 			prev = current;
 			x++;
 		}
 
 		//process the current frame, i.e. look for feature points
-		//Mat currentFrame = current.getBoth_eye();
-		//Mat prevFrame = prev.getBoth_eye();
-		//process(currentFrame, prevFrame);
 		process(current, prev);
 
 		// set current frame to previous frame
 		prev = current;
-
-		// load next frame
-		//img = cvQueryFrame(input);
 
 		frameCounter++;
 

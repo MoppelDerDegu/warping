@@ -120,6 +120,8 @@ void FileManager::saveMeshROIAsImage(const string &fileName, const string &dir, 
 
 	for (unsigned int i = 0; i < m.quads.size(); i++)
 	{
+		// place ROI over quad
+
 		Quad quad = m.quads.at(i);
 		Point topleft, topright, bottomleft, bottomright;
 		int roiWidth, roiHeight;

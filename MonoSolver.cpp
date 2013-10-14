@@ -70,6 +70,7 @@ Mesh MonoSolver::solveImageProblem(Mesh &contentAwareMesh, Mesh &originalMesh, S
 		calculateEdgeLengthRatios(originalMesh, deformedMesh, edgeLengthRatios);
 		calculateOptimalScaleFactors(originalMesh, deformedMesh, scalingFactors);
 		
+		// solve the optimization problem
 		nlopt::result result = opt.optimize(x, minf);
 	
 		cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
@@ -101,67 +102,6 @@ double MonoSolver::imageObjFunc(const vector<double> &x, vector<double> &grad)
 	double quadEnergy = totalQuadEnergy(originalMesh, deformedMesh, scalingFactors, saliencyWeightMapping);
 
 	double res = /*(0.5 * edgeEnergy) +*/ quadEnergy;
-
-	cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << res << ends;
-
-	return res;
-}
-
-Mesh MonoSolver::redistributeQuads(Mesh &originalMesh, vector<pair<float, Quad>> &wfMap)
-{
-	cout << ">> Solving optimization problem to redistribute quads..." << endl;
-	
-	this->deformedMesh = originalMesh;
-	this->saliencyWeightMapping = wfMap;
-	
-	QuadSaliencyManager* qsm = QuadSaliencyManager::getInstance();
-	this->edgeSaliency = qsm->assignSaliencyValuesToEdges(originalMesh, saliencyWeightMapping, oldSize);
-
-	MeshManager* mm = MeshManager::getInstance();
-
-	vector<double> x = mm->meshToDoubleVec(deformedMesh);
-
-	vector<double> lb = computeLowerImageBoundConstraints(x, oldSize);
-	vector<double> ub = computeUpperImageBoundConstraints(x, oldSize);
-
-	nlopt::opt opt(nlopt::LN_PRAXIS, x.size());
-
-	opt.set_lower_bounds(lb);
-	opt.set_upper_bounds(ub);
-
-	opt.set_min_objective(MonoSolver::wrapperRedistributeObjectiveFunc, this);
-
-	opt.set_xtol_abs(1);
-
-	double minf;
-
-	nlopt::result res = opt.optimize(x, minf);
-	
-	cout << "\n>> Solution found after " << iterationCount << " iterations" << endl;
-
-	iterationCount = 0;
-	return deformedMesh;
-}
-
-double MonoSolver::wrapperRedistributeObjectiveFunc(const vector<double> &x, vector<double> &grad, void *my_func_data)
-{
-	MonoSolver* solver = reinterpret_cast<MonoSolver*> (my_func_data);
-	return solver->redistributeObjFunc(x, grad);
-}
-
-double MonoSolver::redistributeObjFunc(const vector<double> &x, vector<double> &grad)
-{
-	++iterationCount;
-
-	if (!grad.empty())
-	{
-		// compute gradient here
-	}
-
-	MeshManager* mm = MeshManager::getInstance();
-
-	mm->doubleVecToMesh(x, deformedMesh);
-	double res = totalRedistributionEnergy(deformedMesh, edgeSaliency);
 
 	cout << "\r>> Iteration: " << iterationCount << " Total Energy: " << res << ends;
 
