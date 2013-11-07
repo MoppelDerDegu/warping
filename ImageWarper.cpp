@@ -69,14 +69,14 @@ void ImageWarper::warp(Mesh &linearScaledMesh, Mesh &deformedMesh, Mat &linearSc
 					//pixel is in the parallelogram defined by vectors a and b
 
 					//corresponding pixel in the linear quad
-					Vertex _x;
+					Point2f _x;
 					
 					if (r + s < 1.0)
 					{
 						//pixel is in the lower left triangle of the quad
 
-						_x.x = (int) (_u.x + r * _a.x + s * _b.x);
-						_x.y = (int) (_u.y + r * _a.y + s * _b.y);
+						_x.x = _u.x + r * _a.x + s * _b.x;
+						_x.y = _u.y + r * _a.y + s * _b.y;
 					}
 					else
 					{
@@ -87,8 +87,8 @@ void ImageWarper::warp(Mesh &linearScaledMesh, Mesh &deformedMesh, Mat &linearSc
 						{
 							//pixel is in the upper right triangle of the quad
 
-							_x.x = (int) (_v.x + _r * _p.x + _s * _q.x);
-							_x.y = (int) (_v.y + _r * _p.y + _s * _q.y);
+							_x.x = _v.x + _r * _p.x + _s * _q.x;
+							_x.y = _v.y + _r * _p.y + _s * _q.y;
 						}
 						else
 							continue;
@@ -123,10 +123,10 @@ void ImageWarper::warp(Mesh &linearScaledMesh, Mesh &deformedMesh, Mat &linearSc
 					{
 						//pixel is in the upper right triangle of the quad
 
-						Vertex _x;
+						Point2f _x;
 
-						_x.x = (int) (_v.x + _r * _p.x + _s * _q.x);
-						_x.y = (int) (_v.y + _r * _p.y + _s * _q.y);
+						_x.x = (_v.x + _r * _p.x + _s * _q.x);
+						_x.y = (_v.y + _r * _p.y + _s * _q.y);
 						
 						// interpolate pixels and fill new pixel
 						if (interpolation == INTER_LINEAR)
@@ -150,43 +150,64 @@ void ImageWarper::warp(Mesh &linearScaledMesh, Mesh &deformedMesh, Mat &linearSc
 					}
 				}
 			}
-		}	
+		}
 	}
 }
 
-float ImageWarper::interpolateLinear(Vertex &x, int channel, Mat &image)
+float ImageWarper::interpolateLinear(Point2f &x, int channel, Mat &image)
 {
-	float n, s, w, e;
-	
+	double epsilon = 0.01;
+	Vertex v1, v2, v3, v4;
+	double w1, w2, w3, w4;
+	float c1, c2, c3, c4;
+
 	if (x.y < image.rows && x.x < image.cols)
 	{
-		if (x.x - 1 < 0)
-			w = image.at<Vec3f> (x.y, x.x) [channel];
-		else 
-			w = image.at<Vec3f> (x.y, x.x - 1) [channel];
+		// nothing to interpolate
+		if (x.x - floor(x.x) < epsilon && x.y - floor(x.y) < epsilon)
+			return image.at<Vec3f> (x.y, x.x) [channel];
 
-		if (x.x == image.cols - 1)
-			e = image.at<Vec3f> (x.y, x.x) [channel];
-		else
-			e = image.at<Vec3f> (x.y, x.x + 1) [channel];
+		// values used for interpolation
+		v1.x = floor(x.x);
+		v1.y = floor(x.y);
 
-		if (x.y - 1 < 0)
-			n = image.at<Vec3f> (x.y, x.x) [channel];
-		else
-			n = image.at<Vec3f> (x.y - 1, x.x) [channel];
+		v2.x = ceil(x.x);
+		v2.y = floor(x.y);
 
-		if (x.y == image.rows - 1)
-			s = image.at<Vec3f> (x.y, x.x) [channel];
-		else
-			s = image.at<Vec3f> (x.y + 1, x.x) [channel];
+		v3.x = floor(x.x);
+		v3.y = ceil(x.y);
 
-		return (float) ((n + s + w + e) / 4);
+		v4.x = ceil(x.x);
+		v4.y = ceil(x.y);
+
+		// check if interpolation points are inside the ROI
+		if (v2.x - 1 < 0 || v2.x == image.cols - 1 || v2.y - 1 < 0 || v2.y == image.rows - 1)
+			v2 = v1;
+
+		if (v3.x - 1 < 0 || v3.x == image.cols - 1 || v3.y - 1 < 0 || v3.y == image.rows - 1)
+			v3 = v1;
+
+		if (v4.x - 1 < 0 || v4.x == image.cols - 1 || v4.y - 1 < 0 || v4.y == image.rows - 1)
+			v4 = v1;
+
+		// calculate weights
+		w1 = (1 - (x.x - floor(x.x))) * (1 - (x.y - floor(x.y)));
+		w2 = (1 - (x.x - floor(x.x))) * (x.y - floor(x.y));
+		w3 = (x.x - floor(x.x)) * (1 - (x.y - floor(x.y)));
+		w4 = (x.x - floor(x.x)) * (x.y - floor(x.y));
+
+		c1 = image.at<Vec3f> (v1.y, v1.x) [channel];
+		c2 = image.at<Vec3f> (v2.y, v2.x) [channel];
+		c3 = image.at<Vec3f> (v3.y, v3.x) [channel];
+		c4 = image.at<Vec3f> (v4.y, v4.x) [channel];
+
+		return c1 * w1 + c2 * w2 + c3 * w3 + c4 * w4;
 	}
 	else
 		return 0.0;
 }
 
-float ImageWarper::interpolateNN(Vertex &x, int channel, Mat &image)
+float ImageWarper::interpolateNN(Point2f &x, int channel, Mat &image)
 {
 	if (x.y < image.rows && x.x < image.cols)
 		return image.at<Vec3f> (x.y, x.x) [channel];
@@ -200,7 +221,7 @@ float ImageWarper::interpolateNN(Vertex &x, int channel, Mat &image)
 		return 0.0;
 }
 
-float ImageWarper::interpolateCubic(Vertex &x, int channel, Mat &image)
+float ImageWarper::interpolateCubic(Point2f &x, int channel, Mat &image)
 {
 	// TODO
 	return 0.0;

@@ -10,8 +10,8 @@ protected:
 	Size newSize;
 
 	void warp(Mesh &linearScaledMesh, Mesh &deformedMesh, Mat &linearScaledImage, Mat& dest, int interpolation = INTER_LINEAR); // warps an image with regard to the deformed mesh
-	float interpolateLinear(Vertex &x, int channel, Mat &image); // interpolates a pixel linearly
-	float interpolateNN(Vertex &x, int channel, Mat &image); // interpolates a pixel with nearest neighbor interpolation
-	float interpolateCubic(Vertex &x, int channel, Mat &image); // interpolates a pixel cubicly
+	float interpolateLinear(Point2f &x, int channel, Mat &image); // interpolates a pixel linearly
+	float interpolateNN(Point2f &x, int channel, Mat &image); // interpolates a pixel with nearest neighbor interpolation
+	float interpolateCubic(Point2f &x, int channel, Mat &image); // interpolates a pixel cubicly
 };
 
